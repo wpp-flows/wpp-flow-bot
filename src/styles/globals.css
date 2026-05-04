@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Design Tokens ---------- */
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 0 0% 100%;
+    --foreground: 224 12% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 12% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 12% 9%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 12% 9%;
+
+    /* Brand — WhatsApp green-tinted, but cooler/quieter for SaaS feel */
+    --primary: 152 60% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 152 56% 94%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 12% 9%;
+
+    /* Semantic */
+    --success: 152 60% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 152 56% 94%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 30% 12%;
+    --warning-soft: 45 92% 94%;
+
+    --destructive: 358 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 358 80% 96%;
+
+    --info: 212 96% 52%;
+    --info-foreground: 0 0% 100%;
+    --info-soft: 212 96% 96%;
+
+    /* Lines & focus */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 152 60% 36%;
+
+    /* Sidebar */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 224 12% 9%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-border: 220 13% 91%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 14% 6%;
+    --foreground: 220 14% 96%;
+
+    --card: 224 14% 8%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 224 14% 8%;
+    --popover-foreground: 220 14% 96%;
+
+    --muted: 224 12% 14%;
+    --muted-foreground: 220 10% 64%;
+
+    --accent: 224 12% 14%;
+    --accent-foreground: 220 14% 96%;
+
+    --primary: 152 56% 48%;
+    --primary-foreground: 224 14% 6%;
+    --primary-soft: 152 36% 14%;
+
+    --secondary: 224 12% 14%;
+    --secondary-foreground: 220 14% 96%;
+
+    --success: 152 56% 48%;
+    --success-foreground: 224 14% 6%;
+    --success-soft: 152 36% 14%;
+
+    --warning: 38 92% 58%;
+    --warning-foreground: 224 14% 6%;
+    --warning-soft: 38 30% 16%;
+
+    --destructive: 358 75% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 358 40% 16%;
+
+    --info: 212 96% 58%;
+    --info-foreground: 224 14% 6%;
+    --info-soft: 212 40% 16%;
+
+    --border: 224 12% 16%;
+    --input: 224 12% 16%;
+    --ring: 152 56% 48%;
+
+    --sidebar: 224 14% 7%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-accent: 224 12% 12%;
+    --sidebar-border: 224 12% 14%;
+  }
+}
+
+/* ---------- Base styles ---------- */
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'liga';
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    letter-spacing: -0.011em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+    letter-spacing: -0.022em;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+
+  /* Selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+  }
+
+  /* Focus outline reset; we render rings via tailwind ring-* */
+  :focus-visible {
+    outline: none;
+  }
+}
+
+/* ---------- Component utilities ---------- */
+@layer components {
+  .glass-panel {
+    @apply bg-background/70 backdrop-blur-xl border border-border;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden bg-muted rounded-md;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--foreground) / 0.04) 40%,
+      hsl(var(--foreground) / 0.04) 60%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  .gradient-mesh {
+    background-image:
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+      radial-gradient(at 100% 0%, hsl(var(--info) / 0.06) 0%, transparent 50%),
+      radial-gradient(at 50% 100%, hsl(var(--primary) / 0.05) 0%, transparent 50%);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* ---------- Utilities ---------- */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
