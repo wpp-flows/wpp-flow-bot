@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: wpp-flows-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: wpp_flows
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wpp_flows']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wpp-flows-services
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wpp_flows?schema=public
+      BETTER_AUTH_SECRET: NKyP4cihK94XzTb6VDZLvJ6qdpzPbTxL
+      BETTER_AUTH_URL: http://localhost:3000
+    ports:
+      - '8080:8080'
+
+volumes:
+  postgres-data:
