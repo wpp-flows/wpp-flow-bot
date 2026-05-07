@@ -35,6 +35,8 @@ export class HandleEvolutionEventUseCase {
             return;
         }
 
+        console.log(`Received event "${event.event}" for bot "${bot.name}"`);
+
         const strategy = this.registry.get(normalizeEventName(event.event));
         if (!strategy) return;
 

@@ -15,6 +15,10 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
 
     async handle(ctx: WebhookContext, data: unknown): Promise<void> {
         const messages = parseMessages(data);
+        if (messages.length === 0) {
+            console.warn("messages.upsert: no messages in payload", data);
+            return;
+        }
         for (const msg of messages) {
             await this.handleMessage(ctx, msg);
         }
@@ -24,11 +28,25 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
         ctx: WebhookContext,
         msg: EvolutionMessage
     ): Promise<void> {
-        if (!msg?.key?.remoteJid) return;
-        if (!isPersonalJid(msg.key.remoteJid)) return;
+        if (!msg?.key?.remoteJid) {
+            console.warn("messages.upsert: skip — missing remoteJid", msg);
+            return;
+        }
+        if (!isPersonalJid(msg.key.remoteJid)) {
+            console.warn(
+                `messages.upsert: skip non-personal JID ${msg.key.remoteJid}`
+            );
+            return;
+        }
 
         const text = extractText(msg);
-        if (!text) return;
+        if (!text) {
+            console.warn(
+                `messages.upsert: skip ${msg.key.remoteJid} — no text in supported fields. message=`,
+                JSON.stringify(msg.message)
+            );
+            return;
+        }
 
         if (msg.key.fromMe && msg.key.id) {
             const existing = await ctx.messageRepo.findByEvolutionId(msg.key.id);

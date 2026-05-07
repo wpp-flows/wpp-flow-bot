@@ -40,13 +40,6 @@ export class CreateBotUseCase {
         const evolutionInstanceName = buildInstanceName(input.organizationId);
         const webhookUrl = input.webhookUrl ?? buildWebhookUrl(evolutionInstanceName);
 
-        const evolution = await evolutionApi.createInstance({
-            instanceName: evolutionInstanceName,
-            webhookUrl,
-        });
-
-        const qrCode = extractQrCode(evolution);
-
         const bot = await this.repo.create({
             organizationId: input.organizationId,
             name: input.name,
@@ -56,7 +49,17 @@ export class CreateBotUseCase {
             flowId: input.flowId ?? null,
         });
 
-        return this.repo.update(bot.id, { qrCode, status: "CONNECTING" });
+        try {
+            const evolution = await evolutionApi.createInstance({
+                instanceName: evolutionInstanceName,
+                webhookUrl,
+            });
+            const qrCode = extractQrCode(evolution);
+            return this.repo.update(bot.id, { qrCode, status: "CONNECTING" });
+        } catch (err) {
+            await this.repo.update(bot.id, { status: "ERROR" });
+            throw err;
+        }
     }
 }
 

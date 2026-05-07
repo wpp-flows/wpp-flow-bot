@@ -80,6 +80,10 @@ class EvolutionApi {
         const data = text ? safeJson(text) : null;
 
         if (!res.ok) {
+            console.error(
+                `Evolution ${res.status} on ${path}. Body:`,
+                JSON.stringify(data, null, 2)
+            );
             throw new EvolutionApiError(
                 `Evolution API ${res.status} on ${path}`,
                 res.status,
@@ -155,6 +159,9 @@ class EvolutionApi {
         number: string;
         text: string;
     }): Promise<EvolutionSendTextResponse> {
+        console.log(
+            `Evolution sendText → instance=${params.instanceName} number=${params.number}`
+        );
         return this.request<EvolutionSendTextResponse>(
             `/message/sendText/${encodeURIComponent(params.instanceName)}`,
             {

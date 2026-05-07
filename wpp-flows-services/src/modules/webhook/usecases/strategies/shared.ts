@@ -9,6 +9,16 @@ export interface EvolutionMessageContent {
     extendedTextMessage?: { text?: string };
     imageMessage?: { caption?: string };
     videoMessage?: { caption?: string };
+    documentMessage?: { caption?: string };
+    documentWithCaptionMessage?: {
+        message?: { documentMessage?: { caption?: string } };
+    };
+    buttonsResponseMessage?: { selectedDisplayText?: string };
+    templateButtonReplyMessage?: { selectedDisplayText?: string };
+    listResponseMessage?: { title?: string; singleSelectReply?: { selectedRowId?: string } };
+    ephemeralMessage?: { message?: EvolutionMessageContent };
+    viewOnceMessage?: { message?: EvolutionMessageContent };
+    viewOnceMessageV2?: { message?: EvolutionMessageContent };
 }
 
 export interface EvolutionMessage {
@@ -24,11 +34,27 @@ export interface EvolutionUpdate {
 }
 
 export function extractText(msg: EvolutionMessage): string | null {
+    return extractFromContent(msg.message);
+}
+
+function extractFromContent(
+    content: EvolutionMessageContent | undefined
+): string | null {
+    if (!content) return null;
     return (
-        msg.message?.conversation ??
-        msg.message?.extendedTextMessage?.text ??
-        msg.message?.imageMessage?.caption ??
-        msg.message?.videoMessage?.caption ??
+        content.conversation ??
+        content.extendedTextMessage?.text ??
+        content.imageMessage?.caption ??
+        content.videoMessage?.caption ??
+        content.documentMessage?.caption ??
+        content.documentWithCaptionMessage?.message?.documentMessage?.caption ??
+        content.buttonsResponseMessage?.selectedDisplayText ??
+        content.templateButtonReplyMessage?.selectedDisplayText ??
+        content.listResponseMessage?.title ??
+        content.listResponseMessage?.singleSelectReply?.selectedRowId ??
+        extractFromContent(content.ephemeralMessage?.message) ??
+        extractFromContent(content.viewOnceMessage?.message) ??
+        extractFromContent(content.viewOnceMessageV2?.message) ??
         null
     );
 }
@@ -48,7 +74,17 @@ export function parseUpdates(data: unknown): EvolutionUpdate[] {
 }
 
 export function isPersonalJid(jid: string): boolean {
-    // Skip groups (@g.us), broadcasts/status (@broadcast), newsletters (@newsletter),
-    // linked-id sessions (@lid). Only handle 1:1 chats (@s.whatsapp.net or @c.us).
-    return /@(s\.whatsapp\.net|c\.us)$/.test(jid);
+    // Accept 1:1 chats: classic (@s.whatsapp.net, @c.us) AND linked-id sessions (@lid),
+    // which modern WhatsApp accounts use. Skip groups (@g.us), broadcasts (@broadcast),
+    // newsletters (@newsletter), status (@status).
+    return /@(s\.whatsapp\.net|c\.us|lid)$/.test(jid);
+}
+
+/**
+ * Returns the destination Evolution should send to. For lid jids we keep the full JID
+ * (the digits are NOT a real phone number); for classic jids we return the bare number.
+ */
+export function jidToSendTarget(jid: string): string {
+    if (/@lid$/.test(jid)) return jid;
+    return jid.replace(/@.*$/, "");
 }

@@ -1,6 +1,7 @@
 import { evolutionApi } from "@/infrastructure/evolution/client";
 import { NotFoundError } from "@/shared/exceptions/http";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
+import { jidToSendTarget } from "@/modules/webhook/usecases/strategies/shared";
 import type {
     Conversation,
     ConversationFilters,
@@ -74,11 +75,9 @@ export class SendMessageUseCase {
         const bot = await this.botRepo.findByIdInOrg(input.organizationId, conv.botId);
         if (!bot) throw new NotFoundError("Bot");
 
-        const phoneNumber = conv.remoteJid.replace(/@.*$/, "");
-
         const evolutionResp = await evolutionApi.sendText({
             instanceName: bot.evolutionInstanceName,
-            number: phoneNumber,
+            number: jidToSendTarget(conv.remoteJid),
             text: input.content,
         });
 

@@ -10,6 +10,7 @@ import type {
     FlowStep,
     FlowWithSteps,
 } from "@/modules/flow/repositories/flow-repo";
+import { jidToSendTarget } from "./strategies/shared";
 
 /**
  * Sequential, pre-persisted, non-AI flow runner.
@@ -75,7 +76,7 @@ export class FlowRunner {
     }): Promise<void> {
         const { bot, conversation, step } = input;
         const text = renderStep(step);
-        const phoneNumber = conversation.remoteJid.replace(/@.*$/, "");
+        const phoneNumber = jidToSendTarget(conversation.remoteJid);
 
         try {
             const evolutionResp = await evolutionApi.sendText({
