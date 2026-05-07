@@ -5,7 +5,6 @@ import type {
 } from "@/modules/chat/repositories/chat-repo";
 import type { FlowRunner } from "./flow-runner";
 import {
-    defaultWebhookStrategies,
     normalizeEventName,
     type WebhookEventStrategy,
 } from "./strategies";
@@ -24,9 +23,9 @@ export class HandleEvolutionEventUseCase {
         private readonly conversationRepo: ConversationRepository,
         private readonly messageRepo: MessageRepository,
         private readonly flowRunner: FlowRunner,
-        strategies: WebhookEventStrategy[] = defaultWebhookStrategies()
+        private readonly strategies: WebhookEventStrategy[]
     ) {
-        this.registry = new Map(strategies.map((s) => [s.eventName, s]));
+        this.registry = new Map(this.strategies.map((s) => [s.eventName, s]));
     }
 
     async execute(event: EvolutionWebhookEvent): Promise<void> {
