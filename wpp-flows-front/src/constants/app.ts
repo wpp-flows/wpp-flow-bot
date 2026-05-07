@@ -18,6 +18,8 @@ export const STORAGE_KEYS = {
 
 export const ROUTES = {
   login: '/login',
+  signUp: '/sign-up',
+  onboarding: '/onboarding',
   dashboard: '/',
   bots: '/bots',
   menu: '/menu',

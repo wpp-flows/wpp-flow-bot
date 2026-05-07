@@ -161,8 +161,8 @@ export function DashboardPage() {
                       </p>
                     </div>
                     <div className="hidden text-right text-2xs text-muted-foreground sm:block">
-                      {bot.metrics.conversations.toLocaleString()} conv. ·{' '}
-                      {bot.metrics.activeChats} active
+                      {bot.status.toLowerCase()} ·{' '}
+                      {bot.lastConnectedAt ? 'connected' : 'never connected'}
                     </div>
                     <div className="ml-2">
                       <span className="inline-flex h-2 w-2 rounded-full bg-current text-success" />

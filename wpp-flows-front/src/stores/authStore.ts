@@ -1,36 +1,40 @@
 import { create } from 'zustand';
-import type { User } from '@/types';
+import type { Organization, User } from '@/types';
 import { authService } from '@/services/authService';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  organization: Organization | null;
   status: 'idle' | 'authenticated' | 'unauthenticated';
-  setSession: (user: User | null, token: string | null) => void;
-  bootstrap: () => void;
+  bootstrap: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshOrganization: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  token: null,
+  organization: null,
   status: 'idle',
-  setSession: (user, token) =>
+  bootstrap: async () => {
+    const session = await authService.me();
+    if (!session) {
+      set({ user: null, organization: null, status: 'unauthenticated' });
+      return;
+    }
+    const organization = await authService.getOrganization();
     set({
-      user,
-      token,
-      status: user && token ? 'authenticated' : 'unauthenticated',
-    }),
-  bootstrap: () => {
-    const { token, user } = authService.getStoredSession();
-    set({
-      user,
-      token,
-      status: user && token ? 'authenticated' : 'unauthenticated',
+      user: session.user,
+      organization,
+      status: 'authenticated',
     });
   },
   signOut: async () => {
     await authService.logout();
-    set({ user: null, token: null, status: 'unauthenticated' });
+    set({ user: null, organization: null, status: 'unauthenticated' });
+  },
+  refreshOrganization: async () => {
+    if (get().status !== 'authenticated') return;
+    const organization = await authService.getOrganization();
+    set({ organization });
   },
 }));

@@ -6,7 +6,11 @@ const schema = z.object({
     PORT: z.coerce.number().default(8080),
     DATABASE_URL: z.string(),
     BETTER_AUTH_SECRET: z.string(),
-    BETTER_AUTH_URL: z.url()
+    BETTER_AUTH_URL: z.url(),
+    CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+    EVOLUTION_API_URL: z.string(),
+    EVOLUTION_API_KEY: z.string(),
+    EVOLUTION_WEBHOOK_URL: z.string().optional()
 })
 
 const parsed = schema.safeParse(process.env)

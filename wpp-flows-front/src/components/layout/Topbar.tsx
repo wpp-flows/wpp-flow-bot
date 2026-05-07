@@ -13,7 +13,7 @@ import { ROUTES } from '@/constants/app';
 
 export function Topbar() {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
-  const { user, signOut } = useAuth();
+  const { user, organization, signOut } = useAuth();
   const { resolved, toggle } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -34,19 +34,15 @@ export function Topbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Tooltip content={`Switch to ${resolved === 'dark' ? 'light' : 'dark'} mode`}>
           <IconButton variant="ghost" onClick={toggle} aria-label="Toggle theme">
             {resolved === 'dark' ? <Sun /> : <Moon />}
           </IconButton>
-        </Tooltip>
-        <Tooltip content="Notifications">
           <IconButton variant="ghost" aria-label="Notifications">
             <span className="relative">
               <Bell />
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-destructive ring-2 ring-background" />
             </span>
           </IconButton>
-        </Tooltip>
 
         <div className="relative ml-2">
           <button
@@ -55,10 +51,10 @@ export function Topbar() {
             onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
             className="flex items-center gap-2.5 rounded-lg pl-1 pr-2.5 py-1 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Avatar name={user?.name ?? ''} src={user?.avatarUrl} size="md" />
+            <Avatar name={user?.name ?? ''} src={user?.image ?? undefined} size="md" />
             <span className="hidden flex-col items-start leading-tight md:flex">
               <span className="text-xs font-semibold tracking-tight">{user?.name ?? 'Guest'}</span>
-              <span className="text-2xs text-muted-foreground">{user?.restaurantName ?? '—'}</span>
+              <span className="text-2xs text-muted-foreground">{organization?.name ?? '—'}</span>
             </span>
           </button>
 

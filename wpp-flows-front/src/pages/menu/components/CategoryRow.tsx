@@ -130,7 +130,7 @@ export function CategoryRow({
                 <p className="truncate text-xs text-muted-foreground">{item.description}</p>
               </div>
               <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
-                {formatCurrency(item.price)}
+                {formatCurrency(Number(item.price))}
               </span>
               <div className="flex items-center">
                 <IconButton size="sm" variant="ghost" onClick={() => onEditItem(item)} aria-label="Edit item">

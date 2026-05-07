@@ -25,7 +25,7 @@ export function CreateBotModal({ open, onClose }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<CreateBotFormValues>({
     resolver: zodResolver(createBotSchema),
-    defaultValues: { name: '', phoneNumber: '', webhookUrl: '' },
+    defaultValues: { name: '', phoneNumber: '' },
   });
 
   const create = useMutation({
@@ -93,19 +93,6 @@ export function CreateBotModal({ open, onClose }: Props) {
             placeholder="+15551234567"
             invalid={!!errors.phoneNumber}
             {...register('phoneNumber')}
-          />
-        </FormField>
-        <FormField
-          label="Webhook URL"
-          htmlFor="bot-webhook"
-          hint="Where Evolution API will deliver inbound events."
-          error={errors.webhookUrl?.message}
-        >
-          <Input
-            id="bot-webhook"
-            placeholder="https://hooks.your-domain.com/incoming"
-            invalid={!!errors.webhookUrl}
-            {...register('webhookUrl')}
           />
         </FormField>
       </form>

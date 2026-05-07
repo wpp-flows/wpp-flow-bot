@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Code2, Plus, Save, Workflow as WorkflowIcon } from 'lucide-react';
+import { Code2, Plus, Save, Workflow as WorkflowIcon, Zap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
@@ -13,7 +13,7 @@ import { flowService } from '@/services/flowService';
 import { queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { generateId } from '@/lib/utils';
-import type { Flow, FlowStep } from '@/types';
+import type { FlowStep, FlowStepInput } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
 
@@ -30,40 +30,86 @@ export function FlowsPage() {
   const [overId, setOverId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>('editor');
 
-  const activeFlow = useMemo(
+  const activeFlowSummary = useMemo(
     () => flows.data?.find((f) => f.id === activeFlowId) ?? flows.data?.[0],
     [flows.data, activeFlowId],
   );
 
+  const activeFlowDetail = useQuery({
+    queryKey: activeFlowSummary
+      ? queryKeys.flows.detail(activeFlowSummary.id)
+      : (['flow-noop'] as const),
+    queryFn: () => flowService.getById(activeFlowSummary!.id),
+    enabled: !!activeFlowSummary,
+  });
+
   useEffect(() => {
-    if (activeFlow) {
-      setActiveFlowId(activeFlow.id);
-      setSteps(activeFlow.steps);
-    }
-  }, [activeFlow]);
+    if (activeFlowSummary) setActiveFlowId(activeFlowSummary.id);
+  }, [activeFlowSummary]);
+
+  useEffect(() => {
+    if (activeFlowDetail.data) setSteps(activeFlowDetail.data.steps);
+  }, [activeFlowDetail.data]);
 
   const isDirty = useMemo(() => {
-    if (!activeFlow) return false;
-    return JSON.stringify(steps) !== JSON.stringify(activeFlow.steps);
-  }, [steps, activeFlow]);
+    if (!activeFlowDetail.data) return false;
+    return JSON.stringify(steps) !== JSON.stringify(activeFlowDetail.data.steps);
+  }, [steps, activeFlowDetail.data]);
+
+  const stepsAsInput = (list: FlowStep[]): FlowStepInput[] =>
+    list.map((s, i) => ({
+      type: s.type,
+      content: s.content,
+      order: i,
+      metadata: s.metadata ?? null,
+    }));
 
   const save = useMutation({
-    mutationFn: () => flowService.saveSteps(activeFlow!.id, steps),
-    onSuccess: () => {
+    mutationFn: () => flowService.saveSteps(activeFlowDetail.data!.id, stepsAsInput(steps)),
+    onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      toast.success('Flow saved', `${activeFlow!.name} updated successfully.`);
+      qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
+      toast.success('Flow saved', `${updated.name} v${updated.version} updated.`);
     },
     onError: () => toast.error('Could not save', 'Please try again.'),
   });
 
+  const newVersion = useMutation({
+    mutationFn: () =>
+      flowService.newVersion(activeFlowDetail.data!.id, {
+        steps: stepsAsInput(steps),
+        activate: false,
+      }),
+    onSuccess: (created) => {
+      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      setActiveFlowId(created.id);
+      toast.success('New version created', `${created.name} v${created.version}`);
+    },
+  });
+
+  const activate = useMutation({
+    mutationFn: () => flowService.activate(activeFlowDetail.data!.id),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
+      toast.success('Flow activated', `${updated.name} v${updated.version} is now live.`);
+    },
+  });
+
   const createFlow = useMutation({
     mutationFn: () =>
-      flowService.create({ name: `New flow ${(flows.data?.length ?? 0) + 1}` }),
+      flowService.create({
+        name: `New flow ${(flows.data?.length ?? 0) + 1}`,
+        steps: [
+          { type: 'MESSAGE', order: 0, content: 'Hi! Welcome to our restaurant 👋' },
+        ],
+      }),
     onSuccess: (flow) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       setActiveFlowId(flow.id);
       toast.success('Flow created', `${flow.name} is ready to edit.`);
     },
+    onError: (err: Error) => toast.error('Could not create flow', err.message),
   });
 
   const updateStep = (idx: number, next: FlowStep) =>
@@ -76,9 +122,13 @@ export function FlowsPage() {
     const id = generateId('step');
     const newStep: FlowStep = {
       id,
-      type: 'message',
-      title: 'New message',
+      flowId: activeFlowDetail.data?.id ?? '',
+      type: 'MESSAGE',
+      order: steps.length,
       content: 'Add what the bot should say at this step.',
+      metadata: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     setSteps((prev) => [...prev, newStep]);
     setExpanded((prev) => ({ ...prev, [id]: true }));
@@ -100,6 +150,7 @@ export function FlowsPage() {
       if (fromIdx < 0 || toIdx < 0) return prev;
       const list = [...prev];
       const [moved] = list.splice(fromIdx, 1);
+      if (!moved) return prev;
       list.splice(toIdx, 0, moved);
       return list;
     });
@@ -107,7 +158,9 @@ export function FlowsPage() {
     setOverId(null);
   };
 
-  const flowForPreview: Flow | null = activeFlow ? { ...activeFlow, steps } : null;
+  const flowForPreview = activeFlowDetail.data
+    ? { ...activeFlowDetail.data, steps }
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -118,6 +171,23 @@ export function FlowsPage() {
           <>
             <Button variant="outline" leftIcon={<Plus />} onClick={() => createFlow.mutate()} loading={createFlow.isPending}>
               New flow
+            </Button>
+            <Button
+              variant="outline"
+              leftIcon={<Zap />}
+              disabled={!activeFlowDetail.data || activeFlowDetail.data.isActive}
+              loading={activate.isPending}
+              onClick={() => activate.mutate()}
+            >
+              Activate
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => newVersion.mutate()}
+              loading={newVersion.isPending}
+              disabled={!activeFlowDetail.data}
+            >
+              New version
             </Button>
             <Button
               leftIcon={<Save />}
@@ -133,11 +203,11 @@ export function FlowsPage() {
 
       {flows.isLoading ? (
         <Skeleton className="h-[600px] rounded-xl" />
-      ) : !activeFlow ? (
+      ) : !activeFlowSummary ? (
         <EmptyState
           icon={<WorkflowIcon />}
           title="No flows yet"
-          description="Flows define how your bot guides each customer through ordering. Start with the default template."
+          description="Flows define how your bot guides each customer through ordering. Create one to get started."
           action={
             <Button leftIcon={<Plus />} onClick={() => createFlow.mutate()}>
               Create your first flow
@@ -148,31 +218,35 @@ export function FlowsPage() {
         <>
           <Card>
             <CardHeader>
-              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <CardTitle>{activeFlow.name}</CardTitle>
-                    {activeFlow.isDefault ? (
-                      <Badge tone="primary" size="sm">
-                        Default
+                    <CardTitle>{activeFlowSummary.name}</CardTitle>
+                    <Badge tone="neutral" size="sm">
+                      v{activeFlowSummary.version}
+                    </Badge>
+                    {activeFlowSummary.isActive ? (
+                      <Badge tone="success" size="sm">
+                        Active
                       </Badge>
                     ) : null}
                   </div>
                   <CardDescription>
-                    {activeFlow.description ?? 'Sequential WhatsApp flow.'} · {steps.length} step
+                    Sequential WhatsApp flow · {steps.length} step
                     {steps.length === 1 ? '' : 's'}
                   </CardDescription>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <Select
-                    value={activeFlow.id}
+                    value={activeFlowSummary.id}
                     onChange={(e) => setActiveFlowId(e.target.value)}
-                    className="w-44"
+                    className="w-60"
                   >
                     {flows.data?.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.name}
+                        {f.name} · v{f.version}
+                        {f.isActive ? ' (active)' : ''}
                       </option>
                     ))}
                   </Select>
@@ -189,7 +263,9 @@ export function FlowsPage() {
             </CardHeader>
           </Card>
 
-          {view === 'editor' ? (
+          {activeFlowDetail.isLoading ? (
+            <Skeleton className="h-[400px] rounded-xl" />
+          ) : view === 'editor' ? (
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_460px]">
               <div className="space-y-3">
                 {steps.map((step, idx) => (

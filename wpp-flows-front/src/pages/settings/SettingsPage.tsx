@@ -18,7 +18,7 @@ const THEMES: { value: Theme; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const themeMode = useThemeStore((s) => s.theme);
   const { setTheme } = useTheme();
 
@@ -33,7 +33,7 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex items-center gap-4">
-            <Avatar size="lg" name={user?.name ?? ''} src={user?.avatarUrl} />
+            <Avatar size="lg" name={user?.name ?? ''} src={user?.image ?? undefined} />
             <div>
               <Button variant="outline" size="sm">
                 Change avatar
@@ -49,7 +49,7 @@ export function SettingsPage() {
               <Input id="settings-email" type="email" defaultValue={user?.email} />
             </FormField>
             <FormField label="Restaurant name" htmlFor="settings-restaurant" className="sm:col-span-2">
-              <Input id="settings-restaurant" defaultValue={user?.restaurantName} />
+              <Input id="settings-restaurant" defaultValue={organization?.name ?? ''} />
             </FormField>
           </div>
           <div className="flex justify-end">

@@ -55,7 +55,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         categoryId: item?.categoryId ?? defaultCategoryId ?? categories[0]?.id ?? '',
         name: item?.name ?? '',
         description: item?.description ?? '',
-        price: item?.price ?? 0,
+        price: item?.price !== undefined ? Number(item.price) : 0,
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
       });

@@ -1,0 +1,38 @@
+import { z } from "zod";
+
+export const createCategorySchema = z.object({
+    name: z.string().min(1).max(120),
+    description: z.string().max(500).optional(),
+});
+
+export const updateCategorySchema = z.object({
+    name: z.string().min(1).max(120).optional(),
+    description: z.string().max(500).optional(),
+});
+
+export const reorderCategoriesSchema = z.object({
+    orderedIds: z.array(z.uuid()).min(1),
+});
+
+export const createItemSchema = z.object({
+    categoryId: z.uuid(),
+    name: z.string().min(1).max(120),
+    description: z.string().max(500),
+    price: z.number().nonnegative(),
+    imageUrl: z.url().optional(),
+    available: z.boolean().optional(),
+});
+
+export const updateItemSchema = z.object({
+    categoryId: z.uuid().optional(),
+    name: z.string().min(1).max(120).optional(),
+    description: z.string().max(500).optional(),
+    price: z.number().nonnegative().optional(),
+    imageUrl: z.url().nullable().optional(),
+    available: z.boolean().optional(),
+});
+
+export const reorderItemsSchema = z.object({
+    categoryId: z.uuid(),
+    orderedIds: z.array(z.uuid()).min(1),
+});

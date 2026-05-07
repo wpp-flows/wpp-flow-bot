@@ -1,20 +1,22 @@
-export interface MenuItem {
+export interface MenuCategory {
   id: string;
-  categoryId: string;
+  organizationId: string;
   name: string;
-  description: string;
-  price: number;
-  imageUrl?: string;
-  available: boolean;
+  description?: string | null;
   position: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface MenuCategory {
+export interface MenuItem {
   id: string;
+  organizationId: string;
+  categoryId: string;
   name: string;
-  description?: string;
+  description: string;
+  price: string;
+  imageUrl?: string | null;
+  available: boolean;
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -29,7 +31,6 @@ export interface UpdateCategoryPayload {
   id: string;
   name?: string;
   description?: string;
-  position?: number;
 }
 
 export interface CreateItemPayload {
@@ -41,7 +42,12 @@ export interface CreateItemPayload {
   available?: boolean;
 }
 
-export interface UpdateItemPayload extends Partial<CreateItemPayload> {
+export interface UpdateItemPayload {
   id: string;
-  position?: number;
+  categoryId?: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string | null;
+  available?: boolean;
 }

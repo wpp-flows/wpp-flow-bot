@@ -2,7 +2,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { MessagesSquare } from 'lucide-react';
+import { Bot, MessagesSquare } from 'lucide-react';
 import type { Conversation, ConversationStatus } from '@/types';
 import { cn, formatRelativeTime } from '@/lib/utils';
 
@@ -11,15 +11,22 @@ interface Props {
   isLoading: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  botNamesById: Record<string, string>;
 }
 
 const STATUS_TONE: Record<ConversationStatus, 'success' | 'neutral' | 'warning'> = {
-  open: 'success',
-  closed: 'neutral',
-  pending: 'warning',
+  OPEN: 'success',
+  CLOSED: 'neutral',
+  PENDING: 'warning',
 };
 
-export function ConversationList({ conversations, isLoading, selectedId, onSelect }: Props) {
+export function ConversationList({
+  conversations,
+  isLoading,
+  selectedId,
+  onSelect,
+  botNamesById,
+}: Readonly<Props>) {
   if (isLoading) {
     return (
       <div className="space-y-2 p-3">
@@ -46,6 +53,7 @@ export function ConversationList({ conversations, isLoading, selectedId, onSelec
     <ul className="divide-y divide-border">
       {conversations.map((c) => {
         const active = c.id === selectedId;
+        const botName = botNamesById[c.botId] ?? 'Unknown bot';
         return (
           <li key={c.id}>
             <button
@@ -68,9 +76,13 @@ export function ConversationList({ conversations, isLoading, selectedId, onSelec
                   </span>
                 </div>
                 <p className="truncate text-xs text-muted-foreground">{c.lastMessagePreview}</p>
-                <div className="mt-1 flex items-center gap-1.5">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-2xs font-medium text-muted-foreground">
+                    <Bot className="h-3 w-3" />
+                    {botName}
+                  </span>
                   <Badge size="sm" tone={STATUS_TONE[c.status]} dot>
-                    {c.status}
+                    {c.status.toLowerCase()}
                   </Badge>
                   {c.unreadCount > 0 ? (
                     <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">

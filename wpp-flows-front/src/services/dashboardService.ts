@@ -1,50 +1,35 @@
-import { apiCall } from '@/instances/api';
 import type { DashboardStats } from '@/types';
-import { mockBots } from './_mockData';
+import { botService } from './botService';
+import { chatService } from './chatService';
 
-const isoDaysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString();
-};
-
+/**
+ * Dashboard service. The backend doesn't yet expose an aggregated dashboard
+ * endpoint — derive stats from existing endpoints client-side until one ships.
+ */
 export const dashboardService = {
   async getStats(): Promise<DashboardStats> {
-    return apiCall({ endpoint: '/dashboard/stats' }, () => {
-      const totals = mockBots.reduce(
-        (acc, b) => ({
-          conversations: acc.conversations + b.metrics.conversations,
-          activeChats: acc.activeChats + b.metrics.activeChats,
-          ordersToday: acc.ordersToday + b.metrics.ordersToday,
-        }),
-        { conversations: 0, activeChats: 0, ordersToday: 0 },
-      );
+    const [bots, conversations] = await Promise.all([
+      botService.list().catch(() => []),
+      chatService.list({}).catch(() => []),
+    ]);
 
-      const conversationsByDay = Array.from({ length: 14 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (13 - i));
-        return {
-          date: d.toISOString().slice(0, 10),
-          count: 80 + Math.round(Math.sin(i * 0.6) * 30 + Math.random() * 40),
-        };
-      });
+    const activeChats = conversations.filter((c) => c.status === 'OPEN').length;
+    const totalConversations = conversations.length;
 
-      return {
-        totalConversations: totals.conversations,
-        activeChats: totals.activeChats,
-        ordersToday: totals.ordersToday,
-        ordersTodayDelta: 12.4,
-        conversationsDelta: 5.8,
-        averageResponseSeconds: 38,
-        conversationsByDay,
-        recentActivity: [
-          { id: 'act_1', kind: 'order', message: 'New order from Lucia Rinaldi · $42.50', createdAt: isoDaysAgo(0) },
-          { id: 'act_2', kind: 'connect', message: 'Bellini Main reconnected to WhatsApp', createdAt: isoDaysAgo(0) },
-          { id: 'act_3', kind: 'message', message: 'Thomas Becker confirmed an order', createdAt: isoDaysAgo(0) },
-          { id: 'act_4', kind: 'disconnect', message: 'Private Events went offline', createdAt: isoDaysAgo(1) },
-          { id: 'act_5', kind: 'order', message: 'New order from Kenji Watanabe · $17.00', createdAt: isoDaysAgo(1) },
-        ],
-      };
-    });
+    return {
+      totalConversations,
+      activeChats,
+      ordersToday: 0,
+      ordersTodayDelta: 0,
+      conversationsDelta: 0,
+      averageResponseSeconds: 0,
+      conversationsByDay: [],
+      recentActivity: bots.slice(0, 5).map((b, i) => ({
+        id: `bot_${b.id}_${i}`,
+        kind: b.status === 'ONLINE' ? 'connect' : 'disconnect',
+        message: `${b.name} is ${b.status.toLowerCase()}`,
+        createdAt: b.updatedAt,
+      })),
+    };
   },
 };

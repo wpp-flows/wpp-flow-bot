@@ -30,7 +30,7 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
     },
   });
 
-  const isOnline = bot.status === 'online';
+  const isOnline = bot.status === 'ONLINE';
 
   return (
     <Card>
@@ -53,8 +53,13 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
             label="Last connected"
             value={bot.lastConnectedAt ? formatRelativeTime(bot.lastConnectedAt) : 'Never'}
           />
-          <Row icon={<Zap />} label="Active chats" value={bot.metrics.activeChats.toString()} />
-          <Row icon={<RefreshCw />} label="Orders today" value={bot.metrics.ordersToday.toString()} />
+          <Row icon={<Zap />} label="Status" value={bot.status} />
+          <Row
+            icon={<RefreshCw />}
+            label="Instance"
+            value={bot.evolutionInstanceName}
+            mono
+          />
         </div>
 
         {!isOnline && bot.qrCode ? (

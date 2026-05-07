@@ -10,16 +10,34 @@ export const loginSchema = z.object({
 });
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
+export const signUpSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(80),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(64, 'Password is too long'),
+});
+export type SignUpFormValues = z.infer<typeof signUpSchema>;
+
+export const organizationOnboardingSchema = z.object({
+  name: z.string().min(2, 'Restaurant name must be at least 2 characters').max(120),
+  slug: z
+    .string()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9-]+$/, 'Lowercase letters, numbers, and dashes only')
+    .optional()
+    .or(z.literal('')),
+});
+export type OrganizationOnboardingFormValues = z.infer<typeof organizationOnboardingSchema>;
+
 export const createBotSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(48),
   phoneNumber: z
     .string()
     .optional()
     .refine((v) => !v || /^\+?[1-9]\d{6,14}$/.test(v), 'Invalid phone format'),
-  webhookUrl: z
-    .string()
-    .optional()
-    .refine((v) => !v || /^https?:\/\//.test(v), 'Must be a valid URL'),
 });
 export type CreateBotFormValues = z.infer<typeof createBotSchema>;
 
@@ -46,25 +64,15 @@ export const menuItemSchema = z.object({
 export type MenuItemFormValues = z.infer<typeof menuItemSchema>;
 
 export const flowStepSchema = z.object({
-  id: z.string(),
-  type: z.enum(['message', 'menu', 'item-selection', 'confirmation', 'payment']),
-  title: z.string().min(1).max(60),
+  id: z.string().optional(),
+  type: z.enum(['MESSAGE', 'MENU', 'CONFIRMATION', 'PAYMENT']),
   content: z.string().min(1).max(800),
-  options: z
-    .array(
-      z.object({
-        id: z.string(),
-        label: z.string().min(1).max(40),
-        value: z.string().min(1).max(40),
-        nextStepId: z.string().optional(),
-      }),
-    )
-    .optional(),
+  order: z.number().int().nonnegative().optional(),
+  metadata: z.record(z.string(), z.any()).nullable().optional(),
 });
 export type FlowStepFormValues = z.infer<typeof flowStepSchema>;
 
 export const flowSchema = z.object({
   name: z.string().min(1).max(60),
-  description: z.string().max(180).optional().or(z.literal('')),
 });
 export type FlowFormValues = z.infer<typeof flowSchema>;

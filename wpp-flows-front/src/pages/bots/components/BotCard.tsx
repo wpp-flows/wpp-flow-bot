@@ -12,7 +12,7 @@ import { toast } from '@/stores/uiStore';
 import { formatRelativeTime, cn } from '@/lib/utils';
 import type { BotInstance } from '@/types';
 
-export function BotCard({ bot }: { bot: BotInstance }) {
+export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -21,11 +21,27 @@ export function BotCard({ bot }: { bot: BotInstance }) {
 
   const connect = useMutation({
     mutationFn: () => botService.connect(bot.id),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       refresh();
-      toast.success(`${bot.name} is online`);
+      if (updated.status === 'ONLINE') {
+        toast.success(`${bot.name} is online`);
+      } else if (updated.qrCode) {
+        toast.info('Scan the QR code with WhatsApp to finish connecting.');
+      } else {
+        toast.info('Generating QR code…');
+      }
     },
-    onError: () => toast.error('Could not connect'),
+    onError: (err) => {
+      const apiErr = err as { status?: number; message?: string };
+      if (apiErr.status === 503) {
+        toast.warning(
+          'No QR code yet',
+          apiErr.message ?? 'Try clicking Connect again in a few seconds.',
+        );
+      } else {
+        toast.error('Could not connect', apiErr.message);
+      }
+    },
   });
 
   const disconnect = useMutation({
@@ -45,7 +61,7 @@ export function BotCard({ bot }: { bot: BotInstance }) {
     },
   });
 
-  const isOnline = bot.status === 'online';
+  const isOnline = bot.status === 'ONLINE';
 
   return (
     <>
@@ -114,11 +130,25 @@ export function BotCard({ bot }: { bot: BotInstance }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <Stat label="Conversations" value={bot.metrics.conversations.toLocaleString()} />
-            <Stat label="Active" value={bot.metrics.activeChats.toString()} />
-            <Stat label="Orders today" value={bot.metrics.ordersToday.toString()} />
-          </div>
+          {bot.qrCode && bot.status !== 'ONLINE' ? (
+            <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
+              <p className="text-2xs uppercase tracking-wider text-muted-foreground">
+                Scan with WhatsApp
+              </p>
+              {bot.qrCode.startsWith('data:') ? (
+                <img src={bot.qrCode} alt="WhatsApp QR" className="mx-auto mt-2 h-40 w-40" />
+              ) : (
+                <>
+                  <p className="mt-2 text-2xs text-muted-foreground">
+                    Pairing code (paste into WhatsApp → Linked devices → Link with phone number)
+                  </p>
+                  <p className="mt-1 break-all font-mono text-xs font-semibold">
+                    {bot.qrCode}
+                  </p>
+                </>
+              )}
+            </div>
+          ) : null}
 
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -185,11 +215,3 @@ export function BotCard({ bot }: { bot: BotInstance }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-muted/40 p-2">
-      <p className="text-base font-semibold tracking-tight">{value}</p>
-      <p className="text-2xs uppercase tracking-wider text-muted-foreground">{label}</p>
-    </div>
-  );
-}

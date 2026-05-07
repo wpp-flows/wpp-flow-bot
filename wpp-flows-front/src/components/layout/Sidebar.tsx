@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Bot, Sparkles, ChevronLeft } from 'lucide-react';
+import { Bot, ChevronLeft } from 'lucide-react';
 import { NAV_GROUPS } from '@/constants/navigation';
 import { APP_CONFIG } from '@/constants/app';
 import { cn } from '@/lib/utils';
@@ -54,7 +54,7 @@ export function Sidebar() {
           </IconButton>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
+        <nav className="flex-1 overflow-hidden px-3 py-4 space-y-6">
           {NAV_GROUPS.map((group) => (
             <div key={group.title} className="space-y-1">
               {group.title ? (
@@ -96,20 +96,6 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="m-3 rounded-lg border border-sidebar-border bg-gradient-to-br from-primary-soft to-card p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-            </span>
-            <p className="text-xs font-semibold tracking-tight">Try AI replies</p>
-          </div>
-          <p className="text-2xs text-muted-foreground text-pretty">
-            Auto-suggest answers when the bot can't match a flow step.
-          </p>
-          <button className="w-full rounded-md bg-foreground px-2 py-1.5 text-2xs font-medium text-background hover:bg-foreground/90 transition-colors">
-            Join the waitlist
-          </button>
-        </div>
       </aside>
     </>
   );

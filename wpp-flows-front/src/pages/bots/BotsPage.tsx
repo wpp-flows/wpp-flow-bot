@@ -22,7 +22,12 @@ export function BotsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const debouncedSearch = useDebouncedValue(search, 200);
 
-  const bots = useQuery({ queryKey: queryKeys.bots.all, queryFn: botService.list });
+  const bots = useQuery({
+    queryKey: queryKeys.bots.all,
+    queryFn: botService.list,
+    refetchInterval: (q) =>
+      (q.state.data ?? []).some((b) => b.status === 'CONNECTING') ? 3000 : false,
+  });
 
   const filtered = (bots.data ?? []).filter((b) => {
     if (statusFilter !== 'all' && b.status !== statusFilter) return false;
@@ -59,9 +64,9 @@ export function BotsPage() {
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
           items={[
             { value: 'all', label: 'All' },
-            { value: 'online', label: 'Online' },
-            { value: 'connecting', label: 'Connecting' },
-            { value: 'offline', label: 'Offline' },
+            { value: 'ONLINE', label: 'Online' },
+            { value: 'CONNECTING', label: 'Connecting' },
+            { value: 'OFFLINE', label: 'Offline' },
           ]}
         />
       </div>

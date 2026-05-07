@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, MessageCircle, Search } from 'lucide-react';
+import { Calendar, Info, MessageCircle, RefreshCw, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Tabs } from '@/components/ui/Tabs';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { botService } from '@/services/botService';
 import { chatService } from '@/services/chatService';
 import { queryKeys } from '@/lib/queryClient';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -27,9 +29,9 @@ export function ConversationsPage() {
   const filters = useMemo(
     () => ({
       search: debouncedSearch || undefined,
-      status: statusFilter,
-      fromDate: fromDate || undefined,
-      toDate: toDate || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      fromDate: fromDate ? new Date(fromDate).toISOString() : undefined,
+      toDate: toDate ? new Date(toDate).toISOString() : undefined,
     }),
     [debouncedSearch, statusFilter, fromDate, toDate],
   );
@@ -37,7 +39,20 @@ export function ConversationsPage() {
   const conversations = useQuery({
     queryKey: [...queryKeys.chats.all, filters],
     queryFn: () => chatService.list(filters),
+    refetchInterval: 60_000,
   });
+
+  const bots = useQuery({
+    queryKey: queryKeys.bots.all,
+    queryFn: botService.list,
+    staleTime: 5 * 60_000,
+  });
+
+  const botNamesById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const b of bots.data ?? []) map[b.id] = b.name;
+    return map;
+  }, [bots.data]);
 
   useEffect(() => {
     if (conversations.data && !selectedId) {
@@ -59,9 +74,24 @@ export function ConversationsPage() {
       <PageHeader
         title="Conversations"
         description="Every WhatsApp thread your bot is handling. Take over, close out, or audit a flow."
+        actions={
+          <Button
+            variant="outline"
+            leftIcon={<RefreshCw />}
+            loading={conversations.isFetching}
+            onClick={() => conversations.refetch()}
+          >
+            Refresh
+          </Button>
+        }
       />
 
-      <Card className="flex h-[calc(100vh-220px)] min-h-[560px] overflow-hidden p-0">
+      <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5" />
+        Conversations refresh automatically every minute. Click Refresh for an immediate update.
+      </div>
+
+      <Card className="flex h-[calc(100vh-270px)] min-h-[560px] overflow-hidden p-0">
         {/* Left panel — list + filters */}
         <div className="flex w-full max-w-sm shrink-0 flex-col border-r border-border">
           <div className="space-y-3 border-b border-border bg-card/40 p-3">
@@ -77,9 +107,9 @@ export function ConversationsPage() {
                 onValueChange={(v) => setStatusFilter(v as StatusFilter)}
                 items={[
                   { value: 'all', label: 'All' },
-                  { value: 'open', label: 'Open' },
-                  { value: 'pending', label: 'Pending' },
-                  { value: 'closed', label: 'Closed' },
+                  { value: 'OPEN', label: 'Open' },
+                  { value: 'PENDING', label: 'Pending' },
+                  { value: 'CLOSED', label: 'Closed' },
                 ]}
                 className="flex-1"
               />
@@ -115,6 +145,7 @@ export function ConversationsPage() {
               isLoading={conversations.isLoading}
               selectedId={selectedId}
               onSelect={setSelectedId}
+              botNamesById={botNamesById}
             />
           </div>
         </div>
@@ -122,7 +153,11 @@ export function ConversationsPage() {
         {/* Right panel — selected conversation */}
         <div className="hidden flex-1 lg:flex">
           {selected ? (
-            <ChatPanel conversation={selected} key={selected.id} />
+            <ChatPanel
+              conversation={selected}
+              botName={botNamesById[selected.botId]}
+              key={selected.id}
+            />
           ) : (
             <div className="flex flex-1 items-center justify-center p-8">
               <EmptyState

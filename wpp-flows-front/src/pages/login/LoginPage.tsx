@@ -28,7 +28,7 @@ export function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'marina@trattoria-bellini.com',
+      email: 'demo@bellini.com',
       password: 'mesademo2026',
       remember: true,
     },
@@ -190,7 +190,7 @@ export function LoginPage() {
 
           <p className="text-center text-xs text-muted-foreground">
             New to {APP_CONFIG.name}?{' '}
-            <Link to="#" className="font-medium text-primary hover:underline underline-offset-4">
+            <Link to={ROUTES.signUp} className="font-medium text-primary hover:underline underline-offset-4">
               Create a workspace
             </Link>
           </p>
@@ -198,7 +198,7 @@ export function LoginPage() {
 
         <div className="mt-auto rounded-lg border border-dashed border-border bg-muted/40 p-3 text-2xs text-muted-foreground">
           <p className="font-semibold text-foreground">Demo credentials</p>
-          <p className="mt-0.5 font-mono text-foreground/80">marina@trattoria-bellini.com · mesademo2026</p>
+          <p className="mt-0.5 font-mono text-foreground/80">demo@bellini.com · mesademo2026</p>
         </div>
       </div>
     </div>

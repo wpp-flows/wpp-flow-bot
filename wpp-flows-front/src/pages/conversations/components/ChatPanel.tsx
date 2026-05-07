@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Phone, Send, XCircle } from 'lucide-react';
+import { Bot, BotOff, CheckCircle2, Phone, Send, XCircle } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Textarea } from '@/components/ui/Textarea';
-import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { Badge } from '@/components/ui/Badge';
 import { chatService } from '@/services/chatService';
 import { queryKeys } from '@/lib/queryClient';
@@ -17,12 +16,15 @@ import type { Conversation } from '@/types';
 import { MessageBubble } from './MessageBubble';
 
 const STATUS_TONE: Record<Conversation['status'], 'success' | 'neutral' | 'warning'> = {
-  open: 'success',
-  closed: 'neutral',
-  pending: 'warning',
+  OPEN: 'success',
+  CLOSED: 'neutral',
+  PENDING: 'warning',
 };
 
-export function ChatPanel({ conversation }: { conversation: Conversation }) {
+export function ChatPanel({
+  conversation,
+  botName,
+}: Readonly<{ conversation: Conversation; botName?: string }>) {
   const qc = useQueryClient();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -43,7 +45,21 @@ export function ChatPanel({ conversation }: { conversation: Conversation }) {
       qc.invalidateQueries({ queryKey: queryKeys.chats.all });
       setDraft('');
     },
-    onError: () => toast.error('Failed to send message'),
+    onError: (err) => {
+      const apiErr = err as {
+        details?: { response?: { message?: Array<{ exists?: boolean; jid?: string }> } };
+        message?: string;
+      };
+      const detail = apiErr.details?.response?.message?.[0];
+      if (detail?.exists === false) {
+        toast.error(
+          'Recipient is not on WhatsApp',
+          `The number ${detail.jid ?? ''} doesn't have a WhatsApp account.`,
+        );
+      } else {
+        toast.error('Failed to send message', apiErr.message);
+      }
+    },
   });
 
   const updateStatus = useMutation({
@@ -51,6 +67,15 @@ export function ChatPanel({ conversation }: { conversation: Conversation }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.chats.all });
       toast.info(`Conversation marked as ${updateStatus.variables}`);
+    },
+  });
+
+  const toggleBot = useMutation({
+    mutationFn: (next: boolean) => chatService.setBotActive(conversation.id, next),
+    onSuccess: (_, next) => {
+      qc.invalidateQueries({ queryKey: queryKeys.chats.all });
+      qc.invalidateQueries({ queryKey: queryKeys.chats.detail(conversation.id) });
+      toast.info(next ? 'Bot resumed' : 'Bot paused — you have control.');
     },
   });
 
@@ -69,16 +94,15 @@ export function ChatPanel({ conversation }: { conversation: Conversation }) {
           <div className="flex items-center gap-2">
             <p className="truncate text-sm font-semibold tracking-tight">{conversation.contactName}</p>
             <Badge tone={STATUS_TONE[conversation.status]} size="sm" dot>
-              {conversation.status}
+              {conversation.status.toLowerCase()}
             </Badge>
-            {conversation.tags?.map((t) => (
-              <Badge key={t} tone="info" size="sm">
-                {t}
-              </Badge>
-            ))}
+            <Badge tone={conversation.botActive ? 'success' : 'warning'} size="sm" dot>
+              {conversation.botActive ? 'bot active' : 'bot paused'}
+            </Badge>
           </div>
           <p className="truncate text-2xs text-muted-foreground font-mono">
-            {conversation.contactPhone} · started {formatDateTime(conversation.createdAt)}
+            {conversation.contactPhone} · {botName ? `via ${botName} · ` : ''}started{' '}
+            {formatDateTime(conversation.createdAt)}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -87,13 +111,21 @@ export function ChatPanel({ conversation }: { conversation: Conversation }) {
               <Phone />
             </IconButton>
           </Tooltip>
-          <StatusBadge status="online" size="sm" />
-          {conversation.status !== 'closed' ? (
+          <Button
+            size="sm"
+            variant={conversation.botActive ? 'outline' : 'primary'}
+            leftIcon={conversation.botActive ? <BotOff /> : <Bot />}
+            onClick={() => toggleBot.mutate(!conversation.botActive)}
+            loading={toggleBot.isPending}
+          >
+            {conversation.botActive ? 'Stop bot' : 'Resume bot'}
+          </Button>
+          {conversation.status !== 'CLOSED' ? (
             <Button
               size="sm"
               variant="outline"
               leftIcon={<CheckCircle2 />}
-              onClick={() => updateStatus.mutate('closed')}
+              onClick={() => updateStatus.mutate('CLOSED')}
               loading={updateStatus.isPending}
             >
               Close
@@ -103,7 +135,7 @@ export function ChatPanel({ conversation }: { conversation: Conversation }) {
               size="sm"
               variant="outline"
               leftIcon={<XCircle />}
-              onClick={() => updateStatus.mutate('open')}
+              onClick={() => updateStatus.mutate('OPEN')}
               loading={updateStatus.isPending}
             >
               Reopen

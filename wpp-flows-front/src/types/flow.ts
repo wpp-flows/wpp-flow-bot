@@ -1,38 +1,44 @@
-export type FlowStepType = 'message' | 'menu' | 'item-selection' | 'confirmation' | 'payment';
-
-export interface FlowStepOption {
-  id: string;
-  label: string;
-  value: string;
-  nextStepId?: string;
-}
+export type FlowStepType = 'MESSAGE' | 'MENU' | 'CONFIRMATION' | 'PAYMENT';
 
 export interface FlowStep {
   id: string;
+  flowId: string;
   type: FlowStepType;
-  title: string;
   content: string;
-  options?: FlowStepOption[];
+  order: number;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Flow {
   id: string;
+  organizationId: string;
   name: string;
-  description?: string;
-  isDefault: boolean;
-  steps: FlowStep[];
-  updatedAt: string;
+  isActive: boolean;
+  version: number;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface FlowWithSteps extends Flow {
+  steps: FlowStep[];
+}
+
+export interface FlowStepInput {
+  type: FlowStepType;
+  content: string;
+  order?: number;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface CreateFlowPayload {
   name: string;
-  description?: string;
+  steps: FlowStepInput[];
+  activate?: boolean;
 }
 
-export interface UpdateFlowPayload {
-  id: string;
-  name?: string;
-  description?: string;
-  steps?: FlowStep[];
+export interface NewFlowVersionPayload {
+  steps?: FlowStepInput[];
+  activate?: boolean;
 }

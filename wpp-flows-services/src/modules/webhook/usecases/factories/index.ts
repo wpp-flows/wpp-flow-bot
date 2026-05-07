@@ -1,0 +1,15 @@
+import { botRepo } from "@/modules/bot/usecases/factories";
+import { conversationRepo, messageRepo } from "@/modules/chat/usecases/factories";
+import { flowRepo } from "@/modules/flow/usecases/factories";
+import { FlowRunner } from "../flow-runner";
+import { HandleEvolutionEventUseCase } from "../handle-evolution-event";
+
+const flowRunner = new FlowRunner(botRepo, flowRepo, conversationRepo, messageRepo);
+
+export const makeHandleEvolutionEvent = () =>
+    new HandleEvolutionEventUseCase(
+        botRepo,
+        conversationRepo,
+        messageRepo,
+        flowRunner
+    );

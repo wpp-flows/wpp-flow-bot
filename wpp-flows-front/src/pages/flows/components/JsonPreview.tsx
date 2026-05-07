@@ -2,20 +2,23 @@ import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { toast } from '@/stores/uiStore';
-import type { Flow } from '@/types';
+import type { FlowWithSteps } from '@/types';
 
-export function JsonPreview({ flow }: { flow: Flow }) {
+export function JsonPreview({ flow }: Readonly<{ flow: FlowWithSteps }>) {
   const [copied, setCopied] = useState(false);
 
   const json = JSON.stringify(
     {
       id: flow.id,
       name: flow.name,
+      version: flow.version,
+      isActive: flow.isActive,
       steps: flow.steps.map((s) => ({
         id: s.id,
         type: s.type,
+        order: s.order,
         content: s.content,
-        ...(s.options ? { options: s.options.map((o) => ({ label: o.label, value: o.value })) } : {}),
+        ...(s.metadata ? { metadata: s.metadata } : {}),
       })),
     },
     null,

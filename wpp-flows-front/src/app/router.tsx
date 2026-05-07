@@ -3,9 +3,20 @@ import { lazy, Suspense } from 'react';
 import { ROUTES } from '@/constants/app';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { RedirectIfAuthenticated, RequireAuth } from '@/components/layout/RouteGuards';
+import {
+  RedirectIfAuthenticated,
+  RedirectIfHasOrganization,
+  RequireAuth,
+  RequireOrganization,
+} from '@/components/layout/RouteGuards';
 
 const LoginPage = lazy(() => import('@/pages/login/LoginPage').then((m) => ({ default: m.LoginPage })));
+const SignUpPage = lazy(() =>
+  import('@/pages/sign-up/SignUpPage').then((m) => ({ default: m.SignUpPage })),
+);
+const OnboardingPage = lazy(() =>
+  import('@/pages/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })),
+);
 const DashboardPage = lazy(() =>
   import('@/pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 );
@@ -34,17 +45,26 @@ export function AppRouter() {
         <Route element={<RedirectIfAuthenticated />}>
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.login} element={<LoginPage />} />
+            <Route path={ROUTES.signUp} element={<SignUpPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<RedirectIfHasOrganization />}>
+          <Route element={<AuthLayout />}>
+            <Route path={ROUTES.onboarding} element={<OnboardingPage />} />
           </Route>
         </Route>
 
         <Route element={<RequireAuth />}>
-          <Route element={<AppShell />}>
-            <Route path={ROUTES.dashboard} element={<DashboardPage />} />
-            <Route path={ROUTES.bots} element={<BotsPage />} />
-            <Route path={ROUTES.menu} element={<MenuPage />} />
-            <Route path={ROUTES.flows} element={<FlowsPage />} />
-            <Route path={ROUTES.conversations} element={<ConversationsPage />} />
-            <Route path={ROUTES.settings} element={<SettingsPage />} />
+          <Route element={<RequireOrganization />}>
+            <Route element={<AppShell />}>
+              <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+              <Route path={ROUTES.bots} element={<BotsPage />} />
+              <Route path={ROUTES.menu} element={<MenuPage />} />
+              <Route path={ROUTES.flows} element={<FlowsPage />} />
+              <Route path={ROUTES.conversations} element={<ConversationsPage />} />
+              <Route path={ROUTES.settings} element={<SettingsPage />} />
+            </Route>
           </Route>
         </Route>
 

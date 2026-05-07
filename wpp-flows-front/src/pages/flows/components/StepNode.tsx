@@ -5,8 +5,14 @@ import { Select } from '@/components/ui/Select';
 import { IconButton } from '@/components/ui/IconButton';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import type { FlowStep, FlowStepOption, FlowStepType } from '@/types';
+import type { FlowStep, FlowStepType } from '@/types';
 import { cn, generateId } from '@/lib/utils';
+
+interface StepOption {
+  id: string;
+  label: string;
+  value: string;
+}
 
 interface StepNodeProps {
   step: FlowStep;
@@ -22,32 +28,37 @@ interface StepNodeProps {
 }
 
 const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone']; description: string }> = {
-  message: {
+  MESSAGE: {
     label: 'Message',
     tone: 'info',
     description: 'Sends a plain text message to the customer.',
   },
-  menu: {
+  MENU: {
     label: 'Menu',
     tone: 'primary',
     description: 'Shows a numbered list of options the customer can pick from.',
   },
-  'item-selection': {
-    label: 'Item selection',
-    tone: 'warning',
-    description: 'Lets the customer pick a dish from the configured menu.',
-  },
-  confirmation: {
+  CONFIRMATION: {
     label: 'Confirmation',
     tone: 'success',
-    description: 'Asks the customer to confirm the order before submitting.',
+    description: 'Asks the customer to confirm before continuing.',
   },
-  payment: {
+  PAYMENT: {
     label: 'Payment',
     tone: 'destructive',
-    description: 'Sends payment instructions or a payment link.',
+    description: 'Sends payment instructions or a payment link (set in metadata.paymentLink).',
   },
 };
+
+const getOptions = (step: FlowStep): StepOption[] => {
+  const opts = (step.metadata as { options?: unknown } | null)?.options;
+  return Array.isArray(opts) ? (opts as StepOption[]) : [];
+};
+
+const setOptions = (step: FlowStep, options: StepOption[]): FlowStep => ({
+  ...step,
+  metadata: { ...(step.metadata ?? {}), options },
+});
 
 export function StepNode({
   step,
@@ -60,26 +71,27 @@ export function StepNode({
   isDragging,
   isOver,
   dragHandleProps,
-}: StepNodeProps) {
+}: Readonly<StepNodeProps>) {
   const meta = TYPE_META[step.type];
-  const supportsOptions = step.type === 'menu' || step.type === 'confirmation';
+  const supportsOptions = step.type === 'MENU';
+  const options = getOptions(step);
+  const headerLabel = `Step ${String(index + 1).padStart(2, '0')}`;
 
-  const updateOption = (id: string, patch: Partial<FlowStepOption>) => {
-    const options = (step.options ?? []).map((o) => (o.id === id ? { ...o, ...patch } : o));
-    onChange({ ...step, options });
+  const updateOption = (id: string, patch: Partial<StepOption>) => {
+    onChange(setOptions(step, options.map((o) => (o.id === id ? { ...o, ...patch } : o))));
   };
 
   const addOption = () => {
-    const opt = {
+    const opt: StepOption = {
       id: generateId('opt'),
-      label: `Option ${(step.options?.length ?? 0) + 1}`,
-      value: `option_${(step.options?.length ?? 0) + 1}`,
+      label: `Option ${options.length + 1}`,
+      value: `option_${options.length + 1}`,
     };
-    onChange({ ...step, options: [...(step.options ?? []), opt] });
+    onChange(setOptions(step, [...options, opt]));
   };
 
   const removeOption = (id: string) => {
-    onChange({ ...step, options: (step.options ?? []).filter((o) => o.id !== id) });
+    onChange(setOptions(step, options.filter((o) => o.id !== id)));
   };
 
   return (
@@ -105,7 +117,7 @@ export function StepNode({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold tracking-tight">{step.title}</p>
+            <p className="truncate text-sm font-semibold tracking-tight">{headerLabel}</p>
             <Badge size="sm" tone={meta.tone}>
               {meta.label}
             </Badge>
@@ -131,38 +143,23 @@ export function StepNode({
 
       {expanded ? (
         <div className="space-y-3 border-t border-border px-4 py-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="space-y-1.5">
-              <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Step title
-              </span>
-              <Input value={step.title} onChange={(e) => onChange({ ...step, title: e.target.value })} />
-            </label>
-            <label className="space-y-1.5">
-              <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Step type
-              </span>
-              <Select
-                value={step.type}
-                onChange={(e) => {
-                  const nextType = e.target.value as FlowStepType;
-                  const next: FlowStep = { ...step, type: nextType };
-                  if (nextType !== 'menu' && nextType !== 'confirmation') {
-                    delete next.options;
-                  } else if (!step.options) {
-                    next.options = [];
-                  }
-                  onChange(next);
-                }}
-              >
-                <option value="message">Message</option>
-                <option value="menu">Menu</option>
-                <option value="item-selection">Item selection</option>
-                <option value="confirmation">Confirmation</option>
-                <option value="payment">Payment</option>
-              </Select>
-            </label>
-          </div>
+          <label className="block space-y-1.5">
+            <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Step type
+            </span>
+            <Select
+              value={step.type}
+              onChange={(e) => {
+                const nextType = e.target.value as FlowStepType;
+                onChange({ ...step, type: nextType });
+              }}
+            >
+              <option value="MESSAGE">Message</option>
+              <option value="MENU">Menu</option>
+              <option value="CONFIRMATION">Confirmation</option>
+              <option value="PAYMENT">Payment</option>
+            </Select>
+          </label>
 
           <p className="text-2xs text-muted-foreground">{meta.description}</p>
 
@@ -182,17 +179,17 @@ export function StepNode({
             <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/20 p-3">
               <div className="flex items-center justify-between">
                 <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Options
+                  Options (stored in metadata.options)
                 </p>
                 <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={addOption}>
                   Add option
                 </Button>
               </div>
-              {(step.options ?? []).length === 0 ? (
+              {options.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No options yet — add the choices users can reply with.</p>
               ) : (
                 <div className="space-y-2">
-                  {(step.options ?? []).map((opt) => (
+                  {options.map((opt) => (
                     <div key={opt.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
                       <Input
                         placeholder="Label (e.g. Pizzas)"
