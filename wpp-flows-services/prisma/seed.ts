@@ -195,76 +195,6 @@ async function seedFlow(organizationId: string) {
     return flow;
 }
 
-async function seedBot(organizationId: string, flowId: string) {
-    const existing = await prisma.bot.findUnique({
-        where: { evolutionInstanceName: DEMO.bot.evolutionInstanceName },
-    });
-    if (existing) {
-        console.log('  · bot already seeded — skipping');
-        return existing;
-    }
-
-    const bot = await prisma.bot.create({
-        data: {
-            organizationId,
-            name: DEMO.bot.name,
-            evolutionInstanceName: DEMO.bot.evolutionInstanceName,
-            phoneNumber: DEMO.bot.phoneNumber,
-            status: 'OFFLINE',
-            flowId,
-        },
-    });
-    console.log(`  · bot "${bot.name}" (status=OFFLINE, no Evolution instance)`);
-    return bot;
-}
-
-async function seedConversations(organizationId: string, botId: string) {
-    const existing = await prisma.conversation.count({ where: { organizationId } });
-    if (existing > 0) {
-        console.log('  · conversations already seeded — skipping');
-        return;
-    }
-
-    const contacts = [
-        { name: 'Lucia Rinaldi', phone: '5511999990001' },
-        { name: 'Thomas Becker', phone: '5511999990002' },
-        { name: 'Kenji Watanabe', phone: '5511999990003' },
-    ];
-
-    for (const c of contacts) {
-        const conv = await prisma.conversation.create({
-            data: {
-                organizationId,
-                botId,
-                remoteJid: `${c.phone}@s.whatsapp.net`,
-                contactName: c.name,
-                contactPhone: c.phone,
-                status: 'OPEN',
-                botActive: true,
-                lastMessagePreview: 'Hi there!',
-            },
-        });
-
-        await prisma.message.createMany({
-            data: [
-                {
-                    conversationId: conv.id,
-                    author: 'USER',
-                    content: 'Hi there!',
-                    status: 'DELIVERED',
-                },
-                {
-                    conversationId: conv.id,
-                    author: 'BOT',
-                    content: 'Ciao! 👋 Welcome to Trattoria Bellini.',
-                    status: 'READ',
-                },
-            ],
-        });
-    }
-    console.log(`  · ${contacts.length} conversations with sample messages`);
-}
-
 async function main() {
     console.log('🌱 Seeding…');
 
@@ -282,11 +212,6 @@ async function main() {
     console.log('• flow');
     const flow = await seedFlow(org.id);
 
-    console.log('• bot');
-    const bot = await seedBot(org.id, flow.id);
-
-    console.log('• conversations');
-    await seedConversations(org.id, bot.id);
 
     console.log('\n✅ Done. Login with:');
     console.log(`   email:    ${DEMO.user.email}`);
