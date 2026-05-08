@@ -1,5 +1,11 @@
 export type FlowStepType = 'MESSAGE' | 'MENU' | 'CONFIRMATION' | 'PAYMENT';
 
+export interface FlowStepOption {
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface FlowStep {
   id: string;
   flowId: string;

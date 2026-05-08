@@ -11,18 +11,42 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { flowService } from '@/services/flowService';
+import { menuService } from '@/services/menuService';
 import { queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { generateId } from '@/lib/utils';
-import type { Flow, FlowStep, FlowStepInput } from '@/types';
+import type { Flow, FlowStep, FlowStepInput, FlowStepOption, MenuCategory } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
 
 type ViewMode = 'editor' | 'json';
 
+function slugFromCategoryName(name: string): string {
+  const slug = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+  return slug || 'option';
+}
+
+function menuOptionsFromCategories(categories: MenuCategory[]): FlowStepOption[] {
+  return categories.map((category) => ({
+    id: category.id,
+    label: category.name,
+    value: slugFromCategoryName(category.name),
+  }));
+}
+
 export function FlowsPage() {
   const qc = useQueryClient();
   const flows = useQuery({ queryKey: queryKeys.flows.all, queryFn: flowService.list });
+  const menuCategories = useQuery({
+    queryKey: queryKeys.menu.categories,
+    queryFn: menuService.listCategories,
+  });
 
   const [activeFlowId, setActiveFlowId] = useState<string | null>(null);
   const [steps, setSteps] = useState<FlowStep[]>([]);
@@ -53,10 +77,30 @@ export function FlowsPage() {
     if (activeFlowDetail.data) setSteps(activeFlowDetail.data.steps);
   }, [activeFlowDetail.data]);
 
+  const menuCategoryOptions = useMemo(
+    () => menuOptionsFromCategories(menuCategories.data ?? []),
+    [menuCategories.data],
+  );
+
+  const stepsForOutput = useMemo(
+    () =>
+      steps.map((step) => {
+        if (step.type !== 'MENU' || menuCategoryOptions.length === 0) return step;
+        return {
+          ...step,
+          metadata: {
+            ...(step.metadata ?? {}),
+            options: menuCategoryOptions,
+          },
+        };
+      }),
+    [steps, menuCategoryOptions],
+  );
+
   const isDirty = useMemo(() => {
     if (!activeFlowDetail.data) return false;
-    return JSON.stringify(steps) !== JSON.stringify(activeFlowDetail.data.steps);
-  }, [steps, activeFlowDetail.data]);
+    return JSON.stringify(stepsForOutput) !== JSON.stringify(activeFlowDetail.data.steps);
+  }, [stepsForOutput, activeFlowDetail.data]);
 
   const stepsAsInput = (list: FlowStep[]): FlowStepInput[] =>
     list.map((s, i) => ({
@@ -67,7 +111,7 @@ export function FlowsPage() {
     }));
 
   const save = useMutation({
-    mutationFn: () => flowService.saveSteps(activeFlowDetail.data!.id, stepsAsInput(steps)),
+    mutationFn: () => flowService.saveSteps(activeFlowDetail.data!.id, stepsAsInput(stepsForOutput)),
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
@@ -79,7 +123,7 @@ export function FlowsPage() {
   const newVersion = useMutation({
     mutationFn: () =>
       flowService.newVersion(activeFlowDetail.data!.id, {
-        steps: stepsAsInput(steps),
+        steps: stepsAsInput(stepsForOutput),
         activate: false,
       }),
     onSuccess: (created) => {
@@ -175,7 +219,7 @@ export function FlowsPage() {
   };
 
   const flowForPreview = activeFlowDetail.data
-    ? { ...activeFlowDetail.data, steps }
+    ? { ...activeFlowDetail.data, steps: stepsForOutput }
     : null;
 
   return (
@@ -320,6 +364,8 @@ export function FlowsPage() {
                       step={step}
                       index={idx}
                       total={steps.length}
+                      menuCategoryOptions={menuCategoryOptions}
+                      menuCategoriesLoading={menuCategories.isLoading}
                       expanded={!!expanded[step.id]}
                       onToggle={() => toggleExpanded(step.id)}
                       onChange={(next) => updateStep(idx, next)}
