@@ -7,7 +7,6 @@ import { authRoutes } from "./modules/auth/http/routes";
 import { botRoutes } from "./modules/bot/http/routes";
 import { chatRoutes } from "./modules/chat/http/routes";
 import { flowRoutes } from "./modules/flow/http/routes";
-import { flowStepRoutes } from "./modules/flow-step/http/routes";
 import { menuRoutes } from "./modules/menu/http/routes";
 import { organizationRoutes } from "./modules/organization/http/routes";
 import { webhookRoutes } from "./modules/webhook/http/routes";
@@ -35,7 +34,6 @@ registerRoutes(app, [
   ...botRoutes,
   ...menuRoutes,
   ...flowRoutes,
-  ...flowStepRoutes,
   ...chatRoutes,
   ...webhookRoutes,
 ]);
