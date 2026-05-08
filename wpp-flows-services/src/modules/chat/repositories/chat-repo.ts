@@ -2,6 +2,21 @@ export type ConversationStatus = "OPEN" | "CLOSED" | "PENDING";
 export type MessageAuthor = "BOT" | "USER" | "AGENT" | "SYSTEM";
 export type MessageStatus = "SENT" | "DELIVERED" | "READ" | "FAILED";
 
+export type FlowPhase = "CATEGORY" | "PRODUCT" | "CONFIRMATION" | "DONE";
+
+export interface FlowCartItem {
+    itemId: string;
+    name: string;
+    price: string;
+    qty: number;
+}
+
+export interface FlowState {
+    phase: FlowPhase;
+    selectedCategoryId?: string | null;
+    cart: FlowCartItem[];
+}
+
 export interface Conversation {
     id: string;
     organizationId: string;
@@ -16,6 +31,7 @@ export interface Conversation {
     lastMessageAt: Date;
     botActive: boolean;
     currentStepId: string | null;
+    flowState: FlowState | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -70,6 +86,7 @@ export interface ConversationRepository {
             lastMessageAt: Date;
             botActive: boolean;
             currentStepId: string | null;
+            flowState: FlowState | null;
             contactName: string;
             contactAvatar: string | null;
         }>

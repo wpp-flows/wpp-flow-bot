@@ -32,12 +32,14 @@ const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone'];
   MENU: {
     label: 'Menu',
     tone: 'primary',
-    description: 'Mostra uma lista numerada de opções para o cliente escolher.',
+    description:
+      'Enviado como lista interativa do WhatsApp. O bot mostra as categorias do menu; ao escolher uma, exibe os itens dela. Voltar entre categoria e itens é automático.',
   },
   CONFIRMATION: {
     label: 'Confirmação',
     tone: 'success',
-    description: 'Pede uma confirmação do cliente antes de continuar.',
+    description:
+      'Enviado como botões interativos: Confirmar, Adicionar mais e Voltar. O carrinho do cliente é resumido logo acima dos botões.',
   },
   PAYMENT: {
     label: 'Pagamento',
@@ -199,7 +201,7 @@ export function StepNode({
               </div>
               {usesMenuCategories ? (
                 <p className="text-xs text-muted-foreground">
-                  As opções são sincronizadas com as categorias cadastradas no menu e salvas em metadata.options.
+                  As opções são sincronizadas com o menu e as mesmas são exibidas na lista interativa enviada ao cliente. Os itens de cada categoria são adicionados automaticamente em uma segunda lista quando o clienteselect a categoria — não é preciso configurar nada aqui.
                 </p>
               ) : null}
               {menuCategoriesLoading && !usesMenuCategories ? (

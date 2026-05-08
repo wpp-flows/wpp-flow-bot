@@ -222,6 +222,7 @@ model Conversation {
   lastMessageAt   DateTime @default(now())
   botActive       Boolean  @default(true)
   currentStepId   String?
+  flowState       Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

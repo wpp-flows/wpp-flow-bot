@@ -49,7 +49,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
         aria-hidden
-        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-foreground/40"
         onClick={closeOnOverlay ? onClose : undefined}
       />
       <div

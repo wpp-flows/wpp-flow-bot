@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -10,7 +11,9 @@ export function AppShell() {
         <Topbar />
         <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 scrollbar-thin">
           <div className="mx-auto w-full max-w-[1440px]">
-            <Outlet />
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

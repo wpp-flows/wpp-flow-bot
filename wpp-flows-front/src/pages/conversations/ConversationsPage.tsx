@@ -129,8 +129,10 @@ export function ConversationsPage() {
         actions={
           <Button
             variant="outline"
-            leftIcon={<RefreshCw />}
-            loading={manualRefreshPending}
+            leftIcon={
+              <RefreshCw className={manualRefreshPending ? "animate-spin" : undefined} />
+            }
+            disabled={manualRefreshPending}
             onClick={() => {
               setManualRefreshPending(true);
               void invalidateQueriesByFilters(queryClient, [
