@@ -9,7 +9,11 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { chatService } from "@/services/chatService";
-import { invalidateChatConversationLists, queryKeys } from "@/lib/queryClient";
+import {
+  isChatConversationListQuery,
+  invalidateQueriesByFilters,
+  queryKeys,
+} from "@/lib/queryClient";
 import { toast } from "@/stores/uiStore";
 import { formatDateTime } from "@/lib/utils";
 import type { Conversation } from "@/types";
@@ -54,7 +58,9 @@ export function ChatPanel({
       chatService.sendMessage(conversation.id, content),
     onSuccess: () => {
       refetch();
-      void invalidateChatConversationLists(qc);
+      void invalidateQueriesByFilters(qc, [
+        { predicate: isChatConversationListQuery },
+      ]);
       setDraft("");
     },
     onError: (err) => {
@@ -80,7 +86,9 @@ export function ChatPanel({
     mutationFn: (next: Conversation["status"]) =>
       chatService.updateStatus(conversation.id, next),
     onSuccess: () => {
-      void invalidateChatConversationLists(qc);
+      void invalidateQueriesByFilters(qc, [
+        { predicate: isChatConversationListQuery },
+      ]);
       toast.info(`Conversation marked as ${updateStatus.variables}`);
     },
   });
@@ -89,10 +97,12 @@ export function ChatPanel({
     mutationFn: (next: boolean) =>
       chatService.setBotActive(conversation.id, next),
     onSuccess: (_, next) => {
-      void invalidateChatConversationLists(qc);
-      qc.invalidateQueries({
-        queryKey: queryKeys.chats.detail(conversation.id),
-      });
+      void invalidateQueriesByFilters(qc, [
+        { predicate: isChatConversationListQuery },
+      ]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.chats.detail(conversation.id) },
+      ]);
       toast.info(next ? "Bot resumed" : "Bot paused — you have control.");
     },
   });

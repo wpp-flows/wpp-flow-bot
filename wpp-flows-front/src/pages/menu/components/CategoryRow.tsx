@@ -6,7 +6,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { menuService } from '@/services/menuService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { formatCurrency, cn } from '@/lib/utils';
 import type { MenuCategory, MenuItem } from '@/types';
@@ -38,8 +38,10 @@ export function CategoryRow({
   const removeCategory = useMutation({
     mutationFn: () => menuService.removeCategory(category.id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.categories });
-      qc.invalidateQueries({ queryKey: queryKeys.menu.items });
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.menu.categories },
+        { queryKey: queryKeys.menu.items },
+      ]);
       toast.success('Category deleted');
       setConfirmDelete(false);
     },
@@ -48,7 +50,7 @@ export function CategoryRow({
   const removeItem = useMutation({
     mutationFn: (id: string) => menuService.removeItem(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.items });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
       toast.success('Item deleted');
     },
   });

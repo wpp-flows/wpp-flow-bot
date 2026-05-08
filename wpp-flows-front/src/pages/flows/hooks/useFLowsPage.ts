@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { flowService } from '@/services/flowService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { Flow, FlowStep, FlowStepInput } from '@/types';
 
@@ -32,7 +32,7 @@ export function useFLowsPage({
   const save = useMutation({
     mutationFn: () => flowService.saveSteps(activeFlowId!, stepsAsInput(steps)),
     onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);
       qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
       toast.success('Flow salvo', `${updated.name} v${updated.version} atualizado.`);
     },
@@ -46,7 +46,7 @@ export function useFLowsPage({
         activate: false,
       }),
     onSuccess: (created) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);
       setActiveFlowId(created.id);
       toast.success('Nova versão criada', `${created.name} v${created.version}`);
     },
@@ -55,7 +55,7 @@ export function useFLowsPage({
   const activate = useMutation({
     mutationFn: () => flowService.activate(activeFlowId!),
     onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);
       qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
       toast.success('Flow ativado', `${updated.name} v${updated.version} está em produção.`);
     },
@@ -68,7 +68,7 @@ export function useFLowsPage({
         steps: [{ type: 'MESSAGE', order: 0, content: 'Olá! Bem-vindo ao nosso restaurante 👋' }],
       }),
     onSuccess: (flow) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);
       setActiveFlowId(flow.id);
       toast.success('Flow criado', `${flow.name} pronto para editar.`);
     },
@@ -80,7 +80,7 @@ export function useFLowsPage({
     onSuccess: async (_, deletedId) => {
       setConfirmDeleteOpen(false);
       qc.removeQueries({ queryKey: queryKeys.flows.detail(deletedId) });
-      await qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      await invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);
       const list = qc.getQueryData<Flow[]>(queryKeys.flows.all);
       const nextId = list?.[0]?.id ?? null;
       setActiveFlowId(nextId);

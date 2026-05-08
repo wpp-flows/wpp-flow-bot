@@ -1,4 +1,8 @@
-import { QueryClient, type Query } from '@tanstack/react-query';
+import {
+  QueryClient,
+  type InvalidateQueryFilters,
+  type Query,
+} from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +51,9 @@ export function isChatConversationListQuery(query: Query): boolean {
   return true;
 }
 
-export function invalidateChatConversationLists(client: QueryClient) {
-  return client.invalidateQueries({ predicate: isChatConversationListQuery });
+export function invalidateQueriesByFilters(
+  client: QueryClient,
+  filters: ReadonlyArray<InvalidateQueryFilters> = [{}],
+) {
+  return Promise.all(filters.map((filter) => client.invalidateQueries(filter)));
 }

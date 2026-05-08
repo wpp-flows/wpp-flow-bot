@@ -9,7 +9,11 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { botService } from "@/services/botService";
 import { chatService } from "@/services/chatService";
-import { invalidateChatConversationLists, queryKeys } from "@/lib/queryClient";
+import {
+  invalidateQueriesByFilters,
+  isChatConversationListQuery,
+  queryKeys,
+} from "@/lib/queryClient";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { Conversation, ConversationStatus } from "@/types";
 import { ConversationList } from "./components/ConversationList";
@@ -61,7 +65,9 @@ export function ConversationsPage() {
     if (selectedId === null) return;
     if (!messagesForSelection.isSuccess || messagesForSelection.isFetching)
       return;
-    void invalidateChatConversationLists(queryClient);
+    void invalidateQueriesByFilters(queryClient, [
+      { predicate: isChatConversationListQuery },
+    ]);
   }, [
     selectedId,
     messagesForSelection.isSuccess,
@@ -104,7 +110,11 @@ export function ConversationsPage() {
       );
       void chatService
         .markConversationRead(id)
-        .then(() => invalidateChatConversationLists(queryClient));
+        .then(() =>
+          invalidateQueriesByFilters(queryClient, [
+            { predicate: isChatConversationListQuery },
+          ]),
+        );
     },
     [queryClient],
   );
@@ -123,9 +133,9 @@ export function ConversationsPage() {
             loading={manualRefreshPending}
             onClick={() => {
               setManualRefreshPending(true);
-              void invalidateChatConversationLists(queryClient).finally(() =>
-                setManualRefreshPending(false),
-              );
+              void invalidateQueriesByFilters(queryClient, [
+                { predicate: isChatConversationListQuery },
+              ]).finally(() => setManualRefreshPending(false));
             }}
           >
             Atualizar

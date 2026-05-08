@@ -7,7 +7,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { botService } from '@/services/botService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { formatRelativeTime, cn } from '@/lib/utils';
 import type { BotInstance } from '@/types';
@@ -17,7 +17,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const refresh = () => qc.invalidateQueries({ queryKey: queryKeys.bots.all });
+  const refresh = () => invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
 
   const connect = useMutation({
     mutationFn: () => botService.connect(bot.id),

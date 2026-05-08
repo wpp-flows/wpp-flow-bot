@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import type { LoginCredentials, SignUpCredentials } from '@/types';
 
 export function useAuth() {
@@ -22,7 +22,7 @@ export function useAuth() {
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: async () => {
       await bootstrap();
-      await queryClient.invalidateQueries();
+      await invalidateQueriesByFilters(queryClient);
     },
   });
 
@@ -30,7 +30,7 @@ export function useAuth() {
     mutationFn: (credentials: SignUpCredentials) => authService.signUp(credentials),
     onSuccess: async () => {
       await bootstrap();
-      await queryClient.invalidateQueries();
+      await invalidateQueriesByFilters(queryClient);
     },
   });
 
