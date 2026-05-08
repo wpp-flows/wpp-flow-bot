@@ -1,5 +1,6 @@
 import {
     evolutionApi,
+    EvolutionApiError,
     type EvolutionButton,
     type EvolutionListSection,
     type EvolutionSendTextResponse,
@@ -64,7 +65,7 @@ export class FlowRunner {
         selectionId?: string | null;
         text?: string | null;
     }): Promise<void> {
-        const { bot, conversation, selectionId } = input;
+        const { bot, conversation, selectionId, text } = input;
         if (!conversation.botActive) return;
 
         const flow = await this.resolveFlow(bot);
@@ -89,12 +90,14 @@ export class FlowRunner {
         }
 
         const state = conversation.flowState ?? initialState();
+        const resolvedSelection =
+            selectionId ?? resolveTypedSelection(text, state.lastOptionMap);
         const transition = await this.applyInput({
             organizationId: bot.organizationId,
             steps: sortedSteps,
             currentStep,
             state,
-            selectionId: selectionId ?? null,
+            selectionId: resolvedSelection,
         });
 
         await this.deliverStep({
@@ -130,29 +133,33 @@ export class FlowRunner {
     }): Promise<{ step: FlowStep; state: FlowState }> {
         const { steps, currentStep, state, selectionId } = input;
 
-        // without an interactive selection we just re-deliver the current step
-        // (the bot keeps nudging the user toward the buttons/list).
+        // Non-interactive steps (MESSAGE, PAYMENT) advance on any inbound — they don't
+        // ship buttons/lists so the user has nothing to "select". Without this the
+        // first MESSAGE step would loop forever.
+        if (currentStep.type !== "MENU" && currentStep.type !== "CONFIRMATION") {
+            return this.applyLinearInput({ steps, currentStep, state, selectionId });
+        }
+
+        // Interactive steps: if the user didn't pick a button/row, just nudge them
+        // by re-delivering the current step.
         if (!selectionId) return { step: currentStep, state };
 
-        switch (currentStep.type) {
-            case "MENU":
-                return this.applyMenuInput({
-                    organizationId: input.organizationId,
-                    steps,
-                    currentStep,
-                    state,
-                    selectionId,
-                });
-            case "CONFIRMATION":
-                return this.applyConfirmationInput({
-                    steps,
-                    currentStep,
-                    state,
-                    selectionId,
-                });
-            default:
-                return this.applyLinearInput({ steps, currentStep, state, selectionId });
+        if (currentStep.type === "MENU") {
+            return this.applyMenuInput({
+                organizationId: input.organizationId,
+                steps,
+                currentStep,
+                state,
+                selectionId,
+            });
         }
+
+        return this.applyConfirmationInput({
+            steps,
+            currentStep,
+            state,
+            selectionId,
+        });
     }
 
     private async applyMenuInput(input: {
@@ -263,7 +270,7 @@ export class FlowRunner {
         steps: FlowStep[];
         currentStep: FlowStep;
         state: FlowState;
-        selectionId: string;
+        selectionId: string | null;
     }): { step: FlowStep; state: FlowState } {
         const { steps, currentStep, state, selectionId } = input;
 
@@ -290,7 +297,7 @@ export class FlowRunner {
         const canGoBack = previousStep(allSteps, step.id) !== null;
 
         try {
-            const { evolutionResp, preview } = await this.send({
+            const { evolutionResp, preview, optionMap } = await this.send({
                 bot,
                 phoneNumber,
                 step,
@@ -308,7 +315,7 @@ export class FlowRunner {
 
             await this.conversationRepo.update(conversation.id, {
                 currentStepId: step.id,
-                flowState: state,
+                flowState: { ...state, lastOptionMap: optionMap },
                 lastMessagePreview: preview.slice(0, 100),
                 lastMessageAt: message.createdAt,
             });
@@ -329,7 +336,7 @@ export class FlowRunner {
         step: FlowStep;
         state: FlowState;
         canGoBack: boolean;
-    }): Promise<{ evolutionResp: EvolutionSendTextResponse; preview: string }> {
+    }): Promise<SendResult> {
         const { bot, phoneNumber, step, state, canGoBack } = input;
 
         if (step.type === "MENU") {
@@ -352,7 +359,7 @@ export class FlowRunner {
             number: phoneNumber,
             text,
         });
-        return { evolutionResp, preview: text };
+        return { evolutionResp, preview: text, optionMap: {} };
     }
 
     private async sendMenuStep(input: {
@@ -361,7 +368,7 @@ export class FlowRunner {
         step: FlowStep;
         state: FlowState;
         canGoBack: boolean;
-    }): Promise<{ evolutionResp: EvolutionSendTextResponse; preview: string }> {
+    }): Promise<SendResult> {
         const { bot, phoneNumber, step, state } = input;
         const organizationId = bot.organizationId;
 
@@ -376,7 +383,7 @@ export class FlowRunner {
             const description = items.length
                 ? "Escolha um item para adicionar ao pedido."
                 : "Esta categoria ainda não tem itens disponíveis.";
-            const evolutionResp = await this.dispatchMenu({
+            const result = await this.dispatchMenu({
                 bot,
                 phoneNumber,
                 title,
@@ -386,8 +393,9 @@ export class FlowRunner {
                 backRow: { rowId: BACK_ID, title: "⬅️ Voltar para categorias" },
             });
             return {
-                evolutionResp,
+                evolutionResp: result.evolutionResp,
                 preview: `${title}: ${items.length} itens`,
+                optionMap: result.optionMap,
             };
         }
 
@@ -398,7 +406,7 @@ export class FlowRunner {
             ? "Escolha uma categoria para começar."
             : "Nenhuma categoria disponível no momento.";
 
-        const evolutionResp = await this.dispatchMenu({
+        const result = await this.dispatchMenu({
             bot,
             phoneNumber,
             title,
@@ -408,8 +416,9 @@ export class FlowRunner {
             backRow: null,
         });
         return {
-            evolutionResp,
+            evolutionResp: result.evolutionResp,
             preview: `${title}: ${categories.length} categorias`,
+            optionMap: result.optionMap,
         };
     }
 
@@ -421,7 +430,7 @@ export class FlowRunner {
         buttonText: string;
         sections: EvolutionListSection[];
         backRow: { rowId: string; title: string } | null;
-    }): Promise<EvolutionSendTextResponse> {
+    }): Promise<{ evolutionResp: EvolutionSendTextResponse; optionMap: Record<string, string> }> {
         const sections =
             input.backRow && input.sections.length > 0
                 ? [
@@ -430,23 +439,46 @@ export class FlowRunner {
                 ]
                 : input.sections;
 
+        const optionMap = buildListOptionMap(sections);
+
         if (sections.length === 0) {
-            // fallback pra caso nao tenha categorias nem itens
-            return evolutionApi.sendText({
+            const text = `${input.title}\n\n${input.description}`;
+            const evolutionResp = await evolutionApi.sendText({
                 instanceName: input.bot.evolutionInstanceName,
                 number: input.phoneNumber,
-                text: `${input.title}\n\n${input.description}`,
+                text,
             });
+            return { evolutionResp, optionMap };
         }
 
-        return evolutionApi.sendList({
-            instanceName: input.bot.evolutionInstanceName,
-            number: input.phoneNumber,
-            title: input.title,
-            description: input.description,
-            buttonText: input.buttonText,
-            sections,
-        });
+        try {
+            const evolutionResp = await evolutionApi.sendList({
+                instanceName: input.bot.evolutionInstanceName,
+                number: input.phoneNumber,
+                title: input.title,
+                description: input.description,
+                buttonText: input.buttonText,
+                sections,
+                footerText: "Toque para escolher uma opção",
+            });
+            return { evolutionResp, optionMap };
+        } catch (err) {
+            if (!(err instanceof EvolutionApiError)) throw err;
+            console.warn(
+                `sendList failed (${err.status}); falling back to text menu.`,
+            );
+            const text = renderListAsText({
+                title: input.title,
+                description: input.description,
+                sections,
+            });
+            const evolutionResp = await evolutionApi.sendText({
+                instanceName: input.bot.evolutionInstanceName,
+                number: input.phoneNumber,
+                text,
+            });
+            return { evolutionResp, optionMap };
+        }
     }
 
     private async sendConfirmationStep(input: {
@@ -454,7 +486,7 @@ export class FlowRunner {
         phoneNumber: string;
         step: FlowStep;
         state: FlowState;
-    }): Promise<{ evolutionResp: EvolutionSendTextResponse; preview: string }> {
+    }): Promise<SendResult> {
         const { bot, phoneNumber, step, state } = input;
         const cartLines = state.cart.length
             ? state.cart
@@ -472,15 +504,37 @@ export class FlowRunner {
             { buttonId: BACK_ID, buttonText: { displayText: "⬅️ Voltar" } },
         ];
 
-        const evolutionResp = await evolutionApi.sendButtons({
-            instanceName: bot.evolutionInstanceName,
-            number: phoneNumber,
-            text,
-            buttons,
-            footerText: "Selecione uma opção para continuar.",
-        });
-        return { evolutionResp, preview: text };
+        const optionMap = buildButtonsOptionMap(buttons);
+
+        try {
+            const evolutionResp = await evolutionApi.sendButtons({
+                instanceName: bot.evolutionInstanceName,
+                number: phoneNumber,
+                text,
+                buttons,
+                footerText: "Selecione uma opção para continuar.",
+            });
+            return { evolutionResp, preview: text, optionMap };
+        } catch (err) {
+            if (!(err instanceof EvolutionApiError)) throw err;
+            console.warn(
+                `sendButtons failed (${err.status}); falling back to text.`,
+            );
+            const fallback = `${text}\n\n${renderButtonsAsText(buttons)}`;
+            const evolutionResp = await evolutionApi.sendText({
+                instanceName: bot.evolutionInstanceName,
+                number: phoneNumber,
+                text: fallback,
+            });
+            return { evolutionResp, preview: text, optionMap };
+        }
     }
+}
+
+interface SendResult {
+    evolutionResp: EvolutionSendTextResponse;
+    preview: string;
+    optionMap: Record<string, string>;
 }
 
 function sortSteps(steps: FlowStep[]): FlowStep[] {
@@ -564,6 +618,87 @@ function buildItemSections(items: MenuItem[]): EvolutionListSection[] {
             })),
         },
     ];
+}
+
+/**
+ * Builds a lookup of user-typed replies → selection ids. The map covers the
+ * 1-based index of each row, the row title (lowercased + trimmed), and the
+ * raw rowId. Used as a fallback when the user types instead of tapping.
+ */
+function buildListOptionMap(
+    sections: EvolutionListSection[]
+): Record<string, string> {
+    const map: Record<string, string> = {};
+    let n = 1;
+    for (const section of sections) {
+        for (const row of section.rows) {
+            map[String(n)] = row.rowId;
+            map[row.title.trim().toLowerCase()] = row.rowId;
+            map[row.rowId.toLowerCase()] = row.rowId;
+            n += 1;
+        }
+    }
+    // Common verbs people actually type in pt-BR.
+    if (Object.values(map).includes(BACK_ID)) {
+        map["voltar"] = BACK_ID;
+    }
+    return map;
+}
+
+function buildButtonsOptionMap(
+    buttons: EvolutionButton[]
+): Record<string, string> {
+    const map: Record<string, string> = {};
+    buttons.forEach((btn, idx) => {
+        map[String(idx + 1)] = btn.buttonId;
+        map[btn.buttonText.displayText.trim().toLowerCase()] = btn.buttonId;
+        // Strip leading emoji + space so "confirmar" matches "✅ Confirmar".
+        const stripped = btn.buttonText.displayText
+            .replace(/^[^\p{L}\p{N}]+/u, "")
+            .trim()
+            .toLowerCase();
+        if (stripped) map[stripped] = btn.buttonId;
+        map[btn.buttonId.toLowerCase()] = btn.buttonId;
+    });
+    return map;
+}
+
+function renderListAsText(input: {
+    title: string;
+    description: string;
+    sections: EvolutionListSection[];
+}): string {
+    const lines: string[] = [];
+    lines.push(input.title);
+    if (input.description) lines.push("", input.description);
+    let n = 1;
+    for (const section of input.sections) {
+        lines.push("", `*${section.title}*`);
+        for (const row of section.rows) {
+            const desc = row.description ? ` — ${row.description}` : "";
+            lines.push(`${n}. ${row.title}${desc}`);
+            n += 1;
+        }
+    }
+    lines.push("", "Responda com o número da opção desejada.");
+    return lines.join("\n");
+}
+
+function renderButtonsAsText(buttons: EvolutionButton[]): string {
+    const items = buttons
+        .map((b, i) => `${i + 1}. ${b.buttonText.displayText}`)
+        .join("\n");
+    return `${items}\n\nResponda com o número ou nome da opção.`;
+}
+
+function resolveTypedSelection(
+    text: string | null | undefined,
+    map: Record<string, string> | undefined
+): string | null {
+    if (!text || !map) return null;
+    const normalized = text.trim().toLowerCase();
+    if (!normalized) return null;
+    return map[normalized] ?? null;
 }
 
 function describeSendError(err: unknown): string {

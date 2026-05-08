@@ -15,6 +15,7 @@ export interface FlowState {
     phase: FlowPhase;
     selectedCategoryId?: string | null;
     cart: FlowCartItem[];
+    lastOptionMap?: Record<string, string>;
 }
 
 export interface Conversation {

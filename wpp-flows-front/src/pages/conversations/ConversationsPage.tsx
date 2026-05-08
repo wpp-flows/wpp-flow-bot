@@ -135,9 +135,15 @@ export function ConversationsPage() {
             disabled={manualRefreshPending}
             onClick={() => {
               setManualRefreshPending(true);
-              void invalidateQueriesByFilters(queryClient, [
+              const filters = [
                 { predicate: isChatConversationListQuery },
-              ]).finally(() => setManualRefreshPending(false));
+                ...(selectedId
+                  ? [{ queryKey: queryKeys.chats.messages(selectedId) }]
+                  : []),
+              ];
+              void invalidateQueriesByFilters(queryClient, filters).finally(() =>
+                setManualRefreshPending(false),
+              );
             }}
           >
             Atualizar
