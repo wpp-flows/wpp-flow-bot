@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Code2, Plus, Save, Trash2, Workflow as WorkflowIcon, Zap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -13,11 +13,11 @@ import { Modal } from '@/components/ui/Modal';
 import { flowService } from '@/services/flowService';
 import { menuService } from '@/services/menuService';
 import { queryKeys } from '@/lib/queryClient';
-import { toast } from '@/stores/uiStore';
 import { generateId } from '@/lib/utils';
-import type { Flow, FlowStep, FlowStepInput, FlowStepOption, MenuCategory } from '@/types';
+import type { FlowStep, FlowStepOption, MenuCategory } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
+import { useFLowsPage } from './hooks/useFLowsPage';
 
 type ViewMode = 'editor' | 'json';
 
@@ -41,7 +41,6 @@ function menuOptionsFromCategories(categories: MenuCategory[]): FlowStepOption[]
 }
 
 export function FlowsPage() {
-  const qc = useQueryClient();
   const flows = useQuery({ queryKey: queryKeys.flows.all, queryFn: flowService.list });
   const menuCategories = useQuery({
     queryKey: queryKeys.menu.categories,
@@ -82,94 +81,17 @@ export function FlowsPage() {
     [menuCategories.data],
   );
 
-  const stepsForOutput = useMemo(
-    () =>
-      steps.map((step) => {
-        if (step.type !== 'MENU' || menuCategoryOptions.length === 0) return step;
-        return {
-          ...step,
-          metadata: {
-            ...(step.metadata ?? {}),
-            options: menuCategoryOptions,
-          },
-        };
-      }),
-    [steps, menuCategoryOptions],
-  );
-
   const isDirty = useMemo(() => {
     if (!activeFlowDetail.data) return false;
-    return JSON.stringify(stepsForOutput) !== JSON.stringify(activeFlowDetail.data.steps);
-  }, [stepsForOutput, activeFlowDetail.data]);
+    return JSON.stringify(steps) !== JSON.stringify(activeFlowDetail.data.steps);
+  }, [steps, activeFlowDetail.data]);
 
-  const stepsAsInput = (list: FlowStep[]): FlowStepInput[] =>
-    list.map((s, i) => ({
-      type: s.type,
-      content: s.content,
-      order: i,
-      metadata: s.metadata ?? null,
-    }));
-
-  const save = useMutation({
-    mutationFn: () => flowService.saveSteps(activeFlowDetail.data!.id, stepsAsInput(stepsForOutput)),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
-      toast.success('Flow salvo', `${updated.name} v${updated.version} atualizado.`);
-    },
-    onError: () => toast.error('Não foi possível salvar', 'Tente novamente.'),
-  });
-
-  const newVersion = useMutation({
-    mutationFn: () =>
-      flowService.newVersion(activeFlowDetail.data!.id, {
-        steps: stepsAsInput(stepsForOutput),
-        activate: false,
-      }),
-    onSuccess: (created) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      setActiveFlowId(created.id);
-      toast.success('Nova versão criada', `${created.name} v${created.version}`);
-    },
-  });
-
-  const activate = useMutation({
-    mutationFn: () => flowService.activate(activeFlowDetail.data!.id),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
-      toast.success('Flow ativado', `${updated.name} v${updated.version} está em produção.`);
-    },
-  });
-
-  const createFlow = useMutation({
-    mutationFn: () =>
-      flowService.create({
-        name: `Novo flow ${(flows.data?.length ?? 0) + 1}`,
-        steps: [
-          { type: 'MESSAGE', order: 0, content: 'Olá! Bem-vindo ao nosso restaurante 👋' },
-        ],
-      }),
-    onSuccess: (flow) => {
-      qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      setActiveFlowId(flow.id);
-      toast.success('Flow criado', `${flow.name} pronto para editar.`);
-    },
-    onError: (err: Error) => toast.error('Não foi possível criar o flow', err.message),
-  });
-
-  const deleteFlow = useMutation({
-    mutationFn: (id: string) => flowService.remove(id),
-    onSuccess: async (_, deletedId) => {
-      setConfirmDeleteOpen(false);
-      qc.removeQueries({ queryKey: queryKeys.flows.detail(deletedId) });
-      await qc.invalidateQueries({ queryKey: queryKeys.flows.all });
-      const list = qc.getQueryData<Flow[]>(queryKeys.flows.all);
-      const nextId = list?.[0]?.id ?? null;
-      setActiveFlowId(nextId);
-      toast.success('Flow excluído', 'O flow foi removido permanentemente.');
-    },
-    onError: (err: Error) => toast.error('Não foi possível excluir o flow', err.message),
+  const { save, newVersion, activate, createFlow, deleteFlow } = useFLowsPage({
+    activeFlowId: activeFlowDetail.data?.id,
+    steps,
+    flowCount: flows.data?.length ?? 0,
+    setActiveFlowId,
+    setConfirmDeleteOpen,
   });
 
   const updateStep = (idx: number, next: FlowStep) =>
@@ -219,7 +141,7 @@ export function FlowsPage() {
   };
 
   const flowForPreview = activeFlowDetail.data
-    ? { ...activeFlowDetail.data, steps: stepsForOutput }
+    ? { ...activeFlowDetail.data, steps }
     : null;
 
   return (

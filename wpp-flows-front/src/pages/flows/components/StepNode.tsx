@@ -56,6 +56,8 @@ const setOptions = (step: FlowStep, options: FlowStepOption[]): FlowStep => ({
   metadata: { ...(step.metadata ?? {}), options },
 });
 
+const hasOptions = (step: FlowStep): boolean => getOptions(step).length > 0;
+
 export function StepNode({
   step,
   index,
@@ -151,6 +153,14 @@ export function StepNode({
               value={step.type}
               onChange={(e) => {
                 const nextType = e.target.value as FlowStepType;
+                if (
+                  nextType === 'MENU' &&
+                  menuCategoryOptions.length > 0 &&
+                  (step.type !== 'MENU' || !hasOptions(step))
+                ) {
+                  onChange(setOptions({ ...step, type: nextType }, menuCategoryOptions));
+                  return;
+                }
                 onChange({ ...step, type: nextType });
               }}
             >
