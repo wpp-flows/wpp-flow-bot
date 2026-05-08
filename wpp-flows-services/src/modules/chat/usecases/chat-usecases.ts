@@ -47,6 +47,9 @@ export class ListMessagesUseCase {
             input.conversationId
         );
         if (!conv) throw new NotFoundError("Conversation");
+        if (conv.unreadCount > 0) {
+            await this.conversationRepo.update(conv.id, { unreadCount: 0 });
+        }
         return this.messageRepo.listByConversation(input.conversationId, {
             limit: input.limit,
         });
@@ -129,5 +132,22 @@ export class UpdateConversationStatusUseCase {
         );
         if (!conv) throw new NotFoundError("Conversation");
         return this.conversationRepo.update(conv.id, { status: input.status });
+    }
+}
+
+/** Marca como lido sem depender do GET /messages (evita corrida ao trocar de conversa rápido). */
+export class MarkConversationReadUseCase {
+    constructor(private readonly conversationRepo: ConversationRepository) {}
+    async execute(input: {
+        organizationId: string;
+        conversationId: string;
+    }): Promise<Conversation> {
+        const conv = await this.conversationRepo.findByIdInOrg(
+            input.organizationId,
+            input.conversationId
+        );
+        if (!conv) throw new NotFoundError("Conversation");
+        if (conv.unreadCount === 0) return conv;
+        return this.conversationRepo.update(conv.id, { unreadCount: 0 });
     }
 }

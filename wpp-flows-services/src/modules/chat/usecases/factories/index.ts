@@ -5,6 +5,7 @@ import {
     GetConversationUseCase,
     ListConversationsUseCase,
     ListMessagesUseCase,
+    MarkConversationReadUseCase,
     SendMessageUseCase,
     SetBotActiveUseCase,
     UpdateConversationStatusUseCase,
@@ -24,5 +25,7 @@ export const makeSendMessage = () =>
 export const makeSetBotActive = () => new SetBotActiveUseCase(conversationRepo);
 export const makeUpdateConversationStatus = () =>
     new UpdateConversationStatusUseCase(conversationRepo);
+export const makeMarkConversationRead = () =>
+    new MarkConversationReadUseCase(conversationRepo);
 
 export { conversationRepo, messageRepo };

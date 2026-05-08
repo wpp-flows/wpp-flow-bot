@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { menuService } from '@/services/menuService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { MenuCategory, MenuItem } from '@/types';
 import { CategoryFormModal } from './components/CategoryFormModal';
@@ -43,7 +43,7 @@ export function MenuPage() {
   const reorder = useMutation({
     mutationFn: (orderedIds: string[]) => menuService.reorderCategories(orderedIds),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.categories });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
       toast.success('Order saved');
     },
   });

@@ -49,4 +49,11 @@ export const chatService = {
       body: { botActive },
     });
   },
+
+  markConversationRead(id: string): Promise<Conversation> {
+    return apiCall<Conversation>({
+      endpoint: `/api/chats/${id}/read`,
+      method: 'PATCH',
+    });
+  },
 };

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { FormField } from '@/components/ui/FormField';
 import { createBotSchema, type CreateBotFormValues } from '@/lib/schemas';
 import { botService } from '@/services/botService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 
 interface Props {
@@ -31,7 +31,7 @@ export function CreateBotModal({ open, onClose }: Props) {
   const create = useMutation({
     mutationFn: (values: CreateBotFormValues) => botService.create(values),
     onSuccess: (bot) => {
-      qc.invalidateQueries({ queryKey: queryKeys.bots.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
       toast.success('Bot created', `${bot.name} is initializing — scan the QR to bring it online.`);
       reset();
       onClose();

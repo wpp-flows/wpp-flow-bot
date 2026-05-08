@@ -5,6 +5,7 @@ import {
     makeGetConversation,
     makeListConversations,
     makeListMessages,
+    makeMarkConversationRead,
     makeSendMessage,
     makeSetBotActive,
     makeUpdateConversationStatus,
@@ -96,6 +97,18 @@ export class ChatController {
             organizationId: request.organizationId,
             conversationId: id,
             status: body.status,
+        });
+        return reply.send(result);
+    }
+
+    @Route("PATCH", "/api/chats/:id/read", {
+        middlewares: [requireOrganization],
+    })
+    async markRead(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const result = await makeMarkConversationRead().execute({
+            organizationId: request.organizationId,
+            conversationId: id,
         });
         return reply.send(result);
     }

@@ -5,6 +5,28 @@ import type {
     FlowWithSteps,
     NewStepInput,
 } from "../repositories/flow-repo";
+import type { CategoryRepository, MenuCategory } from "@/modules/menu/repositories/menu-repo";
+
+function slugFromCategoryName(name: string): string {
+    const s = name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_|_$/g, "");
+    return s || "option";
+}
+
+function menuMetadataFromCategories(categories: MenuCategory[]): Record<string, unknown> {
+    return {
+        options: categories.map((cat) => ({
+            id: cat.id,
+            label: cat.name,
+            value: slugFromCategoryName(cat.name),
+        })),
+    };
+}
 
 export class ListFlowsUseCase {
     constructor(private readonly repo: FlowRepository) {}
@@ -139,7 +161,10 @@ export class ActivateFlowUseCase {
 }
 
 export class ReplaceFlowStepsUseCase {
-    constructor(private readonly repo: FlowRepository) {}
+    constructor(
+        private readonly repo: FlowRepository,
+        private readonly categoryRepo: CategoryRepository
+    ) {}
     async execute(input: {
         organizationId: string;
         id: string;
@@ -147,8 +172,15 @@ export class ReplaceFlowStepsUseCase {
     }): Promise<FlowWithSteps> {
         const flow = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!flow) throw new NotFoundError("Flow");
+        const categories = input.steps.some((step) => step.type === "MENU")
+            ? await this.categoryRepo.listByOrg(input.organizationId)
+            : [];
+        const menuMetadata =
+            categories.length > 0 ? menuMetadataFromCategories(categories) : null;
+
         const normalized = input.steps.map((s, i) => ({
             ...s,
+            ...(s.type === "MENU" && menuMetadata ? { metadata: menuMetadata } : {}),
             order: s.order ?? i,
         }));
         return this.repo.replaceSteps(input.id, normalized);

@@ -18,6 +18,7 @@ export type {
   Flow,
   FlowWithSteps,
   FlowStep,
+  FlowStepOption,
   FlowStepType,
   FlowStepInput,
   CreateFlowPayload,

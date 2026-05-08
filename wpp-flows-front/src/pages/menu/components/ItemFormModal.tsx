@@ -12,7 +12,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Switch } from '@/components/ui/Switch';
 import { menuItemSchema, type MenuItemFormValues } from '@/lib/schemas';
 import { menuService } from '@/services/menuService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { MenuCategory, MenuItem } from '@/types';
 
@@ -73,7 +73,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         available: v.available,
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.items });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
       toast.success('Item added');
       onClose();
     },
@@ -83,7 +83,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
     mutationFn: (v: MenuItemFormValues) =>
       menuService.updateItem({ id: item!.id, ...v, description: v.description ?? '' }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.items });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
       toast.success('Item updated');
       onClose();
     },

@@ -5,19 +5,15 @@ import { Select } from '@/components/ui/Select';
 import { IconButton } from '@/components/ui/IconButton';
 import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import type { FlowStep, FlowStepType } from '@/types';
+import type { FlowStep, FlowStepOption, FlowStepType } from '@/types';
 import { cn, generateId } from '@/lib/utils';
-
-interface StepOption {
-  id: string;
-  label: string;
-  value: string;
-}
 
 interface StepNodeProps {
   step: FlowStep;
   index: number;
   total: number;
+  menuCategoryOptions?: FlowStepOption[];
+  menuCategoriesLoading?: boolean;
   expanded: boolean;
   onToggle: () => void;
   onChange: (next: FlowStep) => void;
@@ -29,41 +25,45 @@ interface StepNodeProps {
 
 const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone']; description: string }> = {
   MESSAGE: {
-    label: 'Message',
+    label: 'Mensagem',
     tone: 'info',
-    description: 'Sends a plain text message to the customer.',
+    description: 'Envia uma mensagem de texto simples para o cliente.',
   },
   MENU: {
     label: 'Menu',
     tone: 'primary',
-    description: 'Shows a numbered list of options the customer can pick from.',
+    description: 'Mostra uma lista numerada de opções para o cliente escolher.',
   },
   CONFIRMATION: {
-    label: 'Confirmation',
+    label: 'Confirmação',
     tone: 'success',
-    description: 'Asks the customer to confirm before continuing.',
+    description: 'Pede uma confirmação do cliente antes de continuar.',
   },
   PAYMENT: {
-    label: 'Payment',
+    label: 'Pagamento',
     tone: 'destructive',
-    description: 'Sends payment instructions or a payment link (set in metadata.paymentLink).',
+    description: 'Envia instruções de pagamento ou um link configurado em metadata.paymentLink.',
   },
 };
 
-const getOptions = (step: FlowStep): StepOption[] => {
+const getOptions = (step: FlowStep): FlowStepOption[] => {
   const opts = (step.metadata as { options?: unknown } | null)?.options;
-  return Array.isArray(opts) ? (opts as StepOption[]) : [];
+  return Array.isArray(opts) ? (opts as FlowStepOption[]) : [];
 };
 
-const setOptions = (step: FlowStep, options: StepOption[]): FlowStep => ({
+const setOptions = (step: FlowStep, options: FlowStepOption[]): FlowStep => ({
   ...step,
   metadata: { ...(step.metadata ?? {}), options },
 });
+
+const hasOptions = (step: FlowStep): boolean => getOptions(step).length > 0;
 
 export function StepNode({
   step,
   index,
   total,
+  menuCategoryOptions = [],
+  menuCategoriesLoading = false,
   expanded,
   onToggle,
   onChange,
@@ -75,16 +75,18 @@ export function StepNode({
   const meta = TYPE_META[step.type];
   const supportsOptions = step.type === 'MENU';
   const options = getOptions(step);
-  const headerLabel = `Step ${String(index + 1).padStart(2, '0')}`;
+  const usesMenuCategories = supportsOptions && menuCategoryOptions.length > 0;
+  const visibleOptions = usesMenuCategories ? menuCategoryOptions : options;
+  const headerLabel = `Passo ${String(index + 1).padStart(2, '0')}`;
 
-  const updateOption = (id: string, patch: Partial<StepOption>) => {
+  const updateOption = (id: string, patch: Partial<FlowStepOption>) => {
     onChange(setOptions(step, options.map((o) => (o.id === id ? { ...o, ...patch } : o))));
   };
 
   const addOption = () => {
-    const opt: StepOption = {
+    const opt: FlowStepOption = {
       id: generateId('opt'),
-      label: `Option ${options.length + 1}`,
+      label: `Opção ${options.length + 1}`,
       value: `option_${options.length + 1}`,
     };
     onChange(setOptions(step, [...options, opt]));
@@ -106,7 +108,7 @@ export function StepNode({
         <button
           {...dragHandleProps}
           className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
-          aria-label="Drag to reorder"
+          aria-label="Arrastar para reordenar"
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -127,14 +129,14 @@ export function StepNode({
           ) : null}
         </div>
 
-        <IconButton size="sm" variant="ghost" onClick={onToggle} aria-label="Toggle">
+        <IconButton size="sm" variant="ghost" onClick={onToggle} aria-label="Expandir ou recolher">
           {expanded ? <ChevronDown /> : <ChevronRight />}
         </IconButton>
         <IconButton
           size="sm"
           variant="ghost"
           onClick={onRemove}
-          aria-label="Delete step"
+          aria-label="Excluir passo"
           disabled={total === 1}
         >
           <Trash2 className={total === 1 ? '' : 'text-destructive'} />
@@ -145,19 +147,27 @@ export function StepNode({
         <div className="space-y-3 border-t border-border px-4 py-4">
           <label className="block space-y-1.5">
             <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Step type
+              Tipo do passo
             </span>
             <Select
               value={step.type}
               onChange={(e) => {
                 const nextType = e.target.value as FlowStepType;
+                if (
+                  nextType === 'MENU' &&
+                  menuCategoryOptions.length > 0 &&
+                  (step.type !== 'MENU' || !hasOptions(step))
+                ) {
+                  onChange(setOptions({ ...step, type: nextType }, menuCategoryOptions));
+                  return;
+                }
                 onChange({ ...step, type: nextType });
               }}
             >
-              <option value="MESSAGE">Message</option>
+              <option value="MESSAGE">Mensagem</option>
               <option value="MENU">Menu</option>
-              <option value="CONFIRMATION">Confirmation</option>
-              <option value="PAYMENT">Payment</option>
+              <option value="CONFIRMATION">Confirmação</option>
+              <option value="PAYMENT">Pagamento</option>
             </Select>
           </label>
 
@@ -165,13 +175,13 @@ export function StepNode({
 
           <label className="block space-y-1.5">
             <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Message content
+              Conteúdo da mensagem
             </span>
             <Textarea
               rows={4}
               value={step.content}
               onChange={(e) => onChange({ ...step, content: e.target.value })}
-              placeholder="Use {{customer_name}}, {{order_summary}}, {{order_total}} as variables."
+              placeholder="Use {{customer_name}}, {{order_summary}}, {{order_total}} como variáveis."
             />
           </label>
 
@@ -179,35 +189,55 @@ export function StepNode({
             <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/20 p-3">
               <div className="flex items-center justify-between">
                 <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Options (stored in metadata.options)
+                  {usesMenuCategories ? 'Categorias do menu' : 'Opções (salvas em metadata.options)'}
                 </p>
-                <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={addOption}>
-                  Add option
-                </Button>
+                {usesMenuCategories ? null : (
+                  <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={addOption}>
+                    Adicionar opção
+                  </Button>
+                )}
               </div>
-              {options.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No options yet — add the choices users can reply with.</p>
+              {usesMenuCategories ? (
+                <p className="text-xs text-muted-foreground">
+                  As opções são sincronizadas com as categorias cadastradas no menu e salvas em metadata.options.
+                </p>
+              ) : null}
+              {menuCategoriesLoading && !usesMenuCategories ? (
+                <p className="text-xs text-muted-foreground">Carregando categorias do menu...</p>
+              ) : null}
+              {visibleOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhuma opção ainda. Adicione as escolhas que os usuários podem responder.</p>
               ) : (
                 <div className="space-y-2">
-                  {options.map((opt) => (
-                    <div key={opt.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  {visibleOptions.map((opt) => (
+                    <div
+                      key={opt.id}
+                      className={cn(
+                        'grid grid-cols-1 gap-2',
+                        usesMenuCategories ? 'sm:grid-cols-2' : 'sm:grid-cols-[1fr_1fr_auto]',
+                      )}
+                    >
                       <Input
-                        placeholder="Label (e.g. Pizzas)"
+                        placeholder="Rótulo (ex: Pizzas)"
                         value={opt.label}
+                        disabled={usesMenuCategories}
                         onChange={(e) => updateOption(opt.id, { label: e.target.value })}
                       />
                       <Input
-                        placeholder="Value (e.g. cat_pizzas)"
+                        placeholder="Valor (ex: cat_pizzas)"
                         value={opt.value}
+                        disabled={usesMenuCategories}
                         onChange={(e) => updateOption(opt.id, { value: e.target.value })}
                       />
-                      <IconButton
-                        variant="ghost"
-                        onClick={() => removeOption(opt.id)}
-                        aria-label="Remove option"
-                      >
-                        <X />
-                      </IconButton>
+                      {usesMenuCategories ? null : (
+                        <IconButton
+                          variant="ghost"
+                          onClick={() => removeOption(opt.id)}
+                          aria-label="Remover opção"
+                        >
+                          <X />
+                        </IconButton>
+                      )}
                     </div>
                   ))}
                 </div>

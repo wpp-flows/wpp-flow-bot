@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { QrPlaceholder } from './QrPlaceholder';
 import type { BotInstance } from '@/types';
 import { botService } from '@/services/botService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { formatRelativeTime } from '@/lib/utils';
 
@@ -16,7 +16,7 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
   const connect = useMutation({
     mutationFn: () => botService.connect(bot.id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.bots.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
       toast.success(`${bot.name} is online`, 'WhatsApp instance is now connected.');
     },
     onError: () => toast.error('Could not connect', 'Try again or check the webhook URL.'),
@@ -25,7 +25,7 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
   const disconnect = useMutation({
     mutationFn: () => botService.disconnect(bot.id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.bots.all });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
       toast.info(`${bot.name} disconnected`);
     },
   });

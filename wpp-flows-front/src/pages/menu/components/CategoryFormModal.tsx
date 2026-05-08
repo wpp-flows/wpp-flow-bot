@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { FormField } from '@/components/ui/FormField';
 import { categorySchema, type CategoryFormValues } from '@/lib/schemas';
 import { menuService } from '@/services/menuService';
-import { queryKeys } from '@/lib/queryClient';
+import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { MenuCategory } from '@/types';
 
@@ -45,7 +45,7 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
   const create = useMutation({
     mutationFn: (v: CategoryFormValues) => menuService.createCategory(v),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.categories });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
       toast.success('Category added');
       onClose();
     },
@@ -55,7 +55,7 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
     mutationFn: (v: CategoryFormValues) =>
       menuService.updateCategory({ id: category!.id, ...v }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.menu.categories });
+      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
       toast.success('Category updated');
       onClose();
     },
