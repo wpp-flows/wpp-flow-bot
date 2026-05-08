@@ -24,22 +24,22 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
     onSuccess: (updated) => {
       refresh();
       if (updated.status === 'ONLINE') {
-        toast.success(`${bot.name} is online`);
+        toast.success(`${bot.name} esta online`);
       } else if (updated.qrCode) {
-        toast.info('Scan the QR code with WhatsApp to finish connecting.');
+        toast.info('Escaneie o QR code com o WhatsApp para concluir a conexao.');
       } else {
-        toast.info('Generating QR code…');
+        toast.info('Gerando QR code...');
       }
     },
     onError: (err) => {
       const apiErr = err as { status?: number; message?: string };
       if (apiErr.status === 503) {
         toast.warning(
-          'No QR code yet',
-          apiErr.message ?? 'Try clicking Connect again in a few seconds.',
+          'Sem QR code ainda',
+          apiErr.message ?? 'Tente clicar em Conectar novamente em alguns segundos.',
         );
       } else {
-        toast.error('Could not connect', apiErr.message);
+        toast.error('Nao foi possivel conectar', apiErr.message);
       }
     },
   });
@@ -48,7 +48,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
     mutationFn: () => botService.disconnect(bot.id),
     onSuccess: () => {
       refresh();
-      toast.info(`${bot.name} disconnected`);
+      toast.info(`${bot.name} desconectado`);
     },
   });
 
@@ -56,7 +56,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
     mutationFn: () => botService.remove(bot.id),
     onSuccess: () => {
       refresh();
-      toast.success('Bot deleted', `${bot.name} was removed.`);
+      toast.success('Bot excluido', `${bot.name} foi removido.`);
       setConfirmDelete(false);
     },
   });
@@ -90,7 +90,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                   variant="ghost"
                   onClick={() => setMenuOpen((v) => !v)}
                   onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
-                  aria-label="Bot actions"
+                  aria-label="Acoes do bot"
                 >
                   <MoreVertical />
                 </IconButton>
@@ -107,7 +107,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
                   >
                     <Power className="h-3.5 w-3.5" />
-                    {isOnline ? 'Disconnect' : 'Connect'}
+                    {isOnline ? 'Desconectar' : 'Conectar'}
                   </button>
                   <button
                     type="button"
@@ -115,7 +115,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Refresh status
+                    Atualizar status
                   </button>
                   <button
                     type="button"
@@ -123,7 +123,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive-soft"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Delete bot
+                    Excluir bot
                   </button>
                 </div>
               </div>
@@ -133,14 +133,14 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
           {bot.qrCode && bot.status !== 'ONLINE' ? (
             <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
               <p className="text-2xs uppercase tracking-wider text-muted-foreground">
-                Scan with WhatsApp
+                Escanear com WhatsApp
               </p>
               {bot.qrCode.startsWith('data:') ? (
-                <img src={bot.qrCode} alt="WhatsApp QR" className="mx-auto mt-2 h-40 w-40" />
+                <img src={bot.qrCode} alt="QR do WhatsApp" className="mx-auto mt-2 h-40 w-40" />
               ) : (
                 <>
                   <p className="mt-2 text-2xs text-muted-foreground">
-                    Pairing code (paste into WhatsApp → Linked devices → Link with phone number)
+                    Codigo de pareamento (cole no WhatsApp 3 Dispositivos conectados 3 Vincular com numero de telefone)
                   </p>
                   <p className="mt-1 break-all font-mono text-xs font-semibold">
                     {bot.qrCode}
@@ -153,14 +153,14 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Phone className="h-3 w-3" />
-              <span className="font-mono">{bot.phoneNumber ?? 'Unassigned'}</span>
+              <span className="font-mono">{bot.phoneNumber ?? 'Nao atribuido'}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Hash className="h-3 w-3" />
               <span>
                 {bot.lastConnectedAt
-                  ? `Last connected ${formatRelativeTime(bot.lastConnectedAt)}`
-                  : 'Never connected'}
+                  ? `Ultima conexao ${formatRelativeTime(bot.lastConnectedAt)}`
+                  : 'Nunca conectado'}
               </span>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                 onClick={() => disconnect.mutate()}
                 loading={disconnect.isPending}
               >
-                Disconnect
+                Desconectar
               </Button>
             ) : (
               <Button
@@ -183,7 +183,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                 onClick={() => connect.mutate()}
                 loading={connect.isPending}
               >
-                Connect
+                Conectar
               </Button>
             )}
           </div>
@@ -193,22 +193,22 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        title="Delete this bot?"
-        description={`${bot.name} will be permanently removed and conversations archived.`}
+        title="Excluir este bot?"
+        description={`${bot.name} sera removido permanentemente e as conversas arquivadas.`}
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button variant="destructive" onClick={() => remove.mutate()} loading={remove.isPending}>
-              Yes, delete
+              Sim, excluir
             </Button>
           </>
         }
       >
         <p className="text-sm text-muted-foreground">
-          This action cannot be undone. The Evolution API instance will also be terminated.
+          Esta acao nao pode ser desfeita. A instancia da Evolution API tambem sera encerrada.
         </p>
       </Modal>
     </>

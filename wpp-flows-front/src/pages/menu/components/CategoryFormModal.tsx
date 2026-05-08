@@ -46,7 +46,7 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
     mutationFn: (v: CategoryFormValues) => menuService.createCategory(v),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
-      toast.success('Category added');
+      toast.success('Categoria adicionada');
       onClose();
     },
   });
@@ -56,7 +56,7 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
       menuService.updateCategory({ id: category!.id, ...v }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
-      toast.success('Category updated');
+      toast.success('Categoria atualizada');
       onClose();
     },
   });
@@ -70,18 +70,18 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
     <Modal
       open={open}
       onClose={onClose}
-      title={editing ? 'Edit category' : 'New category'}
+      title={editing ? 'Editar categoria' : 'Nova categoria'}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             type="submit"
             form="category-form"
             loading={isSubmitting || create.isPending || update.isPending}
           >
-            {editing ? 'Save changes' : 'Create category'}
+            {editing ? 'Salvar alteracoes' : 'Criar categoria'}
           </Button>
         </>
       }
@@ -92,22 +92,22 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
         className="flex flex-col gap-4 py-1"
         noValidate
       >
-        <FormField label="Name" htmlFor="cat-name" error={errors.name?.message} required>
+        <FormField label="Nome" htmlFor="cat-name" error={errors.name?.message} required>
           <Input
             id="cat-name"
-            placeholder="e.g. Pizzas"
+            placeholder="ex: Pizzas"
             invalid={!!errors.name}
             {...register('name')}
           />
         </FormField>
         <FormField
-          label="Description"
+          label="Descricao"
           htmlFor="cat-desc"
           error={errors.description?.message}
         >
           <Textarea
             id="cat-desc"
-            placeholder="Wood-fired classics — short subtitle shown to customers."
+            placeholder="Classicos no forno a lenha - subtitulo curto exibido aos clientes."
             invalid={!!errors.description}
             {...register('description')}
           />

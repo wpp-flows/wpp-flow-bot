@@ -42,7 +42,7 @@ export function CategoryRow({
         { queryKey: queryKeys.menu.categories },
         { queryKey: queryKeys.menu.items },
       ]);
-      toast.success('Category deleted');
+      toast.success('Categoria excluida');
       setConfirmDelete(false);
     },
   });
@@ -51,7 +51,7 @@ export function CategoryRow({
     mutationFn: (id: string) => menuService.removeItem(id),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
-      toast.success('Item deleted');
+      toast.success('Item excluido');
     },
   });
 
@@ -67,7 +67,7 @@ export function CategoryRow({
         <button
           {...dragHandleProps}
           className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
-          aria-label="Drag to reorder"
+          aria-label="Arrastar para reordenar"
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -75,7 +75,7 @@ export function CategoryRow({
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold tracking-tight truncate">{category.name}</h3>
             <Badge tone="neutral" size="sm">
-              {items.length} item{items.length === 1 ? '' : 's'}
+              {items.length} {items.length === 1 ? 'item' : 'itens'}
             </Badge>
           </div>
           {category.description ? (
@@ -84,16 +84,16 @@ export function CategoryRow({
         </div>
         <div className="flex items-center gap-1">
           <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={onAddItem}>
-            Add item
+            Adicionar item
           </Button>
-          <IconButton size="sm" variant="ghost" onClick={onEditCategory} aria-label="Edit category">
+          <IconButton size="sm" variant="ghost" onClick={onEditCategory} aria-label="Editar categoria">
             <Edit3 />
           </IconButton>
           <IconButton
             size="sm"
             variant="ghost"
             onClick={() => setConfirmDelete(true)}
-            aria-label="Delete category"
+            aria-label="Excluir categoria"
           >
             <Trash2 className="text-destructive" />
           </IconButton>
@@ -102,7 +102,7 @@ export function CategoryRow({
 
       {items.length === 0 ? (
         <div className="px-5 py-6 text-center text-xs text-muted-foreground">
-          No items yet — add the first one to make it visible to customers.
+          Nenhum item ainda - adicione o primeiro para ficar visivel aos clientes.
         </div>
       ) : (
         <ul className="divide-y divide-border">
@@ -125,7 +125,7 @@ export function CategoryRow({
                   <p className="truncate text-sm font-medium">{item.name}</p>
                   {!item.available ? (
                     <Badge size="sm" tone="warning">
-                      Hidden
+                      Oculto
                     </Badge>
                   ) : null}
                 </div>
@@ -135,14 +135,14 @@ export function CategoryRow({
                 {formatCurrency(Number(item.price))}
               </span>
               <div className="flex items-center">
-                <IconButton size="sm" variant="ghost" onClick={() => onEditItem(item)} aria-label="Edit item">
+                <IconButton size="sm" variant="ghost" onClick={() => onEditItem(item)} aria-label="Editar item">
                   <Edit3 />
                 </IconButton>
                 <IconButton
                   size="sm"
                   variant="ghost"
                   onClick={() => removeItem.mutate(item.id)}
-                  aria-label="Delete item"
+                  aria-label="Excluir item"
                 >
                   <Trash2 className="text-destructive" />
                 </IconButton>
@@ -155,28 +155,30 @@ export function CategoryRow({
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        title={`Delete ${category.name}?`}
-        description="All items inside this category will also be deleted."
+        title={`Excluir ${category.name}?`}
+        description="Todos os itens desta categoria tambem serao excluidos."
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={() => removeCategory.mutate()}
               loading={removeCategory.isPending}
             >
-              Delete category
+              Excluir categoria
             </Button>
           </>
         }
       >
         <p className="text-sm text-muted-foreground">
           {items.length > 0
-            ? `${items.length} item${items.length === 1 ? '' : 's'} will be permanently removed.`
-            : 'This category has no items, but will still be removed.'}
+            ? items.length === 1
+              ? '1 item sera removido permanentemente.'
+              : `${items.length} itens serao removidos permanentemente.`
+            : 'Esta categoria nao tem itens, mas sera removida.'}
         </p>
       </Modal>
     </div>

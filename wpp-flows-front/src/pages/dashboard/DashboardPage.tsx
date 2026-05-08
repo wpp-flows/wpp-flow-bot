@@ -51,7 +51,7 @@ export function DashboardPage() {
         }
       />
 
-      {/* Stat cards */}
+      {/* Cartoes de estatisticas */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.isLoading || !stats.data ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)
@@ -89,7 +89,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Chart + Status grid */}
+      {/* Grafico + grade de status */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -125,7 +125,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Bottom row: Bots overview + Recent activity */}
+      {/* Linha inferior: resumo de bots + atividade recente */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>

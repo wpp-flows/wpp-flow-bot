@@ -28,6 +28,12 @@ const STATUS_TONE: Record<
   PENDING: "warning",
 };
 
+const STATUS_LABEL: Record<Conversation["status"], string> = {
+  OPEN: "aberta",
+  CLOSED: "fechada",
+  PENDING: "pendente",
+};
+
 export function ChatPanel({
   conversation,
   botName,
@@ -73,11 +79,11 @@ export function ChatPanel({
       const detail = apiErr.details?.response?.message?.[0];
       if (detail?.exists === false) {
         toast.error(
-          "Recipient is not on WhatsApp",
-          `The number ${detail.jid ?? ""} doesn't have a WhatsApp account.`,
+          "Destinatario nao esta no WhatsApp",
+          `O numero ${detail.jid ?? ""} nao tem uma conta no WhatsApp.`,
         );
       } else {
-        toast.error("Failed to send message", apiErr.message);
+        toast.error("Falha ao enviar mensagem", apiErr.message);
       }
     },
   });
@@ -89,7 +95,7 @@ export function ChatPanel({
       void invalidateQueriesByFilters(qc, [
         { predicate: isChatConversationListQuery },
       ]);
-      toast.info(`Conversation marked as ${updateStatus.variables}`);
+      toast.info(`Conversa marcada como ${updateStatus.variables}`);
     },
   });
 
@@ -103,7 +109,7 @@ export function ChatPanel({
       void invalidateQueriesByFilters(qc, [
         { queryKey: queryKeys.chats.detail(conversation.id) },
       ]);
-      toast.info(next ? "Bot resumed" : "Bot paused — you have control.");
+      toast.info(next ? "Bot retomado" : "Bot pausado — voce tem controle.");
     },
   });
 
@@ -124,24 +130,24 @@ export function ChatPanel({
               {conversation.contactName}
             </p>
             <Badge tone={STATUS_TONE[conversation.status]} size="sm" dot>
-              {conversation.status.toLowerCase()}
+              {STATUS_LABEL[conversation.status]}
             </Badge>
             <Badge
               tone={conversation.botActive ? "success" : "warning"}
               size="sm"
               dot
             >
-              {conversation.botActive ? "bot active" : "bot paused"}
+              {conversation.botActive ? "bot ativo" : "bot pausado"}
             </Badge>
           </div>
           <p className="truncate text-2xs text-muted-foreground font-mono">
             {conversation.contactPhone} · {botName ? `via ${botName} · ` : ""}
-            started {formatDateTime(conversation.createdAt)}
+            iniciada {formatDateTime(conversation.createdAt)}
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content="Call contact">
-            <IconButton variant="ghost" aria-label="Call">
+          <Tooltip content="Ligar para contato">
+            <IconButton variant="ghost" aria-label="Ligar">
               <Phone />
             </IconButton>
           </Tooltip>
@@ -152,7 +158,7 @@ export function ChatPanel({
             onClick={() => toggleBot.mutate(!conversation.botActive)}
             loading={toggleBot.isPending}
           >
-            {conversation.botActive ? "Stop bot" : "Resume bot"}
+            {conversation.botActive ? "Pausar bot" : "Retomar bot"}
           </Button>
           {conversation.status !== "CLOSED" ? (
             <Button
@@ -162,7 +168,7 @@ export function ChatPanel({
               onClick={() => updateStatus.mutate("CLOSED")}
               loading={updateStatus.isPending}
             >
-              Close
+              Encerrar
             </Button>
           ) : (
             <Button
@@ -172,7 +178,7 @@ export function ChatPanel({
               onClick={() => updateStatus.mutate("OPEN")}
               loading={updateStatus.isPending}
             >
-              Reopen
+              Reabrir
             </Button>
           )}
         </div>
@@ -207,7 +213,7 @@ export function ChatPanel({
                 onSubmit(e);
               }
             }}
-            placeholder={`Reply to ${conversation.contactName.split(" ")[0]}…`}
+            placeholder={`Responder para ${conversation.contactName.split(" ")[0]}...`}
             className="resize-none"
           />
           <Button
@@ -215,19 +221,19 @@ export function ChatPanel({
             rightIcon={<Send />}
             disabled={!draft.trim() || send.isPending}
           >
-            Send
+            Enviar
           </Button>
         </div>
         <p className="mt-1.5 text-2xs text-muted-foreground">
-          Press{" "}
+          Pressione{" "}
           <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-2xs">
             Enter
           </kbd>{" "}
-          to send,{" "}
+          para enviar,{" "}
           <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-2xs">
             Shift + Enter
           </kbd>{" "}
-          for a new line.
+          para uma nova linha.
         </p>
       </form>
     </div>

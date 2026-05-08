@@ -20,6 +20,12 @@ const STATUS_TONE: Record<ConversationStatus, 'success' | 'neutral' | 'warning'>
   PENDING: 'warning',
 };
 
+const STATUS_LABEL: Record<ConversationStatus, string> = {
+  OPEN: 'aberta',
+  CLOSED: 'fechada',
+  PENDING: 'pendente',
+};
+
 export function ConversationList({
   conversations,
   isLoading,
@@ -42,8 +48,8 @@ export function ConversationList({
       <div className="p-3">
         <EmptyState
           icon={<MessagesSquare />}
-          title="No conversations match"
-          description="Try clearing filters or expanding the date range."
+          title="Nenhuma conversa corresponde"
+          description="Tente limpar os filtros ou ampliar o intervalo de datas."
         />
       </div>
     );
@@ -53,7 +59,7 @@ export function ConversationList({
     <ul className="divide-y divide-border">
       {conversations.map((c) => {
         const active = c.id === selectedId;
-        const botName = botNamesById[c.botId] ?? 'Unknown bot';
+        const botName = botNamesById[c.botId] ?? 'Bot desconhecido';
         return (
           <li key={c.id}>
             <button
@@ -82,7 +88,7 @@ export function ConversationList({
                     {botName}
                   </span>
                   <Badge size="sm" tone={STATUS_TONE[c.status]} dot>
-                    {c.status.toLowerCase()}
+                    {STATUS_LABEL[c.status]}
                   </Badge>
                   {c.unreadCount > 0 && c.id !== selectedId ? (
                     <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">

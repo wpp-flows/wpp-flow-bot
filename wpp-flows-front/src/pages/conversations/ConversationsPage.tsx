@@ -52,9 +52,9 @@ export function ConversationsPage() {
 
   const messagesForSelection = useQuery({
     queryKey:
-      selectedId !== null
-        ? queryKeys.chats.messages(selectedId)
-        : ["chats", "messages", "__none"],
+      selectedId === null
+        ? ["chats", "messages", "__none"]
+        : queryKeys.chats.messages(selectedId),
     queryFn: () => chatService.listMessages(selectedId!),
     enabled: selectedId !== null,
     staleTime: 0,

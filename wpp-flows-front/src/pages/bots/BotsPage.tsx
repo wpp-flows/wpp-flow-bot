@@ -42,10 +42,10 @@ export function BotsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Bots"
-        description="Each bot is a WhatsApp instance powered by Evolution API. Connect, monitor and manage them here."
+        description="Cada bot e uma instancia do WhatsApp com Evolution API. Conecte, monitore e gerencie aqui."
         actions={
           <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
-            New bot
+            Novo bot
           </Button>
         }
       />
@@ -53,7 +53,7 @@ export function BotsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full max-w-sm">
           <Input
-            placeholder="Search by name, phone or ID…"
+            placeholder="Buscar por nome, telefone ou ID..."
             leftIcon={<Search />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -63,9 +63,9 @@ export function BotsPage() {
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
           items={[
-            { value: 'all', label: 'All' },
+            { value: 'all', label: 'Todos' },
             { value: 'ONLINE', label: 'Online' },
-            { value: 'CONNECTING', label: 'Connecting' },
+            { value: 'CONNECTING', label: 'Conectando' },
             { value: 'OFFLINE', label: 'Offline' },
           ]}
         />
@@ -80,16 +80,16 @@ export function BotsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<BotIcon />}
-          title="No bots match your filters"
+          title="Nenhum bot corresponde aos filtros"
           description={
             bots.data?.length === 0
-              ? 'Create your first bot to start sending and receiving WhatsApp messages.'
-              : 'Try adjusting your filters or search term.'
+              ? 'Crie seu primeiro bot para comecar a enviar e receber mensagens no WhatsApp.'
+              : 'Tente ajustar os filtros ou o termo de busca.'
           }
           action={
             bots.data?.length === 0 ? (
               <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
-                Create your first bot
+                Criar seu primeiro bot
               </Button>
             ) : undefined
           }

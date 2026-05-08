@@ -39,12 +39,12 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       await login.mutateAsync(values);
-      toast.success('Welcome back', `Signed in as ${values.email}`);
+      toast.success('Bem-vindo de volta', `Conectado como ${values.email}`);
       const redirectTo = (location.state as { from?: { pathname?: string } })?.from?.pathname;
       navigate(redirectTo ?? ROUTES.dashboard, { replace: true });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Unable to sign in. Try again.';
-      toast.error('Sign-in failed', message);
+      const message = err instanceof ApiError ? err.message : 'Nao foi possivel entrar. Tente novamente.';
+      toast.error('Falha ao entrar', message);
     }
   };
 
@@ -66,14 +66,14 @@ export function LoginPage() {
 
         <div className="relative space-y-6">
           <p className="max-w-md text-3xl font-semibold leading-tight tracking-tight text-balance">
-            Build, deploy and manage WhatsApp chatbots for your restaurant — without writing a line of code.
+            Crie, publique e gerencie chatbots do WhatsApp para o seu restaurante - sem escrever uma linha de codigo.
           </p>
 
           <div className="grid grid-cols-3 gap-4 max-w-md">
             {[
-              { v: '4.2×', l: 'orders / day' },
-              { v: '38s', l: 'avg. response' },
-              { v: '99.9%', l: 'uptime' },
+              { v: '4.2×', l: 'pedidos / dia' },
+              { v: '38s', l: 'tempo medio' },
+              { v: '99.9%', l: 'disponibilidade' },
             ].map((stat) => (
               <div
                 key={stat.l}
@@ -88,9 +88,9 @@ export function LoginPage() {
 
         <div className="relative">
           <blockquote className="text-sm text-white/85 max-w-md">
-            "We replaced two hours of nightly phone work with a Mesa flow. Our staff is finally free to actually serve."
+            "Trocamos duas horas de atendimentos noturnos por um flow Mesa. A equipe agora consegue servir de verdade."
           </blockquote>
-          <p className="mt-2 text-xs text-white/70">— Andrea Romano, Owner · Forno Romano</p>
+          <p className="mt-2 text-xs text-white/70">— Andrea Romano, Proprietaria · Forno Romano</p>
         </div>
       </div>
 
@@ -105,10 +105,10 @@ export function LoginPage() {
 
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Sign in to your dashboard
+            Entre no seu painel
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage flows, menus, and conversations across all your restaurants.
+            Gerencie flows, menus e conversas em todos os seus restaurantes.
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export function LoginPage() {
               autoComplete="email"
               leftIcon={<Mail />}
               invalid={!!errors.email}
-              placeholder="you@restaurant.com"
+              placeholder="voce@restaurante.com"
               {...register('email')}
             />
           </FormField>
@@ -150,7 +150,7 @@ export function LoginPage() {
                   type="button"
                   className="pointer-events-auto inline-flex items-center justify-center rounded-md p-0.5 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPwd((v) => !v)}
-                  aria-label={showPwd ? 'Hide password' : 'Show password'}
+                  aria-label={showPwd ? 'Ocultar senha' : 'Mostrar senha'}
                 >
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -168,13 +168,13 @@ export function LoginPage() {
                 checked={!!remember}
                 onChange={(e) => setValue('remember', e.target.checked, { shouldDirty: true })}
               />
-              Keep me signed in
+              Manter conectado
             </label>
             <Link
               to="#"
               className="text-xs font-medium text-primary hover:underline underline-offset-4"
             >
-              Forgot password?
+              Esqueceu a senha?
             </Link>
           </div>
 
@@ -185,19 +185,19 @@ export function LoginPage() {
             rightIcon={<ArrowRight />}
             className="mt-2"
           >
-            Sign in
+            Entrar
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            New to {APP_CONFIG.name}?{' '}
+            Novo no {APP_CONFIG.name}?{' '}
             <Link to={ROUTES.signUp} className="font-medium text-primary hover:underline underline-offset-4">
-              Create a workspace
+              Criar um workspace
             </Link>
           </p>
         </form>
 
         <div className="mt-auto rounded-lg border border-dashed border-border bg-muted/40 p-3 text-2xs text-muted-foreground">
-          <p className="font-semibold text-foreground">Demo credentials</p>
+          <p className="font-semibold text-foreground">Credenciais de demo</p>
           <p className="mt-0.5 font-mono text-foreground/80">demo@bellini.com · mesademo2026</p>
         </div>
       </div>

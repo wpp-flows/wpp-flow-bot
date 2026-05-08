@@ -12,9 +12,9 @@ import { useThemeStore, type Theme } from '@/stores/themeStore';
 import { cn } from '@/lib/utils';
 
 const THEMES: { value: Theme; label: string; icon: React.ReactNode }[] = [
-  { value: 'light', label: 'Light', icon: <Sun /> },
-  { value: 'dark', label: 'Dark', icon: <Moon /> },
-  { value: 'system', label: 'System', icon: <Monitor /> },
+  { value: 'light', label: 'Claro', icon: <Sun /> },
+  { value: 'dark', label: 'Escuro', icon: <Moon /> },
+  { value: 'system', label: 'Sistema', icon: <Monitor /> },
 ];
 
 export function SettingsPage() {
@@ -24,44 +24,44 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Settings" description="Manage your workspace, profile and appearance." />
+      <PageHeader title="Configuracoes" description="Gerencie seu espaco de trabalho, perfil e aparencia." />
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>This information is visible to your team.</CardDescription>
+          <CardTitle>Perfil</CardTitle>
+          <CardDescription>Estas informacoes sao visiveis para sua equipe.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex items-center gap-4">
             <Avatar size="lg" name={user?.name ?? ''} src={user?.image ?? undefined} />
             <div>
               <Button variant="outline" size="sm">
-                Change avatar
+                Trocar avatar
               </Button>
-              <p className="mt-1 text-2xs text-muted-foreground">PNG or JPG, up to 2MB.</p>
+              <p className="mt-1 text-2xs text-muted-foreground">PNG ou JPG, ate 2MB.</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Full name" htmlFor="settings-name">
+            <FormField label="Nome completo" htmlFor="settings-name">
               <Input id="settings-name" defaultValue={user?.name} />
             </FormField>
             <FormField label="Email" htmlFor="settings-email">
               <Input id="settings-email" type="email" defaultValue={user?.email} />
             </FormField>
-            <FormField label="Restaurant name" htmlFor="settings-restaurant" className="sm:col-span-2">
+            <FormField label="Nome do restaurante" htmlFor="settings-restaurant" className="sm:col-span-2">
               <Input id="settings-restaurant" defaultValue={organization?.name ?? ''} />
             </FormField>
           </div>
           <div className="flex justify-end">
-            <Button>Save changes</Button>
+            <Button>Salvar alteracoes</Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Pick the theme that fits your service hours.</CardDescription>
+          <CardTitle>Aparencia</CardTitle>
+          <CardDescription>Escolha o tema que combina com seu horario de atendimento.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -90,7 +90,7 @@ export function SettingsPage() {
                   <div>
                     <p className="text-sm font-semibold tracking-tight">{t.label}</p>
                     <p className="text-2xs text-muted-foreground">
-                      {t.value === 'system' ? 'Match your OS preference.' : `Use ${t.label.toLowerCase()} mode always.`}
+                      {t.value === 'system' ? 'Siga a preferencia do sistema.' : `Use sempre o modo ${t.label.toLowerCase()}.`}
                     </p>
                   </div>
                 </button>
@@ -102,14 +102,14 @@ export function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>Choose what triggers a desktop and email notification.</CardDescription>
+          <CardTitle>Notificacoes</CardTitle>
+          <CardDescription>Escolha o que dispara notificacoes no desktop e por email.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {[
-            { id: 'orders', label: 'New orders', desc: 'Sound and toast when a new order arrives.' },
-            { id: 'disconnect', label: 'Bot disconnections', desc: 'Get notified the moment a bot drops offline.' },
-            { id: 'inactive', label: 'Inactive conversations', desc: 'Reminder if a customer has waited > 5 minutes.' },
+            { id: 'orders', label: 'Novos pedidos', desc: 'Som e aviso quando um novo pedido chega.' },
+            { id: 'disconnect', label: 'Desconexoes do bot', desc: 'Receba alerta quando um bot ficar offline.' },
+            { id: 'inactive', label: 'Conversas inativas', desc: 'Lembrete se um cliente esperar > 5 minutos.' },
           ].map((row, i) => (
             <div
               key={row.id}

@@ -32,11 +32,11 @@ export function CreateBotModal({ open, onClose }: Props) {
     mutationFn: (values: CreateBotFormValues) => botService.create(values),
     onSuccess: (bot) => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
-      toast.success('Bot created', `${bot.name} is initializing — scan the QR to bring it online.`);
+      toast.success('Bot criado', `${bot.name} esta inicializando — escaneie o QR para coloca-lo online.`);
       reset();
       onClose();
     },
-    onError: () => toast.error('Could not create bot', 'Please try again.'),
+    onError: () => toast.error('Nao foi possivel criar o bot', 'Tente novamente.'),
   });
 
   return (
@@ -46,19 +46,19 @@ export function CreateBotModal({ open, onClose }: Props) {
         reset();
         onClose();
       }}
-      title="Create new bot"
-      description="Spin up a new WhatsApp instance via the Evolution API."
+      title="Criar novo bot"
+      description="Crie uma nova instancia do WhatsApp via a Evolution API."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} type="button">
-            Cancel
+            Cancelar
           </Button>
           <Button
             type="submit"
             form="create-bot-form"
             loading={isSubmitting || create.isPending}
           >
-            Create bot
+            Criar bot
           </Button>
         </>
       }
@@ -70,22 +70,22 @@ export function CreateBotModal({ open, onClose }: Props) {
         noValidate
       >
         <FormField
-          label="Bot name"
+          label="Nome do bot"
           htmlFor="bot-name"
           error={errors.name?.message}
           required
         >
           <Input
             id="bot-name"
-            placeholder="e.g. Bellini Main"
+            placeholder="ex: Bellini Main"
             invalid={!!errors.name}
             {...register('name')}
           />
         </FormField>
         <FormField
-          label="WhatsApp phone number"
+          label="Numero de telefone do WhatsApp"
           htmlFor="bot-phone"
-          hint="Optional — assign later when scanning the QR."
+          hint="Opcional — atribua depois ao escanear o QR."
           error={errors.phoneNumber?.message}
         >
           <Input

@@ -29,10 +29,10 @@ export function JsonPreview({ flow }: Readonly<{ flow: FlowWithSteps }>) {
     try {
       await navigator.clipboard.writeText(json);
       setCopied(true);
-      toast.success('JSON copied to clipboard');
+      toast.success('JSON copiado para a area de transferencia');
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Failed to copy');
+      toast.error('Falha ao copiar');
     }
   };
 
@@ -47,7 +47,7 @@ export function JsonPreview({ flow }: Readonly<{ flow: FlowWithSteps }>) {
             flow.json
           </span>
         </div>
-        <IconButton size="sm" variant="ghost" onClick={handleCopy} aria-label="Copy JSON">
+        <IconButton size="sm" variant="ghost" onClick={handleCopy} aria-label="Copiar JSON">
           {copied ? <Check className="text-success" /> : <Copy />}
         </IconButton>
       </div>

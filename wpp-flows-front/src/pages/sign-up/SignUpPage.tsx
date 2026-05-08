@@ -27,25 +27,25 @@ export function SignUpPage() {
   const onSubmit = async (values: SignUpFormValues) => {
     try {
       await signUp.mutateAsync(values);
-      toast.success('Account created', `Welcome, ${values.name}!`);
+      toast.success('Conta criada', `Bem-vindo, ${values.name}!`);
       navigate(ROUTES.onboarding, { replace: true });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Sign-up failed.';
-      toast.error('Sign-up failed', message);
+      const message = err instanceof ApiError ? err.message : 'Falha no cadastro.';
+      toast.error('Falha no cadastro', message);
     }
   };
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-soft-lg sm:p-10">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Create your {APP_CONFIG.name} account</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Crie sua conta {APP_CONFIG.name}</h1>
         <p className="text-sm text-muted-foreground">
-          Sign up to start managing WhatsApp chatbots for your restaurant.
+          Cadastre-se para comecar a gerenciar chatbots do WhatsApp do seu restaurante.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4" noValidate>
-        <FormField label="Full name" htmlFor="signup-name" error={errors.name?.message} required>
+        <FormField label="Nome completo" htmlFor="signup-name" error={errors.name?.message} required>
           <Input
             id="signup-name"
             leftIcon={<User />}
@@ -62,19 +62,19 @@ export function SignUpPage() {
             autoComplete="email"
             leftIcon={<Mail />}
             invalid={!!errors.email}
-            placeholder="you@restaurant.com"
+            placeholder="voce@restaurante.com"
             {...register('email')}
           />
         </FormField>
 
-        <FormField label="Password" htmlFor="signup-password" error={errors.password?.message} required>
+        <FormField label="Senha" htmlFor="signup-password" error={errors.password?.message} required>
           <Input
             id="signup-password"
             type="password"
             autoComplete="new-password"
             leftIcon={<Lock />}
             invalid={!!errors.password}
-            placeholder="At least 8 characters"
+            placeholder="Pelo menos 8 caracteres"
             {...register('password')}
           />
         </FormField>
@@ -86,13 +86,13 @@ export function SignUpPage() {
           rightIcon={<ArrowRight />}
           className="mt-2"
         >
-          Create account
+          Criar conta
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
-          Already have an account?{' '}
+          Ja tem uma conta?{' '}
           <Link to={ROUTES.login} className="font-medium text-primary hover:underline underline-offset-4">
-            Sign in
+            Entrar
           </Link>
         </p>
       </form>

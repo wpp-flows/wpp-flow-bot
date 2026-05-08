@@ -37,12 +37,12 @@ export function OnboardingPage() {
       }),
     onSuccess: async (org) => {
       await refreshOrganization();
-      toast.success('Restaurant created', `${org.name} is ready to go.`);
+      toast.success('Restaurante criado', `${org.name} esta pronto.`);
       navigate(ROUTES.dashboard, { replace: true });
     },
     onError: (err: Error) => {
-      const message = err instanceof ApiError ? err.message : 'Could not create.';
-      toast.error('Setup failed', message);
+      const message = err instanceof ApiError ? err.message : 'Nao foi possivel criar.';
+      toast.error('Falha na configuracao', message);
     },
   });
 
@@ -53,9 +53,9 @@ export function OnboardingPage() {
           <Store className="h-5 w-5" />
         </span>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Set up your restaurant</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Configure seu restaurante</h1>
           <p className="text-xs text-muted-foreground">
-            Final step before you can use {APP_CONFIG.name}.
+            Etapa final antes de usar {APP_CONFIG.name}.
           </p>
         </div>
       </div>
@@ -66,7 +66,7 @@ export function OnboardingPage() {
         noValidate
       >
         <FormField
-          label="Restaurant name"
+          label="Nome do restaurante"
           htmlFor="org-name"
           error={errors.name?.message}
           required
@@ -80,10 +80,10 @@ export function OnboardingPage() {
         </FormField>
 
         <FormField
-          label="Slug (optional)"
+          label="Slug (opcional)"
           htmlFor="org-slug"
           error={errors.slug?.message}
-          hint="Used in public URLs. Auto-generated from the name if blank."
+          hint="Usado em URLs publicas. Gerado automaticamente do nome se ficar em branco."
         >
           <Input
             id="org-slug"
@@ -100,7 +100,7 @@ export function OnboardingPage() {
           rightIcon={<ArrowRight />}
           className="mt-2"
         >
-          Continue
+          Continuar
         </Button>
       </form>
     </div>

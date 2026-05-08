@@ -17,16 +17,16 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
     mutationFn: () => botService.connect(bot.id),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
-      toast.success(`${bot.name} is online`, 'WhatsApp instance is now connected.');
+      toast.success(`${bot.name} esta online`, 'A instancia do WhatsApp agora esta conectada.');
     },
-    onError: () => toast.error('Could not connect', 'Try again or check the webhook URL.'),
+    onError: () => toast.error('Nao foi possivel conectar', 'Tente novamente ou verifique a URL do webhook.'),
   });
 
   const disconnect = useMutation({
     mutationFn: () => botService.disconnect(bot.id),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
-      toast.info(`${bot.name} disconnected`);
+      toast.info(`${bot.name} desconectado`);
     },
   });
 
@@ -47,16 +47,16 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <Row icon={<Phone />} label="Phone" value={bot.phoneNumber ?? '—'} mono />
+          <Row icon={<Phone />} label="Telefone" value={bot.phoneNumber ?? '—'} mono />
           <Row
             icon={<Activity />}
-            label="Last connected"
-            value={bot.lastConnectedAt ? formatRelativeTime(bot.lastConnectedAt) : 'Never'}
+            label="Ultima conexao"
+            value={bot.lastConnectedAt ? formatRelativeTime(bot.lastConnectedAt) : 'Nunca'}
           />
           <Row icon={<Zap />} label="Status" value={bot.status} />
           <Row
             icon={<RefreshCw />}
-            label="Instance"
+            label="Instancia"
             value={bot.evolutionInstanceName}
             mono
           />
@@ -67,9 +67,9 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
             <QrPlaceholder seed={bot.id} />
             <div className="flex flex-col justify-between gap-3">
               <div className="space-y-1.5">
-                <h4 className="text-sm font-semibold tracking-tight">Scan to link WhatsApp</h4>
+                <h4 className="text-sm font-semibold tracking-tight">Escaneie para vincular o WhatsApp</h4>
                 <p className="text-xs text-muted-foreground text-pretty">
-                  Open WhatsApp on your phone, go to Settings &rarr; Linked Devices and scan this code to bring your bot online.
+                  Abra o WhatsApp no seu telefone, va em Configuracoes &rarr; Dispositivos conectados e escaneie este codigo para colocar seu bot online.
                 </p>
               </div>
               <Button
@@ -78,7 +78,7 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
                 onClick={() => connect.mutate()}
                 loading={connect.isPending}
               >
-                I scanned it — connect now
+                Ja escaneei — conectar agora
               </Button>
             </div>
           </div>
@@ -92,15 +92,15 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
               onClick={() => disconnect.mutate()}
               loading={disconnect.isPending}
             >
-              Disconnect
+              Desconectar
             </Button>
           ) : (
             <Button size="sm" onClick={() => connect.mutate()} loading={connect.isPending}>
-              Connect
+              Conectar
             </Button>
           )}
           <Button variant="ghost" size="sm">
-            View logs
+            Ver logs
           </Button>
         </div>
       </CardContent>

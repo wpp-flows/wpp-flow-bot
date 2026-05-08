@@ -55,7 +55,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         categoryId: item?.categoryId ?? defaultCategoryId ?? categories[0]?.id ?? '',
         name: item?.name ?? '',
         description: item?.description ?? '',
-        price: item?.price !== undefined ? Number(item.price) : 0,
+        price: item?.price === undefined ? 0 : Number(item.price),
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
       });
@@ -74,7 +74,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
-      toast.success('Item added');
+      toast.success('Item adicionado');
       onClose();
     },
   });
@@ -84,7 +84,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
       menuService.updateItem({ id: item!.id, ...v, description: v.description ?? '' }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
-      toast.success('Item updated');
+      toast.success('Item atualizado');
       onClose();
     },
   });
@@ -98,19 +98,19 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
     <Modal
       open={open}
       onClose={onClose}
-      title={editing ? 'Edit item' : 'New item'}
+      title={editing ? 'Editar item' : 'Novo item'}
       size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             type="submit"
             form="item-form"
             loading={isSubmitting || create.isPending || update.isPending}
           >
-            {editing ? 'Save changes' : 'Add item'}
+            {editing ? 'Salvar alteracoes' : 'Adicionar item'}
           </Button>
         </>
       }
@@ -122,7 +122,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         noValidate
       >
         <FormField
-          label="Category"
+          label="Categoria"
           htmlFor="itm-cat"
           error={errors.categoryId?.message}
           required
@@ -137,7 +137,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
           </Select>
         </FormField>
         <FormField
-          label="Name"
+          label="Nome"
           htmlFor="itm-name"
           error={errors.name?.message}
           required
@@ -151,7 +151,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
           />
         </FormField>
         <FormField
-          label="Description"
+          label="Descricao"
           htmlFor="itm-desc"
           error={errors.description?.message}
           className="sm:col-span-2"
@@ -159,13 +159,13 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
           <Textarea
             id="itm-desc"
             rows={3}
-            placeholder="San Marzano tomato, fior di latte, basil…"
+            placeholder="Tomate San Marzano, fior di latte, manjericao..."
             invalid={!!errors.description}
             {...register('description')}
           />
         </FormField>
         <FormField
-          label="Price"
+          label="Preco"
           htmlFor="itm-price"
           error={errors.price?.message}
           required
@@ -182,10 +182,10 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
           />
         </FormField>
         <FormField
-          label="Image URL"
+          label="URL da imagem"
           htmlFor="itm-img"
           error={errors.imageUrl?.message}
-          hint="Optional. Use a square 1:1 hero image when possible."
+          hint="Opcional. Use uma imagem 1:1 quando possivel."
           className="sm:col-span-1"
         >
           <Input
@@ -197,9 +197,9 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         </FormField>
         <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
           <div>
-            <p className="text-sm font-medium">Available</p>
+            <p className="text-sm font-medium">Disponivel</p>
             <p className="text-2xs text-muted-foreground">
-              Hidden items remain in the menu but are not offered to customers.
+              Itens ocultos permanecem no menu, mas nao sao oferecidos aos clientes.
             </p>
           </div>
           <Switch

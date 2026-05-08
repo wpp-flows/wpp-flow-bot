@@ -44,7 +44,7 @@ export function MenuPage() {
     mutationFn: (orderedIds: string[]) => menuService.reorderCategories(orderedIds),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
-      toast.success('Order saved');
+      toast.success('Ordem salva');
     },
   });
 
@@ -72,7 +72,7 @@ export function MenuPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Menu"
-        description="Curate the dishes the bot will offer to your customers. Drag to reorder how categories appear in the flow."
+        description="Organize os pratos que o bot vai oferecer aos seus clientes. Arraste para reordenar como as categorias aparecem no fluxo."
         actions={
           <>
             <Button
@@ -83,7 +83,7 @@ export function MenuPage() {
                 setCatModalOpen(true);
               }}
             >
-              New category
+              Nova categoria
             </Button>
             <Button
               leftIcon={<Plus />}
@@ -94,7 +94,7 @@ export function MenuPage() {
                 setItemModalOpen(true);
               }}
             >
-              New item
+              Novo item
             </Button>
           </>
         }
@@ -109,8 +109,8 @@ export function MenuPage() {
       ) : isEmpty ? (
         <EmptyState
           icon={<UtensilsCrossed />}
-          title="No categories yet"
-          description="Group your dishes into categories — Pizzas, Drinks, Desserts. Customers see them in this order."
+          title="Nenhuma categoria ainda"
+          description="Agrupe seus pratos em categorias - Pizzas, Bebidas, Sobremesas. Os clientes veem nessa ordem."
           action={
             <Button
               leftIcon={<Plus />}
@@ -119,7 +119,7 @@ export function MenuPage() {
                 setCatModalOpen(true);
               }}
             >
-              Create first category
+              Criar primeira categoria
             </Button>
           }
         />

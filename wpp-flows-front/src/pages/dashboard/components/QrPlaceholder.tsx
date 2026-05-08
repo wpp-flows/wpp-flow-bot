@@ -49,7 +49,7 @@ export function QrPlaceholder({ seed = 'mesa', className }: { seed?: string; cla
       ))}
       <span className="absolute inset-0 flex items-center justify-center">
         <span className="rounded-md bg-background px-2 py-0.5 text-2xs font-semibold tracking-wider uppercase text-muted-foreground ring-1 ring-border">
-          Scan to connect
+          Escaneie para conectar
         </span>
       </span>
     </div>
