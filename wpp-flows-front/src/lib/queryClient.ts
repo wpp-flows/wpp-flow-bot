@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, type Query } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,3 +39,14 @@ export const queryKeys = {
     stats: ['dashboard', 'stats'] as const,
   },
 } as const;
+
+export function isChatConversationListQuery(query: Query): boolean {
+  const key = query.queryKey;
+  if (!Array.isArray(key) || key[0] !== 'chats') return false;
+  if (key.length >= 3 && key[2] === 'messages') return false;
+  return true;
+}
+
+export function invalidateChatConversationLists(client: QueryClient) {
+  return client.invalidateQueries({ predicate: isChatConversationListQuery });
+}

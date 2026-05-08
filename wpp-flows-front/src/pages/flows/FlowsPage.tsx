@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Code2, Plus, Save, Workflow as WorkflowIcon, Zap } from 'lucide-react';
+import { Code2, Plus, Save, Trash2, Workflow as WorkflowIcon, Zap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
@@ -9,11 +9,12 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs } from '@/components/ui/Tabs';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { flowService } from '@/services/flowService';
 import { queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { generateId } from '@/lib/utils';
-import type { FlowStep, FlowStepInput } from '@/types';
+import type { Flow, FlowStep, FlowStepInput } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
 
@@ -29,6 +30,7 @@ export function FlowsPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>('editor');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const activeFlowSummary = useMemo(
     () => flows.data?.find((f) => f.id === activeFlowId) ?? flows.data?.[0],
@@ -69,9 +71,9 @@ export function FlowsPage() {
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
-      toast.success('Flow saved', `${updated.name} v${updated.version} updated.`);
+      toast.success('Flow salvo', `${updated.name} v${updated.version} atualizado.`);
     },
-    onError: () => toast.error('Could not save', 'Please try again.'),
+    onError: () => toast.error('Não foi possível salvar', 'Tente novamente.'),
   });
 
   const newVersion = useMutation({
@@ -83,7 +85,7 @@ export function FlowsPage() {
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       setActiveFlowId(created.id);
-      toast.success('New version created', `${created.name} v${created.version}`);
+      toast.success('Nova versão criada', `${created.name} v${created.version}`);
     },
   });
 
@@ -92,24 +94,38 @@ export function FlowsPage() {
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       qc.setQueryData(queryKeys.flows.detail(updated.id), updated);
-      toast.success('Flow activated', `${updated.name} v${updated.version} is now live.`);
+      toast.success('Flow ativado', `${updated.name} v${updated.version} está em produção.`);
     },
   });
 
   const createFlow = useMutation({
     mutationFn: () =>
       flowService.create({
-        name: `New flow ${(flows.data?.length ?? 0) + 1}`,
+        name: `Novo flow ${(flows.data?.length ?? 0) + 1}`,
         steps: [
-          { type: 'MESSAGE', order: 0, content: 'Hi! Welcome to our restaurant 👋' },
+          { type: 'MESSAGE', order: 0, content: 'Olá! Bem-vindo ao nosso restaurante 👋' },
         ],
       }),
     onSuccess: (flow) => {
       qc.invalidateQueries({ queryKey: queryKeys.flows.all });
       setActiveFlowId(flow.id);
-      toast.success('Flow created', `${flow.name} is ready to edit.`);
+      toast.success('Flow criado', `${flow.name} pronto para editar.`);
     },
-    onError: (err: Error) => toast.error('Could not create flow', err.message),
+    onError: (err: Error) => toast.error('Não foi possível criar o flow', err.message),
+  });
+
+  const deleteFlow = useMutation({
+    mutationFn: (id: string) => flowService.remove(id),
+    onSuccess: async (_, deletedId) => {
+      setConfirmDeleteOpen(false);
+      qc.removeQueries({ queryKey: queryKeys.flows.detail(deletedId) });
+      await qc.invalidateQueries({ queryKey: queryKeys.flows.all });
+      const list = qc.getQueryData<Flow[]>(queryKeys.flows.all);
+      const nextId = list?.[0]?.id ?? null;
+      setActiveFlowId(nextId);
+      toast.success('Flow excluído', 'O flow foi removido permanentemente.');
+    },
+    onError: (err: Error) => toast.error('Não foi possível excluir o flow', err.message),
   });
 
   const updateStep = (idx: number, next: FlowStep) =>
@@ -125,7 +141,7 @@ export function FlowsPage() {
       flowId: activeFlowDetail.data?.id ?? '',
       type: 'MESSAGE',
       order: steps.length,
-      content: 'Add what the bot should say at this step.',
+      content: 'Digite o que o bot deve dizer neste passo.',
       metadata: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -163,14 +179,28 @@ export function FlowsPage() {
     : null;
 
   return (
+    <>
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Flow builder"
-        description="Define the step-by-step conversation your bot will follow. Each step is a node — drag to reorder, click to edit."
+        title="Construtor de flows"
+        description="Defina a conversa passo a passo que o bot vai seguir. Cada passo é um nó — arraste para reordenar e clique para editar."
         actions={
           <>
+            <Button
+              variant="outline"
+              leftIcon={<Trash2 />}
+              disabled={!activeFlowDetail.data || activeFlowDetail.data.isActive}
+              title={
+                activeFlowDetail.data?.isActive
+                  ? 'Ative outro flow antes de excluir este.'
+                  : undefined
+              }
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              Excluir flow
+            </Button>
             <Button variant="outline" leftIcon={<Plus />} onClick={() => createFlow.mutate()} loading={createFlow.isPending}>
-              New flow
+              Novo flow
             </Button>
             <Button
               variant="outline"
@@ -179,7 +209,7 @@ export function FlowsPage() {
               loading={activate.isPending}
               onClick={() => activate.mutate()}
             >
-              Activate
+              Ativar
             </Button>
             <Button
               variant="outline"
@@ -187,7 +217,7 @@ export function FlowsPage() {
               loading={newVersion.isPending}
               disabled={!activeFlowDetail.data}
             >
-              New version
+              Nova versão
             </Button>
             <Button
               leftIcon={<Save />}
@@ -195,7 +225,7 @@ export function FlowsPage() {
               loading={save.isPending}
               onClick={() => save.mutate()}
             >
-              {isDirty ? 'Save changes' : 'Saved'}
+              {isDirty ? 'Salvar alterações' : 'Salvo'}
             </Button>
           </>
         }
@@ -206,11 +236,11 @@ export function FlowsPage() {
       ) : !activeFlowSummary ? (
         <EmptyState
           icon={<WorkflowIcon />}
-          title="No flows yet"
-          description="Flows define how your bot guides each customer through ordering. Create one to get started."
+          title="Nenhum flow ainda"
+          description="Os flows definem como o bot guia cada cliente. Crie um para começar."
           action={
             <Button leftIcon={<Plus />} onClick={() => createFlow.mutate()}>
-              Create your first flow
+              Criar primeiro flow
             </Button>
           }
         />
@@ -227,13 +257,13 @@ export function FlowsPage() {
                     </Badge>
                     {activeFlowSummary.isActive ? (
                       <Badge tone="success" size="sm">
-                        Active
+                        Ativo
                       </Badge>
                     ) : null}
                   </div>
                   <CardDescription>
-                    Sequential WhatsApp flow · {steps.length} step
-                    {steps.length === 1 ? '' : 's'}
+                    Flow sequencial no WhatsApp · {steps.length}{' '}
+                    {steps.length === 1 ? 'passo' : 'passos'}
                   </CardDescription>
                 </div>
 
@@ -246,7 +276,7 @@ export function FlowsPage() {
                     {flows.data?.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name} · v{f.version}
-                        {f.isActive ? ' (active)' : ''}
+                        {f.isActive ? ' (ativo)' : ''}
                       </option>
                     ))}
                   </Select>
@@ -311,7 +341,7 @@ export function FlowsPage() {
                   className="group flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-4 py-4 text-sm font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-primary-soft/40 hover:text-primary"
                 >
                   <Plus className="h-4 w-4" />
-                  Add step
+                  Adicionar passo
                 </button>
               </div>
 
@@ -325,5 +355,39 @@ export function FlowsPage() {
         </>
       )}
     </div>
+
+    <Modal
+      open={confirmDeleteOpen}
+      onClose={() => setConfirmDeleteOpen(false)}
+      title="Excluir este flow?"
+      description={
+        activeFlowSummary
+          ? `${activeFlowSummary.name} · v${activeFlowSummary.version} será removido permanentemente.`
+          : undefined
+      }
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => setConfirmDeleteOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            loading={deleteFlow.isPending}
+            onClick={() => {
+              if (activeFlowDetail.data?.id) deleteFlow.mutate(activeFlowDetail.data.id);
+            }}
+          >
+            Sim, excluir
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm text-muted-foreground">
+        Não é possível excluir o flow ativo — ative outra versão antes. Esta ação não pode ser
+        desfeita.
+      </p>
+    </Modal>
+    </>
   );
 }

@@ -84,7 +84,7 @@ export function ConversationList({
                   <Badge size="sm" tone={STATUS_TONE[c.status]} dot>
                     {c.status.toLowerCase()}
                   </Badge>
-                  {c.unreadCount > 0 ? (
+                  {c.unreadCount > 0 && c.id !== selectedId ? (
                     <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">
                       {c.unreadCount}
                     </span>

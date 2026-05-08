@@ -17,7 +17,7 @@ export function MessageBubble({ message }: Readonly<{ message: Message }>) {
   const isBot = message.author === 'BOT';
 
   return (
-    <div className={cn('flex gap-2', fromUs ? 'justify-start' : 'justify-end')}>
+    <div className={cn('flex w-full gap-2', fromUs ? 'justify-start' : 'justify-end')}>
       {fromUs ? (
         <span
           className={cn(

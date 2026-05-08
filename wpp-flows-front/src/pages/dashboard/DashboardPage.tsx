@@ -33,18 +33,18 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title={`Welcome back, ${user?.name?.split(' ')[0] ?? 'there'}`}
-        description="A real-time look at how your WhatsApp bots are performing today."
+        title={`Bem-vindo de volta, ${user?.name?.split(' ')[0] ?? 'visitante'}`}
+        description="Uma visão em tempo real do desempenho dos seus bots do WhatsApp hoje."
         actions={
           <>
             <Link to={ROUTES.flows}>
               <Button variant="outline" size="md">
-                Open flow builder
+                Abrir construtor de fluxos
               </Button>
             </Link>
             <Link to={ROUTES.bots}>
               <Button size="md" leftIcon={<Plus />}>
-                New bot
+                Novo bot
               </Button>
             </Link>
           </>
@@ -58,30 +58,30 @@ export function DashboardPage() {
         ) : (
           <>
             <StatCard
-              label="Total conversations"
+              label="Total de conversas"
               value={stats.data.totalConversations.toLocaleString()}
               delta={stats.data.conversationsDelta}
               icon={<MessagesSquare />}
               iconTone="primary"
             />
             <StatCard
-              label="Active chats"
+              label="Chats ativos"
               value={stats.data.activeChats}
-              hint="Across all bot instances"
+              hint="Em todas as instâncias do bot"
               icon={<Users />}
               iconTone="info"
             />
             <StatCard
-              label="Orders today"
+              label="Pedidos hoje"
               value={stats.data.ordersToday}
               delta={stats.data.ordersTodayDelta}
               icon={<Receipt />}
               iconTone="success"
             />
             <StatCard
-              label="Avg. response"
+              label="Resposta média"
               value={`${stats.data.averageResponseSeconds}s`}
-              hint="Last 24 hours"
+              hint="Últimas 24 horas"
               icon={<Timer />}
               iconTone="warning"
             />
@@ -95,14 +95,14 @@ export function DashboardPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle>Conversations · last 14 days</CardTitle>
-                <CardDescription>Daily WhatsApp inbound across all instances.</CardDescription>
+                <CardTitle>Conversas · últimos 14 dias</CardTitle>
+                <CardDescription>Entradas diárias no WhatsApp em todas as instâncias.</CardDescription>
               </div>
               <Link
                 to={ROUTES.conversations}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline underline-offset-4"
               >
-                View all
+                Ver todas
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </div>
@@ -131,13 +131,13 @@ export function DashboardPage() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle>Your bots</CardTitle>
+                <CardTitle>Seus bots</CardTitle>
                 <CardDescription>
-                  Monitor every instance — add a new one or jump in to fix a disconnection.
+                  Monitore cada instância — adicione uma nova ou entre para corrigir uma desconexão.
                 </CardDescription>
               </div>
               <Link to={ROUTES.bots}>
-                <Button variant="ghost" size="sm">Manage</Button>
+                <Button variant="ghost" size="sm">Gerenciar</Button>
               </Link>
             </div>
           </CardHeader>
@@ -162,7 +162,7 @@ export function DashboardPage() {
                     </div>
                     <div className="hidden text-right text-2xs text-muted-foreground sm:block">
                       {bot.status.toLowerCase()} ·{' '}
-                      {bot.lastConnectedAt ? 'connected' : 'never connected'}
+                      {bot.lastConnectedAt ? 'conectado' : 'nunca conectado'}
                     </div>
                     <div className="ml-2">
                       <span className="inline-flex h-2 w-2 rounded-full bg-current text-success" />
@@ -174,8 +174,8 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>Live event feed.</CardDescription>
+            <CardTitle>Atividade recente</CardTitle>
+            <CardDescription>Feed de eventos ao vivo.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {stats.isLoading
