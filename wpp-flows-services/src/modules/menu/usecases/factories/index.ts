@@ -18,6 +18,8 @@ import {
 const categoryRepo = new PrismaCategoryRepository();
 const itemRepo = new PrismaItemRepository();
 
+export { categoryRepo, itemRepo };
+
 export const makeListCategories = () => new ListCategoriesUseCase(categoryRepo);
 export const makeCreateCategory = () => new CreateCategoryUseCase(categoryRepo);
 export const makeUpdateCategory = () => new UpdateCategoryUseCase(categoryRepo);

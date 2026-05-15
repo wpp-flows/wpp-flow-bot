@@ -129,13 +129,21 @@ export function ConversationsPage() {
         actions={
           <Button
             variant="outline"
-            leftIcon={<RefreshCw />}
-            loading={manualRefreshPending}
+            leftIcon={
+              <RefreshCw className={manualRefreshPending ? "animate-spin" : undefined} />
+            }
+            disabled={manualRefreshPending}
             onClick={() => {
               setManualRefreshPending(true);
-              void invalidateQueriesByFilters(queryClient, [
+              const filters = [
                 { predicate: isChatConversationListQuery },
-              ]).finally(() => setManualRefreshPending(false));
+                ...(selectedId
+                  ? [{ queryKey: queryKeys.chats.messages(selectedId) }]
+                  : []),
+              ];
+              void invalidateQueriesByFilters(queryClient, filters).finally(() =>
+                setManualRefreshPending(false),
+              );
             }}
           >
             Atualizar

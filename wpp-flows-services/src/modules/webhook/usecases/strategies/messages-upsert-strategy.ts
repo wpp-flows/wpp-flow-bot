@@ -3,6 +3,7 @@ import type {
     ConversationRepository,
 } from "@/modules/chat/repositories/chat-repo";
 import {
+    extractSelectionId,
     extractText,
     isPersonalJid,
     parseMessages,
@@ -77,7 +78,13 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
         });
 
         if (msg.key.fromMe) return;
-        await ctx.flowRunner.handleInbound({ bot: ctx.bot, conversation: updated });
+        const selectionId = extractSelectionId(msg);
+        await ctx.flowRunner.handleInbound({
+            bot: ctx.bot,
+            conversation: updated,
+            selectionId,
+            text,
+        });
     }
 
     private async upsertConversation(

@@ -7,27 +7,34 @@ import type { FlowWithSteps } from '@/types';
 export function JsonPreview({ flow }: Readonly<{ flow: FlowWithSteps }>) {
   const [copied, setCopied] = useState(false);
 
-  const json = JSON.stringify(
-    {
-      id: flow.id,
-      name: flow.name,
-      version: flow.version,
-      isActive: flow.isActive,
-      steps: flow.steps.map((s) => ({
-        id: s.id,
-        type: s.type,
-        order: s.order,
-        content: s.content,
-        ...(s.metadata ? { metadata: s.metadata } : {}),
-      })),
-    },
-    null,
-    2,
-  );
+  const CONTENT_LIMIT = 160;
+  const truncate = (text: string) =>
+    text.length > CONTENT_LIMIT ? `${text.slice(0, CONTENT_LIMIT)}…` : text;
+
+  const buildJson = (truncateContent: boolean) =>
+    JSON.stringify(
+      {
+        id: flow.id,
+        name: flow.name,
+        version: flow.version,
+        isActive: flow.isActive,
+        steps: flow.steps.map((s) => ({
+          id: s.id,
+          type: s.type,
+          order: s.order,
+          content: truncateContent ? truncate(s.content) : s.content,
+          ...(s.metadata ? { metadata: s.metadata } : {}),
+        })),
+      },
+      null,
+      2,
+    );
+
+  const json = buildJson(true);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(json);
+      await navigator.clipboard.writeText(buildJson(false));
       setCopied(true);
       toast.success('JSON copiado para a area de transferencia');
       setTimeout(() => setCopied(false), 1500);
@@ -51,7 +58,7 @@ export function JsonPreview({ flow }: Readonly<{ flow: FlowWithSteps }>) {
           {copied ? <Check className="text-success" /> : <Copy />}
         </IconButton>
       </div>
-      <pre className="h-[600px] overflow-auto p-4 font-mono text-2xs leading-relaxed text-foreground/90 scrollbar-thin">
+      <pre className="h-[600px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-2xs leading-relaxed text-foreground/90 scrollbar-thin">
         {json}
       </pre>
     </div>

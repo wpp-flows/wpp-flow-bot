@@ -69,7 +69,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         name: v.name,
         description: v.description ?? '',
         price: v.price,
-        imageUrl: v.imageUrl,
+        imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
       }),
     onSuccess: () => {
@@ -81,7 +81,12 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
 
   const update = useMutation({
     mutationFn: (v: MenuItemFormValues) =>
-      menuService.updateItem({ id: item!.id, ...v, description: v.description ?? '' }),
+      menuService.updateItem({
+        id: item!.id,
+        ...v,
+        description: v.description ?? '',
+        imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
+      }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
       toast.success('Item atualizado');

@@ -262,8 +262,8 @@ export function FlowsPage() {
           {activeFlowDetail.isLoading ? (
             <Skeleton className="h-[400px] rounded-xl" />
           ) : view === 'editor' ? (
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_460px]">
-              <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
+              <div className="min-w-0 space-y-3">
                 {steps.map((step, idx) => (
                   <div
                     key={step.id}

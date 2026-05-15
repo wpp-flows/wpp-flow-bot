@@ -4,6 +4,7 @@ import type {
     ConversationFilters,
     ConversationRepository,
     ConversationStatus,
+    FlowState,
 } from "../chat-repo";
 
 const toConversation = (row: any): Conversation => ({
@@ -20,6 +21,7 @@ const toConversation = (row: any): Conversation => ({
     lastMessageAt: row.lastMessageAt,
     botActive: row.botActive,
     currentStepId: row.currentStepId,
+    flowState: (row.flowState as FlowState | null) ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });

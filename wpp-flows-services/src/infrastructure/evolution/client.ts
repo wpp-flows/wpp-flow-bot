@@ -42,6 +42,22 @@ export interface EvolutionSendTextResponse {
     messageTimestamp?: number;
 }
 
+export interface EvolutionButton {
+    buttonId: string;
+    buttonText: { displayText: string };
+}
+
+export interface EvolutionListRow {
+    rowId: string;
+    title: string;
+    description?: string;
+}
+
+export interface EvolutionListSection {
+    title: string;
+    rows: EvolutionListRow[];
+}
+
 export class EvolutionApiError extends Error {
     constructor(
         message: string,
@@ -169,6 +185,58 @@ class EvolutionApi {
                 body: JSON.stringify({
                     number: params.number,
                     text: params.text,
+                }),
+            }
+        );
+    }
+
+    async sendButtons(params: {
+        instanceName: string;
+        number: string;
+        text: string;
+        buttons: EvolutionButton[];
+        footerText?: string;
+    }): Promise<EvolutionSendTextResponse> {
+        console.log(
+            `Evolution sendButtons → instance=${params.instanceName} number=${params.number} buttons=${params.buttons.length}`
+        );
+        return this.request<EvolutionSendTextResponse>(
+            `/message/sendButtons/${encodeURIComponent(params.instanceName)}`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    number: params.number,
+                    text: params.text,
+                    buttons: params.buttons,
+                    ...(params.footerText ? { footerText: params.footerText } : {}),
+                }),
+            }
+        );
+    }
+
+    async sendList(params: {
+        instanceName: string;
+        number: string;
+        title: string;
+        description: string;
+        buttonText: string;
+        sections: EvolutionListSection[];
+        footerText?: string;
+    }): Promise<EvolutionSendTextResponse> {
+        console.log(
+            `Evolution sendList → instance=${params.instanceName} number=${params.number} sections=${params.sections.length}`
+        );
+        return this.request<EvolutionSendTextResponse>(
+            `/message/sendList/${encodeURIComponent(params.instanceName)}`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    number: params.number,
+                    title: params.title,
+                    description: params.description,
+                    buttonText: params.buttonText,
+                    sections: params.sections,
+                    ...(params.footerText ? { footerText: params.footerText } : {}),
                 }),
             }
         );

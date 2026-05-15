@@ -13,9 +13,21 @@ export interface EvolutionMessageContent {
     documentWithCaptionMessage?: {
         message?: { documentMessage?: { caption?: string } };
     };
-    buttonsResponseMessage?: { selectedDisplayText?: string };
-    templateButtonReplyMessage?: { selectedDisplayText?: string };
-    listResponseMessage?: { title?: string; singleSelectReply?: { selectedRowId?: string } };
+    buttonsResponseMessage?: {
+        selectedDisplayText?: string;
+        selectedButtonId?: string;
+    };
+    templateButtonReplyMessage?: {
+        selectedDisplayText?: string;
+        selectedId?: string;
+    };
+    listResponseMessage?: {
+        title?: string;
+        singleSelectReply?: { selectedRowId?: string };
+    };
+    interactiveResponseMessage?: {
+        nativeFlowResponseMessage?: { paramsJson?: string; name?: string };
+    };
     ephemeralMessage?: { message?: EvolutionMessageContent };
     viewOnceMessage?: { message?: EvolutionMessageContent };
     viewOnceMessageV2?: { message?: EvolutionMessageContent };
@@ -35,6 +47,25 @@ export interface EvolutionUpdate {
 
 export function extractText(msg: EvolutionMessage): string | null {
     return extractFromContent(msg.message);
+}
+
+export function extractSelectionId(msg: EvolutionMessage): string | null {
+    return extractSelectionFromContent(msg.message);
+}
+
+function extractSelectionFromContent(
+    content: EvolutionMessageContent | undefined
+): string | null {
+    if (!content) return null;
+    return (
+        content.buttonsResponseMessage?.selectedButtonId ??
+        content.templateButtonReplyMessage?.selectedId ??
+        content.listResponseMessage?.singleSelectReply?.selectedRowId ??
+        extractSelectionFromContent(content.ephemeralMessage?.message) ??
+        extractSelectionFromContent(content.viewOnceMessage?.message) ??
+        extractSelectionFromContent(content.viewOnceMessageV2?.message) ??
+        null
+    );
 }
 
 function extractFromContent(
