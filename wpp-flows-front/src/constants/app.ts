@@ -25,6 +25,10 @@ export const ROUTES = {
   menu: '/menu',
   flows: '/flows',
   conversations: '/conversations',
+  orders: '/orders',
+  wallet: '/wallet',
+  promotions: '/promotions',
+  notifications: '/notifications',
   settings: '/settings',
 } as const;
 

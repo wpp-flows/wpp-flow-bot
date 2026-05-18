@@ -42,22 +42,6 @@ export interface EvolutionSendTextResponse {
     messageTimestamp?: number;
 }
 
-export interface EvolutionButton {
-    buttonId: string;
-    buttonText: { displayText: string };
-}
-
-export interface EvolutionListRow {
-    rowId: string;
-    title: string;
-    description?: string;
-}
-
-export interface EvolutionListSection {
-    title: string;
-    rows: EvolutionListRow[];
-}
-
 export class EvolutionApiError extends Error {
     constructor(
         message: string,
@@ -170,6 +154,36 @@ class EvolutionApi {
         );
     }
 
+    /**
+     * Sends a typing/recording presence to the customer. Used by the flow
+     * runner to make outbound messages feel more natural — fire this with
+     * presence="composing" and the bot shows as "digitando…" on WhatsApp.
+     *
+     * Best-effort: not every Evolution version supports it, and the API never
+     * needs to succeed for the actual message to go through.
+     */
+    async sendPresence(params: {
+        instanceName: string;
+        number: string;
+        presence: "composing" | "recording" | "paused" | "available" | "unavailable";
+        delayMs?: number;
+    }): Promise<unknown> {
+        return this.request<unknown>(
+            `/chat/sendPresence/${encodeURIComponent(params.instanceName)}`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    number: params.number,
+                    options: {
+                        delay: params.delayMs ?? 1500,
+                        presence: params.presence,
+                        number: params.number,
+                    },
+                }),
+            },
+        );
+    }
+
     async sendText(params: {
         instanceName: string;
         number: string;
@@ -190,57 +204,6 @@ class EvolutionApi {
         );
     }
 
-    async sendButtons(params: {
-        instanceName: string;
-        number: string;
-        text: string;
-        buttons: EvolutionButton[];
-        footerText?: string;
-    }): Promise<EvolutionSendTextResponse> {
-        console.log(
-            `Evolution sendButtons → instance=${params.instanceName} number=${params.number} buttons=${params.buttons.length}`
-        );
-        return this.request<EvolutionSendTextResponse>(
-            `/message/sendButtons/${encodeURIComponent(params.instanceName)}`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    number: params.number,
-                    text: params.text,
-                    buttons: params.buttons,
-                    ...(params.footerText ? { footerText: params.footerText } : {}),
-                }),
-            }
-        );
-    }
-
-    async sendList(params: {
-        instanceName: string;
-        number: string;
-        title: string;
-        description: string;
-        buttonText: string;
-        sections: EvolutionListSection[];
-        footerText?: string;
-    }): Promise<EvolutionSendTextResponse> {
-        console.log(
-            `Evolution sendList → instance=${params.instanceName} number=${params.number} sections=${params.sections.length}`
-        );
-        return this.request<EvolutionSendTextResponse>(
-            `/message/sendList/${encodeURIComponent(params.instanceName)}`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    number: params.number,
-                    title: params.title,
-                    description: params.description,
-                    buttonText: params.buttonText,
-                    sections: params.sections,
-                    ...(params.footerText ? { footerText: params.footerText } : {}),
-                }),
-            }
-        );
-    }
 }
 
 function safeJson(text: string) {

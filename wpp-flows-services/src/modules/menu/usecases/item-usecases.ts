@@ -26,6 +26,7 @@ export class CreateItemUseCase {
         price: number;
         imageUrl?: string;
         available?: boolean;
+        availableDaysOfWeek?: number[];
     }): Promise<MenuItem> {
         const category = await this.categoryRepo.findByIdInOrg(
             input.organizationId,
@@ -53,6 +54,7 @@ export class UpdateItemUseCase {
         price?: number;
         imageUrl?: string | null;
         available?: boolean;
+        availableDaysOfWeek?: number[];
     }): Promise<MenuItem> {
         const existing = await this.itemRepo.findByIdInOrg(
             input.organizationId,
@@ -75,6 +77,7 @@ export class UpdateItemUseCase {
             price: input.price,
             imageUrl: input.imageUrl,
             available: input.available,
+            availableDaysOfWeek: input.availableDaysOfWeek,
         });
     }
 }

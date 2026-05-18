@@ -1,10 +1,21 @@
 import { ConflictError, NotFoundError } from "@/shared/exceptions/http";
-import type { Organization, OrganizationRepository } from "../repositories/organization-repo";
+import type {
+    NotificationPreferences,
+    Organization,
+    OrganizationRepository,
+    PayoutPixKeyType,
+} from "../repositories/organization-repo";
 
 export interface UpdateOrganizationInput {
     ownerId: string;
     name?: string;
     slug?: string;
+    mercadoPagoAccessToken?: string | null;
+    mercadoPagoPublicKey?: string | null;
+    mercadoPagoWebhookSecret?: string | null;
+    payoutPixKey?: string | null;
+    payoutPixKeyType?: PayoutPixKeyType | null;
+    notificationPreferences?: NotificationPreferences;
 }
 
 export class UpdateOrganizationUseCase {
@@ -19,6 +30,15 @@ export class UpdateOrganizationUseCase {
             if (conflict) throw new ConflictError("Slug already taken.");
         }
 
-        return this.repo.update(org.id, { name: input.name, slug: input.slug });
+        return this.repo.update(org.id, {
+            name: input.name,
+            slug: input.slug,
+            mercadoPagoAccessToken: input.mercadoPagoAccessToken,
+            mercadoPagoPublicKey: input.mercadoPagoPublicKey,
+            mercadoPagoWebhookSecret: input.mercadoPagoWebhookSecret,
+            payoutPixKey: input.payoutPixKey,
+            payoutPixKeyType: input.payoutPixKeyType,
+            notificationPreferences: input.notificationPreferences,
+        });
     }
 }

@@ -8,11 +8,25 @@ export interface User {
   updatedAt: string;
 }
 
+export type PayoutPixKeyType = 'cpf' | 'cnpj' | 'email' | 'phone' | 'random';
+
+export interface NotificationPreferences {
+  newOrders: boolean;
+  botDisconnects: boolean;
+  idleConversations: boolean;
+}
+
 export interface Organization {
   id: string;
   name: string;
   slug: string;
   ownerId: string;
+  mercadoPagoAccessToken: string | null;
+  mercadoPagoPublicKey: string | null;
+  mercadoPagoWebhookSecret: string | null;
+  payoutPixKey: string | null;
+  payoutPixKeyType: PayoutPixKeyType | null;
+  notificationPreferences: NotificationPreferences;
   createdAt: string;
   updatedAt: string;
 }

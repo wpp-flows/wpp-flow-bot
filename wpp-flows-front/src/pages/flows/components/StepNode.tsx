@@ -1,4 +1,5 @@
-import { GripVertical, Trash2, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { useRef } from 'react';
+import { GripVertical, Trash2, ChevronDown, ChevronRight, Plus, X, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
@@ -7,6 +8,7 @@ import { Badge, type BadgeProps } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { FlowStep, FlowStepOption, FlowStepType } from '@/types';
 import { cn, generateId } from '@/lib/utils';
+import { FLOW_VARIABLES, formatVariable } from '../flow-variables';
 
 interface StepNodeProps {
   step: FlowStep;
@@ -27,7 +29,8 @@ const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone'];
   MESSAGE: {
     label: 'Mensagem',
     tone: 'info',
-    description: 'Envia uma mensagem de texto simples para o cliente.',
+    description:
+      'Envia uma mensagem de texto. Se houver outra mensagem logo após (Mensagem ou Pagamento), o bot envia em sequência sem precisar de resposta do cliente.',
   },
   MENU: {
     label: 'Menu',
@@ -46,6 +49,12 @@ const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone'];
     tone: 'destructive',
     description: 'Envia instruções de pagamento ou um link configurado em metadata.paymentLink.',
   },
+  INPUT: {
+    label: 'Entrada do cliente',
+    tone: 'warning',
+    description:
+      'Envia a mensagem como pergunta e captura a próxima resposta digitada do cliente no campo escolhido (ex: observação, endereço). Disponível em mensagens seguintes via {{input.<campo>}}.',
+  },
 };
 
 const getOptions = (step: FlowStep): FlowStepOption[] => {
@@ -59,6 +68,18 @@ const setOptions = (step: FlowStep, options: FlowStepOption[]): FlowStep => ({
 });
 
 const hasOptions = (step: FlowStep): boolean => getOptions(step).length > 0;
+
+const getFieldKey = (step: FlowStep): string => {
+  const key = (step.metadata as { fieldKey?: unknown } | null)?.fieldKey;
+  return typeof key === 'string' ? key : '';
+};
+
+const setFieldKey = (step: FlowStep, fieldKey: string): FlowStep => ({
+  ...step,
+  metadata: { ...(step.metadata ?? {}), fieldKey },
+});
+
+const COMMON_FIELD_KEYS = ['observation', 'address', 'note'] as const;
 
 export function StepNode({
   step,
@@ -76,10 +97,35 @@ export function StepNode({
 }: Readonly<StepNodeProps>) {
   const meta = TYPE_META[step.type];
   const supportsOptions = step.type === 'MENU';
+  const isInput = step.type === 'INPUT';
   const options = getOptions(step);
   const usesMenuCategories = supportsOptions && menuCategoryOptions.length > 0;
   const visibleOptions = usesMenuCategories ? menuCategoryOptions : options;
   const headerLabel = `Passo ${String(index + 1).padStart(2, '0')}`;
+  const fieldKey = getFieldKey(step);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const insertVariable = (key: string) => {
+    const token = formatVariable(key);
+    const el = textareaRef.current;
+    if (!el) {
+      onChange({ ...step, content: `${step.content}${token}` });
+      return;
+    }
+    const start = el.selectionStart ?? step.content.length;
+    const end = el.selectionEnd ?? start;
+    const before = step.content.slice(0, start);
+    const after = step.content.slice(end);
+    const nextContent = `${before}${token}${after}`;
+    onChange({ ...step, content: nextContent });
+    // Restore focus + caret after React's controlled re-render.
+    requestAnimationFrame(() => {
+      if (!textareaRef.current) return;
+      const caret = start + token.length;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(caret, caret);
+    });
+  };
 
   const updateOption = (id: string, patch: Partial<FlowStepOption>) => {
     onChange(setOptions(step, options.map((o) => (o.id === id ? { ...o, ...patch } : o))));
@@ -163,6 +209,10 @@ export function StepNode({
                   onChange(setOptions({ ...step, type: nextType }, menuCategoryOptions));
                   return;
                 }
+                if (nextType === 'INPUT' && !getFieldKey(step)) {
+                  onChange(setFieldKey({ ...step, type: nextType }, 'observation'));
+                  return;
+                }
                 onChange({ ...step, type: nextType });
               }}
             >
@@ -170,22 +220,73 @@ export function StepNode({
               <option value="MENU">Menu</option>
               <option value="CONFIRMATION">Confirmação</option>
               <option value="PAYMENT">Pagamento</option>
+              <option value="INPUT">Entrada do cliente</option>
             </Select>
           </label>
 
           <p className="text-2xs text-muted-foreground">{meta.description}</p>
 
+          {isInput ? (
+            <label className="block space-y-1.5">
+              <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Campo a salvar
+              </span>
+              <Input
+                value={fieldKey}
+                placeholder="observation"
+                onChange={(e) => onChange(setFieldKey(step, e.target.value))}
+                list={`field-key-suggestions-${step.id}`}
+              />
+              <datalist id={`field-key-suggestions-${step.id}`}>
+                {COMMON_FIELD_KEYS.map((k) => (
+                  <option key={k} value={k} />
+                ))}
+              </datalist>
+              <span className="text-2xs text-muted-foreground">
+                Identificador usado em <code className="rounded bg-muted px-1 py-0.5 font-mono">{`{{input.${fieldKey || 'campo'}}}`}</code> nos passos seguintes.
+              </span>
+            </label>
+          ) : null}
+
           <label className="block space-y-1.5">
             <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Conteúdo da mensagem
+              {isInput ? 'Pergunta para o cliente' : 'Conteúdo da mensagem'}
             </span>
             <Textarea
+              ref={textareaRef}
               rows={4}
               value={step.content}
               onChange={(e) => onChange({ ...step, content: e.target.value })}
-              placeholder="Use {{customer_name}}, {{order_summary}}, {{order_total}} como variáveis."
+              placeholder={
+                isInput
+                  ? 'Ex: Alguma observação no seu pedido?'
+                  : 'Ex: Olá {{customer_name}}, segue o cardápio!'
+              }
             />
           </label>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Tag className="h-3 w-3" />
+              Variáveis disponíveis
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {FLOW_VARIABLES.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  onClick={() => insertVariable(v.key)}
+                  title={v.description}
+                  className="rounded-full border border-border bg-muted/40 px-2 py-0.5 font-mono text-2xs text-muted-foreground transition hover:border-primary hover:bg-primary-soft hover:text-primary"
+                >
+                  {`{{${v.key}}}`}
+                </button>
+              ))}
+            </div>
+            <p className="text-2xs text-muted-foreground">
+              Clique para inserir no cursor. Variáveis sem valor no momento ficam vazias.
+            </p>
+          </div>
 
           {supportsOptions ? (
             <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/20 p-3">

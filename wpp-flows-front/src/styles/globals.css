@@ -58,6 +58,11 @@
     --sidebar-border: 220 13% 91%;
 
     --radius: 0.75rem;
+    --chart-1: var(--primary);
+    --chart-2: var(--success);
+    --chart-3: var(--info);
+    --chart-4: var(--warning);
+    --chart-5: var(--destructive);
   }
 
   .dark {
@@ -76,28 +81,28 @@
     --accent: 224 12% 14%;
     --accent-foreground: 220 14% 96%;
 
-    --primary: 152 56% 48%;
+    --primary: 152 64% 56%;
     --primary-foreground: 224 14% 6%;
-    --primary-soft: 152 36% 14%;
+    --primary-soft: 152 48% 18%;
 
     --secondary: 224 12% 14%;
     --secondary-foreground: 220 14% 96%;
 
-    --success: 152 56% 48%;
+    --success: 152 64% 56%;
     --success-foreground: 224 14% 6%;
-    --success-soft: 152 36% 14%;
+    --success-soft: 152 48% 18%;
 
-    --warning: 38 92% 58%;
+    --warning: 38 96% 62%;
     --warning-foreground: 224 14% 6%;
-    --warning-soft: 38 30% 16%;
+    --warning-soft: 38 48% 20%;
 
-    --destructive: 358 75% 60%;
+    --destructive: 358 88% 66%;
     --destructive-foreground: 0 0% 100%;
-    --destructive-soft: 358 40% 16%;
+    --destructive-soft: 358 52% 22%;
 
-    --info: 212 96% 58%;
+    --info: 212 96% 64%;
+    --info-soft: 212 52% 22%;
     --info-foreground: 224 14% 6%;
-    --info-soft: 212 40% 16%;
 
     --border: 224 12% 16%;
     --input: 224 12% 16%;
@@ -107,6 +112,12 @@
     --sidebar-foreground: 220 14% 96%;
     --sidebar-accent: 224 12% 12%;
     --sidebar-border: 224 12% 14%;
+
+    --chart-1: var(--primary);
+    --chart-2: var(--success);
+    --chart-3: var(--info);
+    --chart-4: var(--warning);
+    --chart-5: var(--destructive);
   }
 }
 

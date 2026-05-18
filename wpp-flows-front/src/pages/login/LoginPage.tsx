@@ -28,8 +28,8 @@ export function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'demo@bellini.com',
-      password: 'mesademo2026',
+      email: 'demo@famigliarossi.com.br',
+      password: 'pizzaria2026',
       remember: true,
     },
   });

@@ -2,6 +2,7 @@ import { apiCall } from '@/instances/api';
 import type {
   AuthSession,
   LoginCredentials,
+  NotificationPreferences,
   Organization,
   SignUpCredentials,
   User,
@@ -59,10 +60,32 @@ export const authService = {
     });
   },
 
-  async updateOrganization(payload: { name?: string; slug?: string }): Promise<Organization> {
+  async updateOrganization(payload: {
+    name?: string;
+    slug?: string;
+    mercadoPagoAccessToken?: string | null;
+    mercadoPagoPublicKey?: string | null;
+    mercadoPagoWebhookSecret?: string | null;
+    payoutPixKey?: string | null;
+    payoutPixKeyType?: Organization['payoutPixKeyType'];
+    notificationPreferences?: NotificationPreferences;
+  }): Promise<Organization> {
     return apiCall<Organization>({
       endpoint: '/api/organization',
       method: 'PATCH',
+      body: payload,
+    });
+  },
+
+  /**
+   * Updates the current user's display fields via better-auth's update-user
+   * endpoint. Only `name` and `image` are exposed by better-auth's default
+   * config; email changes require the change-email flow which we don't surface here.
+   */
+  async updateUser(payload: { name?: string; image?: string }): Promise<User> {
+    return apiCall<User>({
+      endpoint: '/api/auth/update-user',
+      method: 'POST',
       body: payload,
     });
   },

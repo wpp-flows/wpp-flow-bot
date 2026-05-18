@@ -3,6 +3,8 @@ import type {
     ConversationRepository,
     MessageRepository,
 } from "@/modules/chat/repositories/chat-repo";
+import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
+import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { FlowRunner } from "./flow-runner";
 import {
     normalizeEventName,
@@ -22,7 +24,9 @@ export class HandleEvolutionEventUseCase {
         private readonly botRepo: BotRepository,
         private readonly conversationRepo: ConversationRepository,
         private readonly messageRepo: MessageRepository,
+        private readonly customerRepo: CustomerRepository,
         private readonly flowRunner: FlowRunner,
+        private readonly notificationEmitter: NotificationEmitter,
         private readonly strategies: WebhookEventStrategy[]
     ) {
         this.registry = new Map(this.strategies.map((s) => [s.eventName, s]));
@@ -46,7 +50,9 @@ export class HandleEvolutionEventUseCase {
                 botRepo: this.botRepo,
                 conversationRepo: this.conversationRepo,
                 messageRepo: this.messageRepo,
+                customerRepo: this.customerRepo,
                 flowRunner: this.flowRunner,
+                notificationEmitter: this.notificationEmitter,
             },
             event.data
         );

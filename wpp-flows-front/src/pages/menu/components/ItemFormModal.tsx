@@ -16,6 +16,8 @@ import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { MenuCategory, MenuItem } from '@/types';
 
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -44,10 +46,12 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
       price: 0,
       imageUrl: '',
       available: true,
+      availableDaysOfWeek: [],
     },
   });
 
   const available = watch('available');
+  const availableDaysOfWeek = watch('availableDaysOfWeek') ?? [];
 
   useEffect(() => {
     if (open) {
@@ -58,6 +62,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         price: item?.price === undefined ? 0 : Number(item.price),
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
+        availableDaysOfWeek: item?.availableDaysOfWeek ?? [],
       });
     }
   }, [open, item, defaultCategoryId, categories, reset]);
@@ -71,6 +76,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         price: v.price,
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
+        availableDaysOfWeek: v.availableDaysOfWeek ?? [],
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
@@ -86,6 +92,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         ...v,
         description: v.description ?? '',
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
+        availableDaysOfWeek: v.availableDaysOfWeek ?? [],
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
@@ -202,15 +209,46 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         </FormField>
         <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
           <div>
-            <p className="text-sm font-medium">Disponivel</p>
+            <p className="text-sm font-medium">Disponível</p>
             <p className="text-2xs text-muted-foreground">
-              Itens ocultos permanecem no menu, mas nao sao oferecidos aos clientes.
+              Itens ocultos permanecem no menu, mas não são oferecidos aos clientes.
             </p>
           </div>
           <Switch
             checked={!!available}
             onChange={(e) => setValue('available', e.target.checked, { shouldDirty: true })}
           />
+        </div>
+
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
+          <p className="text-sm font-medium">Dias disponíveis</p>
+          <p className="text-2xs text-muted-foreground">
+            Selecione os dias da semana em que este item aparece. Vazio = todos os dias.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DAY_LABELS.map((label, idx) => {
+              const active = availableDaysOfWeek.includes(idx);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    const next = active
+                      ? availableDaysOfWeek.filter((d) => d !== idx)
+                      : [...availableDaysOfWeek, idx].sort((a, b) => a - b);
+                    setValue('availableDaysOfWeek', next, { shouldDirty: true });
+                  }}
+                  className={
+                    active
+                      ? 'rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-medium text-primary transition'
+                      : 'rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground'
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </form>
     </Modal>

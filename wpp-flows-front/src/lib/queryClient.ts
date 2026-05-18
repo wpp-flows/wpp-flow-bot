@@ -41,6 +41,22 @@ export const queryKeys = {
   },
   dashboard: {
     stats: ['dashboard', 'stats'] as const,
+    overview: ['dashboard', 'overview'] as const,
+  },
+  orders: {
+    all: ['orders'] as const,
+    detail: (id: string) => ['orders', id] as const,
+  },
+  wallet: {
+    me: ['wallet'] as const,
+    transactions: ['wallet', 'transactions'] as const,
+  },
+  promotions: {
+    all: ['promotions'] as const,
+  },
+  notifications: {
+    recent: ['notifications', 'recent'] as const,
+    list: ['notifications', 'list'] as const,
   },
 } as const;
 

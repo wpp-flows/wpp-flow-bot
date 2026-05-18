@@ -11,6 +11,7 @@ const toConversation = (row: any): Conversation => ({
     id: row.id,
     organizationId: row.organizationId,
     botId: row.botId,
+    customerId: row.customerId ?? null,
     remoteJid: row.remoteJid,
     contactName: row.contactName,
     contactPhone: row.contactPhone,

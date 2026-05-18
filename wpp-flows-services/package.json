@@ -1,6 +1,6 @@
 {
   "name": "wpp-flows-services",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "prisma:studio": "npx prisma studio",
     "prisma:push": "prisma db push",
     "prisma:generate": "npx prisma generate",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "npx prisma db seed"
   },
   "keywords": [],
   "author": "",

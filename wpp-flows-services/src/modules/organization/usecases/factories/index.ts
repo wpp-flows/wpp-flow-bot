@@ -5,6 +5,8 @@ import { UpdateOrganizationUseCase } from "../update-organization";
 
 const repo = new PrismaOrganizationRepository();
 
+export { repo as organizationRepo };
+
 export function makeGetOrganization() {
     return new GetOrganizationUseCase(repo);
 }

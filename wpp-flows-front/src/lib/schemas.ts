@@ -60,12 +60,16 @@ export const menuItemSchema = z.object({
     .optional()
     .refine((v) => !v || /^https?:\/\//.test(v), 'Must be a valid URL'),
   available: z.boolean().optional().default(true),
+  availableDaysOfWeek: z
+    .array(z.number().int().min(0).max(6))
+    .optional()
+    .default([]),
 });
 export type MenuItemFormValues = z.infer<typeof menuItemSchema>;
 
 export const flowStepSchema = z.object({
   id: z.string().optional(),
-  type: z.enum(['MESSAGE', 'MENU', 'CONFIRMATION', 'PAYMENT']),
+  type: z.enum(['MESSAGE', 'MENU', 'CONFIRMATION', 'PAYMENT', 'INPUT']),
   content: z.string().min(1).max(800),
   order: z.number().int().nonnegative().optional(),
   metadata: z.record(z.string(), z.any()).nullable().optional(),
