@@ -17,6 +17,8 @@ export interface MenuItem {
   price: string;
   imageUrl?: string | null;
   available: boolean;
+  /** 0–6 (Sunday..Saturday). Empty = available every day. */
+  availableDaysOfWeek: number[];
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +42,7 @@ export interface CreateItemPayload {
   price: number;
   imageUrl?: string;
   available?: boolean;
+  availableDaysOfWeek?: number[];
 }
 
 export interface UpdateItemPayload {
@@ -50,4 +53,5 @@ export interface UpdateItemPayload {
   price?: number;
   imageUrl?: string | null;
   available?: boolean;
+  availableDaysOfWeek?: number[];
 }

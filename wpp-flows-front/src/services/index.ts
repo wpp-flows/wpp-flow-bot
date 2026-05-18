@@ -4,3 +4,7 @@ export { menuService } from './menuService';
 export { flowService } from './flowService';
 export { chatService } from './chatService';
 export { dashboardService } from './dashboardService';
+export { orderService } from './orderService';
+export { walletService } from './walletService';
+export { promotionService } from './promotionService';
+export { notificationService } from './notificationService';

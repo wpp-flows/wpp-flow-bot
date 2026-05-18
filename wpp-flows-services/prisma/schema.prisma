@@ -82,6 +82,17 @@ model Organization {
   slug      String   @unique
   ownerId   String   @unique
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Mercado Pago access token (Brazilian PaaS test/prod). Per-org so each
+  /// restaurant collects into its own MP account.
+  mercadoPagoAccessToken String?
+  mercadoPagoPublicKey   String?
+  /// Webhook validation secret (used by /webhook/mercadopago to confirm origin).
+  mercadoPagoWebhookSecret String?
+  /// PIX key (cpf/cnpj/email/phone/random) where the wallet pays out withdrawals.
+  payoutPixKey           String?
+  payoutPixKeyType       String?
+  /// Per-org notification toggles (new orders, bot disconnects, idle convs).
+  notificationPreferences Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -90,6 +101,11 @@ model Organization {
   items         MenuItem[]
   flows         Flow[]
   conversations Conversation[]
+  customers     Customer[]
+  orders        Order[]
+  wallet        Wallet?
+  promotions    Promotion[]
+  notifications Notification[]
 
   @@map("organization")
 }
@@ -150,9 +166,14 @@ model MenuItem {
   price          Decimal  @db.Decimal(10, 2)
   imageUrl       String?
   available      Boolean  @default(true)
+  /// 0–6 (Sunday..Saturday). Empty array means available every day. When set,
+  /// the bot only lists this item on the matching weekdays.
+  availableDaysOfWeek Int[] @default([])
   position       Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  featuredInPromotions Promotion[]
 
   @@index([organizationId])
   @@index([categoryId])
@@ -183,6 +204,7 @@ enum FlowStepType {
   MENU
   CONFIRMATION
   PAYMENT
+  INPUT
 }
 
 model FlowStep {
@@ -212,6 +234,8 @@ model Conversation {
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   botId           String
   bot             Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  customerId      String?
+  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   remoteJid       String
   contactName     String
   contactPhone    String
@@ -227,11 +251,177 @@ model Conversation {
   updatedAt       DateTime @updatedAt
 
   messages Message[]
+  orders   Order[]
 
   @@unique([botId, remoteJid])
   @@index([organizationId])
   @@index([botId])
+  @@index([customerId])
   @@map("conversation")
+}
+
+model Customer {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  phone          String
+  orderCount     Int          @default(0)
+  /// Snapshot of recent addresses the customer has used. Newest first.
+  savedAddresses Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  conversations Conversation[]
+  orders        Order[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+  @@map("customer")
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  conversationId  String?
+  conversation    Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  /// Auto-incrementing display number scoped to the organization. Populated by the use case.
+  sequence        Int
+  /// Snapshot of items at the time of order, shape matches FlowCartItem.
+  items           Json
+  subtotal        Decimal       @db.Decimal(10, 2)
+  discount        Decimal?      @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(RECEIVED)
+  observation     String?
+  address         String?
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentProvider String?
+  paymentProviderRef String?
+  paymentLink     String?
+  receiptUrl      String?
+  /// Snapshot of the applied promotion ids (if any) so we can audit later.
+  appliedPromotionIds Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  walletTransactions WalletTransaction[]
+
+  @@unique([organizationId, sequence])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([conversationId])
+  @@index([organizationId, status])
+  @@map("order")
+}
+
+model Wallet {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  balance        Decimal      @default(0) @db.Decimal(10, 2)
+  currency       String       @default("BRL")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@map("wallet")
+}
+
+enum WalletTxKind {
+  CREDIT
+  WITHDRAWAL
+}
+
+enum WalletTxStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+model WalletTransaction {
+  id        String         @id @default(uuid())
+  walletId  String
+  wallet    Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  kind      WalletTxKind
+  amount    Decimal        @db.Decimal(10, 2)
+  status    WalletTxStatus @default(COMPLETED)
+  orderId   String?
+  order     Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  note      String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([walletId])
+  @@index([walletId, status])
+  @@map("wallet_transaction")
+}
+
+enum PromotionKind {
+  /// Discount applied when the customer hits the configured order number
+  /// (e.g. every 5th order: 10% off).
+  NTH_ORDER_DISCOUNT
+  /// Free-text "promotion of the day" message inserted before the menu.
+  DAILY_MESSAGE
+}
+
+enum PromotionDiscountType {
+  PERCENT
+  FIXED
+}
+
+model Promotion {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind           PromotionKind
+  name           String
+  isActive       Boolean       @default(true)
+  /// NTH_ORDER_DISCOUNT: every Nth order qualifies.
+  nthOrder       Int?
+  /// NTH_ORDER_DISCOUNT: discount amount (% or fixed BRL).
+  discountType   PromotionDiscountType?
+  discountValue  Decimal?      @db.Decimal(10, 2)
+  /// DAILY_MESSAGE: 0–6 (sunday..saturday) days the message fires. Empty = every day.
+  daysOfWeek     Int[]         @default([])
+  /// Message sent before showing the menu (DAILY_MESSAGE only).
+  message        String?
+  /// DAILY_MESSAGE: optional menu item highlighted as the "item do dia". The
+  /// flow runner appends item details to the greeting message and, when
+  /// `promotionalPrice` is set, discounts the price difference at checkout.
+  featuredItemId    String?
+  featuredItem      MenuItem? @relation(fields: [featuredItemId], references: [id], onDelete: SetNull)
+  promotionalPrice  Decimal?  @db.Decimal(10, 2)
+  /// NTH_ORDER_DISCOUNT: optional teaser shown the order *before* the qualifying one
+  /// (e.g. shown on the 3rd order announcing the 5th-order bonus).
+  teaserOrderOffset Int?
+  teaserMessage     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@index([featuredItemId])
+  @@map("promotion")
 }
 
 enum MessageAuthor {
@@ -260,4 +450,31 @@ model Message {
 
   @@index([conversationId])
   @@map("message")
+}
+
+enum NotificationType {
+  NEW_ORDER
+  PAYMENT_RECEIVED
+  BOT_OFFLINE
+  IDLE_CONVERSATION
+  GENERIC
+}
+
+model Notification {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           NotificationType
+  title          String
+  body           String?
+  /// Optional deep-link inside the dashboard (e.g. "/orders/<id>").
+  link           String?
+  /// When the notification was marked as read. Read notifications are deleted
+  /// 24h after this timestamp by a lazy cleanup that runs on every list query.
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, readAt])
+  @@map("notification")
 }

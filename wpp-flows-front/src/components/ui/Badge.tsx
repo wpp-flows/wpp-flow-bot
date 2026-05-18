@@ -4,13 +4,20 @@ import { cn } from '@/lib/utils';
 type Tone = 'neutral' | 'primary' | 'success' | 'warning' | 'destructive' | 'info';
 type Size = 'sm' | 'md';
 
+/**
+ * Each tone uses its semantic *-soft surface and the bright accent color for text.
+ * In dark mode the same tokens already resolve to a darker surface + brighter accent,
+ * so the contrast holds without needing a `dark:` override (the previous
+ * `dark:text-*-foreground` made the text near-black against a dark surface and
+ * caused the "dull" look in the flow builder badges).
+ */
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-muted text-muted-foreground',
-  primary: 'bg-primary-soft text-primary dark:text-primary-foreground',
-  success: 'bg-success-soft text-success dark:text-success-foreground',
-  warning: 'bg-warning-soft text-warning dark:text-warning-foreground',
-  destructive: 'bg-destructive-soft text-destructive dark:text-destructive-foreground',
-  info: 'bg-info-soft text-info dark:text-info-foreground',
+  neutral: 'bg-muted text-foreground',
+  primary: 'bg-primary-soft text-primary',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warning-soft text-warning',
+  destructive: 'bg-destructive-soft text-destructive',
+  info: 'bg-info-soft text-info',
 };
 
 const SIZES: Record<Size, string> = {

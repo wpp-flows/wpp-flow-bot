@@ -1,15 +1,15 @@
-import { Bell, Menu, Moon, Search, Sun, LogOut } from 'lucide-react';
+import { Menu, Moon, Search, Sun, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/IconButton';
 import { Input } from '@/components/ui/Input';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/constants/app';
+import { NotificationsBell } from './NotificationsBell';
 
 export function Topbar() {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
@@ -37,12 +37,7 @@ export function Topbar() {
           <IconButton variant="ghost" onClick={toggle} aria-label="Toggle theme">
             {resolved === 'dark' ? <Sun /> : <Moon />}
           </IconButton>
-          <IconButton variant="ghost" aria-label="Notifications">
-            <span className="relative">
-              <Bell />
-              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-destructive ring-2 ring-background" />
-            </span>
-          </IconButton>
+          <NotificationsBell />
 
         <div className="relative ml-2">
           <button

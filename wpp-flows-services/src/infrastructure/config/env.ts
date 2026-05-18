@@ -10,7 +10,12 @@ const schema = z.object({
     CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
     EVOLUTION_API_URL: z.string(),
     EVOLUTION_API_KEY: z.string(),
-    EVOLUTION_WEBHOOK_URL: z.string().optional()
+    EVOLUTION_WEBHOOK_URL: z.string().optional(),
+    /**
+     * Public base URL for this API, used by Mercado Pago to call us back.
+     * Required only when MP is configured for an organization.
+     */
+    PUBLIC_API_URL: z.string().optional(),
 })
 
 const parsed = schema.safeParse(process.env)

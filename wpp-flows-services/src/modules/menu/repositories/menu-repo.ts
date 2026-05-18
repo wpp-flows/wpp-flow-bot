@@ -17,6 +17,11 @@ export interface MenuItem {
     price: string;
     imageUrl: string | null;
     available: boolean;
+    /**
+     * 0–6 (Sunday..Saturday). Empty = available every day. Anything else
+     * restricts the item to those weekdays in the bot's menu.
+     */
+    availableDaysOfWeek: number[];
     position: number;
     createdAt: Date;
     updatedAt: Date;
@@ -52,6 +57,7 @@ export interface ItemRepository {
         price: number | string;
         imageUrl?: string;
         available?: boolean;
+        availableDaysOfWeek?: number[];
         position: number;
     }): Promise<MenuItem>;
     update(
@@ -63,6 +69,7 @@ export interface ItemRepository {
             price?: number | string;
             imageUrl?: string | null;
             available?: boolean;
+            availableDaysOfWeek?: number[];
             position?: number;
         }
     ): Promise<MenuItem>;

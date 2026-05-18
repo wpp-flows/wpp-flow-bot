@@ -14,6 +14,8 @@ export const reorderCategoriesSchema = z.object({
     orderedIds: z.array(z.uuid()).min(1),
 });
 
+const daysOfWeekSchema = z.array(z.number().int().min(0).max(6));
+
 export const createItemSchema = z.object({
     categoryId: z.uuid(),
     name: z.string().min(1).max(120),
@@ -21,6 +23,7 @@ export const createItemSchema = z.object({
     price: z.number().nonnegative(),
     imageUrl: z.url().optional(),
     available: z.boolean().optional(),
+    availableDaysOfWeek: daysOfWeekSchema.optional(),
 });
 
 export const updateItemSchema = z.object({
@@ -30,6 +33,7 @@ export const updateItemSchema = z.object({
     price: z.number().nonnegative().optional(),
     imageUrl: z.url().nullable().optional(),
     available: z.boolean().optional(),
+    availableDaysOfWeek: daysOfWeekSchema.optional(),
 });
 
 export const reorderItemsSchema = z.object({

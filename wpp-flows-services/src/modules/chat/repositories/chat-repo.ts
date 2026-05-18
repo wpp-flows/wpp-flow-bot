@@ -16,12 +16,37 @@ export interface FlowState {
     selectedCategoryId?: string | null;
     cart: FlowCartItem[];
     lastOptionMap?: Record<string, string>;
+    /**
+     * Free-text answers captured by INPUT steps, keyed by metadata.fieldKey
+     * (e.g. "observation", "address"). Exposed to subsequent steps as
+     * `{{input.<key>}}` template variables.
+     */
+    inputs?: Record<string, string>;
+    /**
+     * Id of an INPUT step that is currently waiting for the customer's typed
+     * reply. While set, the runner treats the next inbound text as the answer
+     * regardless of any list/button selection id attached to it.
+     */
+    awaitingInputForStepId?: string | null;
+    /**
+     * Id of the most recently created Order for this conversation, set when a
+     * CONFIRMATION step finalizes. Available in subsequent steps so they can
+     * reference the order (e.g. "Pedido #{{order_number}}").
+     */
+    orderId?: string | null;
+    /**
+     * Order id we are currently waiting on a Mercado Pago webhook to clear. While
+     * set, the runner treats inbound text/selections as "still waiting" and
+     * re-sends the payment link instead of advancing the flow.
+     */
+    awaitingPaymentForOrderId?: string | null;
 }
 
 export interface Conversation {
     id: string;
     organizationId: string;
     botId: string;
+    customerId: string | null;
     remoteJid: string;
     contactName: string;
     contactPhone: string;
@@ -88,6 +113,7 @@ export interface ConversationRepository {
             botActive: boolean;
             currentStepId: string | null;
             flowState: FlowState | null;
+            customerId: string | null;
             contactName: string;
             contactAvatar: string | null;
         }>

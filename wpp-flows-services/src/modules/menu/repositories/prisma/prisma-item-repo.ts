@@ -4,6 +4,7 @@ import type { ItemRepository, MenuItem } from "../menu-repo";
 const toModel = (row: any): MenuItem => ({
     ...row,
     price: row.price.toString(),
+    availableDaysOfWeek: (row.availableDaysOfWeek as number[] | null) ?? [],
 });
 
 export class PrismaItemRepository implements ItemRepository {
@@ -41,6 +42,7 @@ export class PrismaItemRepository implements ItemRepository {
         price: number | string;
         imageUrl?: string;
         available?: boolean;
+        availableDaysOfWeek?: number[];
         position: number;
     }): Promise<MenuItem> {
         const row = await prisma.menuItem.create({
@@ -61,6 +63,7 @@ export class PrismaItemRepository implements ItemRepository {
             price?: number | string;
             imageUrl?: string | null;
             available?: boolean;
+            availableDaysOfWeek?: number[];
             position?: number;
         }
     ): Promise<MenuItem> {

@@ -4,6 +4,9 @@ import {
   UtensilsCrossed,
   Workflow,
   MessagesSquare,
+  Receipt,
+  Wallet,
+  TicketPercent,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -23,19 +26,22 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: 'Workspace',
+    title: 'Principal',
     items: [
       { label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard },
       { label: 'Bots', to: ROUTES.bots, icon: Bot },
-      { label: 'Conversations', to: ROUTES.conversations, icon: MessagesSquare },
+      { label: 'Conversas', to: ROUTES.conversations, icon: MessagesSquare },
+      { label: 'Pedidos', to: ROUTES.orders, icon: Receipt },
+      { label: 'Carteira', to: ROUTES.wallet, icon: Wallet },
     ],
   },
   {
-    title: 'Configuration',
+    title: 'Configuração',
     items: [
       { label: 'Menu', to: ROUTES.menu, icon: UtensilsCrossed },
+      { label: 'Promoções', to: ROUTES.promotions, icon: TicketPercent },
       { label: 'Flow Builder', to: ROUTES.flows, icon: Workflow },
-      { label: 'Settings', to: ROUTES.settings, icon: Settings },
+      { label: 'Configurações', to: ROUTES.settings, icon: Settings },
     ],
   },
 ];

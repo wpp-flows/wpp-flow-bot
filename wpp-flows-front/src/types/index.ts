@@ -1,6 +1,8 @@
 export type {
   User,
   Organization,
+  PayoutPixKeyType,
+  NotificationPreferences,
   AuthSession,
   LoginCredentials,
   SignUpCredentials,
@@ -32,4 +34,37 @@ export type {
   MessageAuthor,
   MessageStatus,
 } from './chat';
-export type { DashboardStats, ActivityEvent } from './dashboard';
+export type {
+  DashboardStats,
+  ActivityEvent,
+  DashboardOverview,
+  DashboardOrdersByDay,
+  DashboardStatusBucket,
+  DashboardTopItem,
+  DashboardOrderStatus,
+} from './dashboard';
+export type {
+  Order,
+  OrderItem,
+  OrderStatus,
+  OrderFilters,
+  PaymentStatus,
+} from './order';
+export type {
+  Wallet,
+  WalletTransaction,
+  WalletTxKind,
+  WalletTxStatus,
+} from './wallet';
+export type {
+  Promotion,
+  PromotionInput,
+  PromotionKind,
+  PromotionDiscountType,
+} from './promotion';
+export type {
+  Notification,
+  NotificationType,
+  NotificationRecentResponse,
+  NotificationPage,
+} from './notification';

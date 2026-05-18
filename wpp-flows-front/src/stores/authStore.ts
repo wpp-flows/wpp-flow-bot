@@ -9,6 +9,7 @@ interface AuthState {
   bootstrap: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshOrganization: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -36,5 +37,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().status !== 'authenticated') return;
     const organization = await authService.getOrganization();
     set({ organization });
+  },
+  refreshUser: async () => {
+    if (get().status !== 'authenticated') return;
+    const session = await authService.me();
+    if (session) set({ user: session.user });
   },
 }));

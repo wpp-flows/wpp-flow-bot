@@ -26,6 +26,18 @@ const FlowsPage = lazy(() => import('@/pages/flows/FlowsPage').then((m) => ({ de
 const ConversationsPage = lazy(() =>
   import('@/pages/conversations/ConversationsPage').then((m) => ({ default: m.ConversationsPage })),
 );
+const OrdersPage = lazy(() =>
+  import('@/pages/orders/OrdersPage').then((m) => ({ default: m.OrdersPage })),
+);
+const WalletPage = lazy(() =>
+  import('@/pages/wallet/WalletPage').then((m) => ({ default: m.WalletPage })),
+);
+const PromotionsPage = lazy(() =>
+  import('@/pages/promotions/PromotionsPage').then((m) => ({ default: m.PromotionsPage })),
+);
+const NotificationsPage = lazy(() =>
+  import('@/pages/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })),
+);
 const SettingsPage = lazy(() =>
   import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
@@ -63,6 +75,10 @@ export function AppRouter() {
               <Route path={ROUTES.menu} element={<MenuPage />} />
               <Route path={ROUTES.flows} element={<FlowsPage />} />
               <Route path={ROUTES.conversations} element={<ConversationsPage />} />
+              <Route path={ROUTES.orders} element={<OrdersPage />} />
+              <Route path={ROUTES.wallet} element={<WalletPage />} />
+              <Route path={ROUTES.promotions} element={<PromotionsPage />} />
+              <Route path={ROUTES.notifications} element={<NotificationsPage />} />
               <Route path={ROUTES.settings} element={<SettingsPage />} />
             </Route>
           </Route>

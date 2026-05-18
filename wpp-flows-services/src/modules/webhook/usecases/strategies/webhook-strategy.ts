@@ -3,6 +3,8 @@ import type {
     ConversationRepository,
     MessageRepository,
 } from "@/modules/chat/repositories/chat-repo";
+import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
+import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { FlowRunner } from "../flow-runner";
 
 export interface WebhookContext {
@@ -10,7 +12,9 @@ export interface WebhookContext {
     botRepo: BotRepository;
     conversationRepo: ConversationRepository;
     messageRepo: MessageRepository;
+    customerRepo: CustomerRepository;
     flowRunner: FlowRunner;
+    notificationEmitter: NotificationEmitter;
 }
 
 export interface WebhookEventStrategy {
