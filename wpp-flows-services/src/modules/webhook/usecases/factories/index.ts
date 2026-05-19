@@ -28,7 +28,7 @@ const flowStepSender = new FlowStepSender(
     }),
 );
 
-const flowRunner = new FlowRunner(
+export const flowRunner = new FlowRunner(
     flowRepo,
     conversationRepo,
     messageRepo,
