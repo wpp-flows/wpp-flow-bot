@@ -38,9 +38,7 @@ services:
       - evolution-data:/evolution/instances
 
   app:
-    build:
-      context: ./wpp-flows-services
-      dockerfile: Dockerfile
+    image: medinavs/wpp-flows-services:${APP_IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       redis:
