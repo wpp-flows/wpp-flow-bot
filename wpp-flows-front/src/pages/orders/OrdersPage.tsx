@@ -4,6 +4,7 @@ import { Receipt, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { orderService } from '@/services/orderService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
@@ -22,6 +23,19 @@ export function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Mobile-only modal that surfaces the order detail when the user taps a row
+  // below xl. On xl+ the inline detail panel is visible, so the modal stays closed.
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+
+  const openOrder = (id: string) => {
+    setSelectedId(id);
+    if (
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(min-width: 1280px)').matches
+    ) {
+      setMobileDetailOpen(true);
+    }
+  };
 
   // Always fetch every order so the filter chip counts (and the "Todos" chip)
   // stay accurate regardless of which status the user is currently viewing.
@@ -120,7 +134,7 @@ export function OrdersPage() {
               <button
                 key={order.id}
                 type="button"
-                onClick={() => setSelectedId(order.id)}
+                onClick={() => openOrder(order.id)}
                 className={cn(
                   'w-full rounded-xl border bg-card p-4 text-left transition hover:border-primary/40',
                   selected?.id === order.id ? 'border-primary' : 'border-border',
@@ -143,6 +157,25 @@ export function OrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Mobile/tablet (< xl) detail modal — opens when a row is tapped. */}
+      <Modal
+        open={mobileDetailOpen && !!selected}
+        onClose={() => setMobileDetailOpen(false)}
+        title={selected ? `Pedido ${orderNumber(selected.sequence)}` : 'Pedido'}
+        size="lg"
+      >
+        {selected ? (
+          <OrderDetail
+            order={selected}
+            onAdvance={(status) => {
+              updateStatus.mutate({ id: selected.id, status });
+              setMobileDetailOpen(false);
+            }}
+            pending={updateStatus.isPending}
+          />
+        ) : null}
+      </Modal>
     </div>
   );
 }

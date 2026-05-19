@@ -17,7 +17,9 @@ export function PageHeader({ title, description, actions, className }: PageHeade
           <p className="text-sm text-muted-foreground text-pretty max-w-2xl">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex items-center gap-2 shrink-0">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2 md:shrink-0">{actions}</div>
+      ) : null}
     </div>
   );
 }

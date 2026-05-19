@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Info, MessageCircle, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Calendar, Info, MessageCircle, RefreshCw, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -15,6 +15,7 @@ import {
   queryKeys,
 } from "@/lib/queryClient";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { cn } from "@/lib/utils";
 import type { Conversation, ConversationStatus } from "@/types";
 import { ConversationList } from "./components/ConversationList";
 import { ChatPanel } from "./components/ChatPanel";
@@ -29,6 +30,7 @@ export function ConversationsPage() {
   const [toDate, setToDate] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [manualRefreshPending, setManualRefreshPending] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
 
   const debouncedSearch = useDebouncedValue(search, 200);
 
@@ -104,6 +106,7 @@ export function ConversationsPage() {
   const onSelectConversation = useCallback(
     (id: string) => {
       setSelectedId(id);
+      setMobileView("chat");
       queryClient.setQueriesData<Conversation[]>(
         { queryKey: queryKeys.chats.all, exact: false },
         (old) => old?.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
@@ -158,8 +161,12 @@ export function ConversationsPage() {
       </div>
 
       <Card className="flex h-[calc(100vh-270px)] min-h-[560px] w-full min-w-0 overflow-hidden p-0">
-        {/* Painel esquerdo — lista e filtros */}
-        <div className="flex w-full max-w-sm shrink-0 flex-col border-r border-border">
+        <div
+          className={cn(
+            "w-full flex-col border-r border-border lg:flex lg:max-w-sm lg:shrink-0",
+            mobileView === "list" ? "flex" : "hidden lg:flex",
+          )}
+        >
           <div className="space-y-3 border-b border-border bg-card/40 p-3">
             <Input
               placeholder="Buscar conversas…"
@@ -216,14 +223,28 @@ export function ConversationsPage() {
           </div>
         </div>
 
-        {/* Painel direito — conversa selecionada */}
-        <div className="hidden min-h-0 min-w-0 flex-1 lg:flex lg:flex-col">
+        <div
+          className={cn(
+            "min-h-0 min-w-0 flex-1 lg:flex lg:flex-col",
+            mobileView === "chat" ? "flex flex-col" : "hidden lg:flex",
+          )}
+        >
           {selected ? (
-            <ChatPanel
-              conversation={selected}
-              botName={botNamesById[selected.botId]}
-              key={selected.id}
-            />
+            <>
+              <button
+                type="button"
+                onClick={() => setMobileView("list")}
+                className="flex items-center gap-1.5 border-b border-border bg-muted/30 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground lg:hidden"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Voltar para conversas
+              </button>
+              <ChatPanel
+                conversation={selected}
+                botName={botNamesById[selected.botId]}
+                key={selected.id}
+              />
+            </>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8">
               <EmptyState

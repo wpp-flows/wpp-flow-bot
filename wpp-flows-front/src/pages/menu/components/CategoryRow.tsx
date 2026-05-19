@@ -82,10 +82,26 @@ export function CategoryRow({
             <p className="text-xs text-muted-foreground truncate">{category.description}</p>
           ) : null}
         </div>
-        <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={onAddItem}>
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Full button label on >= sm, icon-only on mobile to keep the row from wrapping awkwardly. */}
+          <Button
+            size="sm"
+            variant="ghost"
+            leftIcon={<Plus />}
+            onClick={onAddItem}
+            className="hidden sm:inline-flex"
+          >
             Adicionar item
           </Button>
+          <IconButton
+            size="sm"
+            variant="ghost"
+            onClick={onAddItem}
+            aria-label="Adicionar item"
+            className="sm:hidden"
+          >
+            <Plus />
+          </IconButton>
           <IconButton size="sm" variant="ghost" onClick={onEditCategory} aria-label="Editar categoria">
             <Edit3 />
           </IconButton>
@@ -129,7 +145,10 @@ export function CategoryRow({
                     </Badge>
                   ) : null}
                 </div>
-                <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                {/* Description hidden on narrow screens so the price + actions don't push off-row. */}
+                <p className="hidden truncate text-xs text-muted-foreground sm:block">
+                  {item.description}
+                </p>
               </div>
               <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
                 {formatCurrency(Number(item.price))}
