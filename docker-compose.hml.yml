@@ -1,0 +1,66 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      SERVER_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: ${DATABASE_URL}
+      DATABASE_CONNECTION_CLIENT_NAME: evolution_exchange
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: "true"
+      CACHE_LOCAL_ENABLED: "false"
+      CONFIG_SESSION_PHONE_VERSION: 2.3000.1038839325
+      CONFIG_SESSION_PHONE_CLIENT: Chrome
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      QRCODE_LIMIT: 30
+      QRCODE_COLOR: "#198754"
+    volumes:
+      - evolution-data:/evolution/instances
+
+  app:
+    build:
+      context: ./wpp-flows-services
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      evolution-api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN}
+      EVOLUTION_API_URL: http://evolution-api:8080
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_WEBHOOK_URL: http://app:8080
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+    expose:
+      - "8080"
+
+volumes:
+  redis-data:
+  evolution-data:
