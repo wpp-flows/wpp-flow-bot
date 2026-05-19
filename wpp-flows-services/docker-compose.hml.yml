@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis:7-alpine
+    image: ${REDIS_IMAGE}
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -12,33 +12,33 @@ services:
       retries: 10
 
   evolution-api:
-    image: evoapicloud/evolution-api:v2.3.7
+    image: ${EVOLUTION_IMAGE}
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
     environment:
-      SERVER_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+      SERVER_URL: ${PUBLIC_API_URL}
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: postgresql
+      DATABASE_ENABLED: ${EVOLUTION_DATABASE_ENABLED}
+      DATABASE_PROVIDER: ${EVOLUTION_DATABASE_PROVIDER}
       DATABASE_CONNECTION_URI: ${DATABASE_URL}
-      DATABASE_CONNECTION_CLIENT_NAME: evolution_exchange
-      CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/6
-      CACHE_REDIS_PREFIX_KEY: evolution
-      CACHE_REDIS_SAVE_INSTANCES: "true"
-      CACHE_LOCAL_ENABLED: "false"
-      CONFIG_SESSION_PHONE_VERSION: 2.3000.1038839325
-      CONFIG_SESSION_PHONE_CLIENT: Chrome
-      CONFIG_SESSION_PHONE_NAME: Chrome
-      QRCODE_LIMIT: 30
-      QRCODE_COLOR: "#198754"
+      DATABASE_CONNECTION_CLIENT_NAME: ${EVOLUTION_DATABASE_CLIENT_NAME}
+      CACHE_REDIS_ENABLED: ${EVOLUTION_CACHE_REDIS_ENABLED}
+      CACHE_REDIS_URI: ${EVOLUTION_CACHE_REDIS_URI}
+      CACHE_REDIS_PREFIX_KEY: ${EVOLUTION_CACHE_REDIS_PREFIX_KEY}
+      CACHE_REDIS_SAVE_INSTANCES: ${EVOLUTION_CACHE_REDIS_SAVE_INSTANCES}
+      CACHE_LOCAL_ENABLED: ${EVOLUTION_CACHE_LOCAL_ENABLED}
+      CONFIG_SESSION_PHONE_VERSION: ${EVOLUTION_CONFIG_SESSION_PHONE_VERSION}
+      CONFIG_SESSION_PHONE_CLIENT: ${EVOLUTION_CONFIG_SESSION_PHONE_CLIENT}
+      CONFIG_SESSION_PHONE_NAME: ${EVOLUTION_CONFIG_SESSION_PHONE_NAME}
+      QRCODE_LIMIT: ${EVOLUTION_QRCODE_LIMIT}
+      QRCODE_COLOR: ${EVOLUTION_QRCODE_COLOR}
     volumes:
       - evolution-data:/evolution/instances
 
   app:
-    image: medinavs/wpp-flows-services:${APP_IMAGE_TAG:-latest}
+    image: ${APP_IMAGE}:${APP_IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       redis:
@@ -46,18 +46,18 @@ services:
       evolution-api:
         condition: service_started
     environment:
-      NODE_ENV: production
-      PORT: 8080
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${APP_PORT}
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+      BETTER_AUTH_URL: ${PUBLIC_API_URL}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN}
-      EVOLUTION_API_URL: http://evolution-api:8080
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
-      EVOLUTION_WEBHOOK_URL: http://app:8080
-      PUBLIC_API_URL: ${PUBLIC_API_URL:-https://${DOMAIN}}
+      EVOLUTION_WEBHOOK_URL: ${EVOLUTION_WEBHOOK_URL}
+      PUBLIC_API_URL: ${PUBLIC_API_URL}
     expose:
-      - "8080"
+      - "${APP_PORT}"
 
 volumes:
   redis-data:
