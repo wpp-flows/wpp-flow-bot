@@ -43,14 +43,13 @@ services:
         condition: service_healthy
     ports:
       - "8081:8080"
-    env_file:
-      - .env
     environment:
       SERVER_URL: http://localhost:8081
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-key}
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://postgres:postgres@postgres:5432/evolution?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/evolution?schema=public
       DATABASE_CONNECTION_CLIENT_NAME: evolution_exchange
       CACHE_REDIS_ENABLED: "true"
       CACHE_REDIS_URI: redis://redis:6379/6
@@ -79,14 +78,14 @@ services:
       evolution-api:
         condition: service_started
     environment:
-      NODE_ENV: production
-      PORT: 8080
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wpp_flows?schema=public
-      BETTER_AUTH_SECRET: NKyP4cihK94XzTb6VDZLvJ6qdpzPbTxL
-      BETTER_AUTH_URL: http://localhost:8080
-      CLIENT_ORIGIN: http://localhost:5173
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${APP_PORT:-8080}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/wpp_flows?schema=public}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-NKyP4cihK94XzTb6VDZLvJ6qdpzPbTxL}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173}
       EVOLUTION_API_URL: http://evolution-api:8080
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-key}
       EVOLUTION_WEBHOOK_URL: http://app:8080
       # isso aqui nao vai rodar em dev de qlqr forma, só deixei pra nao quebrar build
       PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
