@@ -5,6 +5,8 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -17,23 +19,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    environment:
-      SERVER_URL: ${PUBLIC_API_URL}
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-      DATABASE_ENABLED: ${EVOLUTION_DATABASE_ENABLED}
-      DATABASE_PROVIDER: ${EVOLUTION_DATABASE_PROVIDER}
-      DATABASE_CONNECTION_URI: ${DATABASE_URL}
-      DATABASE_CONNECTION_CLIENT_NAME: ${EVOLUTION_DATABASE_CLIENT_NAME}
-      CACHE_REDIS_ENABLED: ${EVOLUTION_CACHE_REDIS_ENABLED}
-      CACHE_REDIS_URI: ${EVOLUTION_CACHE_REDIS_URI}
-      CACHE_REDIS_PREFIX_KEY: ${EVOLUTION_CACHE_REDIS_PREFIX_KEY}
-      CACHE_REDIS_SAVE_INSTANCES: ${EVOLUTION_CACHE_REDIS_SAVE_INSTANCES}
-      CACHE_LOCAL_ENABLED: ${EVOLUTION_CACHE_LOCAL_ENABLED}
-      CONFIG_SESSION_PHONE_VERSION: ${EVOLUTION_CONFIG_SESSION_PHONE_VERSION}
-      CONFIG_SESSION_PHONE_CLIENT: ${EVOLUTION_CONFIG_SESSION_PHONE_CLIENT}
-      CONFIG_SESSION_PHONE_NAME: ${EVOLUTION_CONFIG_SESSION_PHONE_NAME}
-      QRCODE_LIMIT: ${EVOLUTION_QRCODE_LIMIT}
-      QRCODE_COLOR: ${EVOLUTION_QRCODE_COLOR}
+    env_file:
+      - .env
     volumes:
       - evolution-data:/evolution/instances
 
@@ -45,17 +32,8 @@ services:
         condition: service_healthy
       evolution-api:
         condition: service_started
-    environment:
-      NODE_ENV: ${NODE_ENV}
-      PORT: ${APP_PORT}
-      DATABASE_URL: ${DATABASE_URL}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${PUBLIC_API_URL}
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN}
-      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
-      EVOLUTION_WEBHOOK_URL: ${EVOLUTION_WEBHOOK_URL}
-      PUBLIC_API_URL: ${PUBLIC_API_URL}
+    env_file:
+      - .env
     expose:
       - "${APP_PORT}"
 
