@@ -25,15 +25,13 @@ export function Sidebar() {
   }, []);
 
   useEffect(() => {
-    if (open && phase === 'closed') {
+    if (open) {
       setPhase('opening');
       const t = setTimeout(() => setPhase('open'), 360);
       return () => clearTimeout(t);
     }
-    if (!open && phase !== 'closed') {
-      setPhase('closed');
-    }
-  }, [open, phase]);
+    setPhase('closed');
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -49,10 +47,9 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile backdrop — also captures stray taps so they never hit content behind */}
       <div
         className={cn(
-          'fixed inset-0 z-30 bg-foreground/55 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
+          'fixed inset-0 z-30 bg-black/65 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
           overlayActive ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => setOpen(false)}
@@ -73,10 +70,8 @@ export function Sidebar() {
       <aside
         className={cn(
           'fixed z-40 flex flex-col bg-sidebar text-sidebar-foreground',
-          // Mobile: fullscreen sheet that slides down from the top edge.
           'inset-0 transition-transform duration-300 ease-out',
           sidebarVisible ? 'translate-y-0' : '-translate-y-full',
-          // Desktop: docked sidebar, no transform — keep the original behavior.
           'lg:static lg:inset-auto lg:w-64 lg:translate-y-0 lg:border-r lg:border-sidebar-border',
         )}
         aria-hidden={isMobile && !sidebarVisible}
