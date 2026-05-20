@@ -114,6 +114,13 @@ export default {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'bot-wake': {
+          '0%':   { transform: 'scale(0.6) rotate(-25deg)', opacity: '0' },
+          '40%':  { transform: 'scale(1.15) rotate(12deg)', opacity: '1' },
+          '60%':  { transform: 'scale(0.95) rotate(-6deg)' },
+          '80%':  { transform: 'scale(1.05) rotate(3deg)' },
+          '100%': { transform: 'scale(1) rotate(0deg)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 200ms ease-out',
@@ -122,6 +129,7 @@ export default {
         'slide-in-right': 'slide-in-right 220ms ease-out',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
         'shimmer': 'shimmer 1.6s linear infinite',
+        'bot-wake': 'bot-wake 420ms cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },
   },
