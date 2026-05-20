@@ -24,7 +24,7 @@ export const app = fastify({
 });
 
 app.register(fastifyCors, {
-  origin: env.CLIENT_ORIGIN,
+  origin: [env.CLIENT_ORIGIN],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
