@@ -1,7 +1,7 @@
 export const APP_CONFIG = {
   name: 'Mesa',
-  tagline: 'WhatsApp chatbots for restaurants',
-  shortDescription: 'Build, manage, and scale your restaurant WhatsApp bots.',
+  tagline: 'WhatsApp chatbots para restaurantes',
+  shortDescription: 'Crie e gerencie bots do WhatsApp para seus restaurantes.',
   supportEmail: 'support@mesa.app',
   version: '0.1.0',
 } as const;
