@@ -16,6 +16,7 @@ const schema = z.object({
      * Required only when MP is configured for an organization.
      */
     PUBLIC_API_URL: z.string().optional(),
+    COOKIE_DOMAIN: z.string().optional(),
 })
 
 const parsed = schema.safeParse(process.env)

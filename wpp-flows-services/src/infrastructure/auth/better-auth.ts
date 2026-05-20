@@ -16,9 +16,10 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
+      ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
     },
-    crossSubDomainCookies: {
-      enabled: false,
-    },
+    crossSubDomainCookies: env.COOKIE_DOMAIN
+      ? { enabled: true, domain: env.COOKIE_DOMAIN }
+      : { enabled: false },
   },
 });
