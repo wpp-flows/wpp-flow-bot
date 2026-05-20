@@ -12,6 +12,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - wpp-flows-network
 
   evolution-api:
     image: ${EVOLUTION_IMAGE}
@@ -23,6 +25,8 @@ services:
       - .env
     volumes:
       - evolution-data:/evolution/instances
+    networks:
+      - wpp-flows-network
 
   app:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
@@ -44,7 +48,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - wpp-flows-network
+      - coolify
 
 volumes:
   redis-data:
   evolution-data:
+networks:
+  wpp-flows-network:
+    driver: bridge
+  coolify:
+    external: true
