@@ -38,16 +38,14 @@ services:
         condition: service_started
     env_file:
       - .env
-    environment:
-      SERVICE_FQDN_APP_8080: ${SERVICE_FQDN_APP_8080}
     expose:
       - "8080"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
-      interval: 10s
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
     networks:
       - wpp-flows-network
       - coolify
