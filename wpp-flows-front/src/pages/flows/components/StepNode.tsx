@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { GripVertical, Trash2, ChevronDown, ChevronRight, Plus, X, Tag } from 'lucide-react';
+import { GripVertical, Trash2, ChevronDown, ChevronRight, Plus, X, Tag, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
@@ -20,6 +20,8 @@ interface StepNodeProps {
   onToggle: () => void;
   onChange: (next: FlowStep) => void;
   onRemove: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   isDragging?: boolean;
   isOver?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
@@ -91,6 +93,8 @@ export function StepNode({
   onToggle,
   onChange,
   onRemove,
+  onMoveUp,
+  onMoveDown,
   isDragging,
   isOver,
   dragHandleProps,
@@ -153,13 +157,37 @@ export function StepNode({
       )}
     >
       <div className="flex items-center gap-3 px-4 py-3">
+        {/* Touch devices can't use HTML5 drag — show explicit up/down arrows
+            on mobile. Drag handle stays for pointer devices. */}
         <button
           {...dragHandleProps}
-          className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          className="hidden h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing sm:flex"
           aria-label="Arrastar para reordenar"
         >
           <GripVertical className="h-4 w-4" />
         </button>
+        <div className="flex flex-col sm:hidden">
+          <IconButton
+            size="sm"
+            variant="ghost"
+            onClick={onMoveUp}
+            disabled={!onMoveUp || index === 0}
+            aria-label="Mover passo para cima"
+            className="h-5"
+          >
+            <ArrowUp />
+          </IconButton>
+          <IconButton
+            size="sm"
+            variant="ghost"
+            onClick={onMoveDown}
+            disabled={!onMoveDown || index === total - 1}
+            aria-label="Mover passo para baixo"
+            className="h-5"
+          >
+            <ArrowDown />
+          </IconButton>
+        </div>
 
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-2xs font-mono font-semibold text-muted-foreground">
           {String(index + 1).padStart(2, '0')}

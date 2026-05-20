@@ -129,7 +129,7 @@ export default {
         'slide-in-right': 'slide-in-right 220ms ease-out',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
         'shimmer': 'shimmer 1.6s linear infinite',
-        'bot-wake': 'bot-wake 420ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'bot-wake': 'bot-wake 750ms cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },
   },

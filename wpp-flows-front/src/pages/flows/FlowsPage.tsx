@@ -100,6 +100,16 @@ export function FlowsPage() {
   const removeStep = (idx: number) =>
     setSteps((prev) => prev.filter((_, i) => i !== idx));
 
+  const moveStep = (from: number, to: number) =>
+    setSteps((prev) => {
+      if (to < 0 || to >= prev.length) return prev;
+      const list = [...prev];
+      const [moved] = list.splice(from, 1);
+      if (!moved) return prev;
+      list.splice(to, 0, moved);
+      return list;
+    });
+
   const addStep = () => {
     const id = generateId('step');
     const newStep: FlowStep = {
@@ -237,7 +247,7 @@ export function FlowsPage() {
                   <Select
                     value={activeFlowSummary.id}
                     onChange={(e) => setActiveFlowId(e.target.value)}
-                    className="w-60"
+                    className="w-full sm:w-60"
                   >
                     {flows.data?.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -292,6 +302,8 @@ export function FlowsPage() {
                       onToggle={() => toggleExpanded(step.id)}
                       onChange={(next) => updateStep(idx, next)}
                       onRemove={() => removeStep(idx)}
+                      onMoveUp={() => moveStep(idx, idx - 1)}
+                      onMoveDown={() => moveStep(idx, idx + 1)}
                       isDragging={draggingId === step.id}
                       isOver={overId === step.id}
                     />

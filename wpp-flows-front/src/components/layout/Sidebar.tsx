@@ -27,7 +27,7 @@ export function Sidebar() {
   useEffect(() => {
     if (open) {
       setPhase('opening');
-      const t = setTimeout(() => setPhase('open'), 360);
+      const t = setTimeout(() => setPhase('open'), 700);
       return () => clearTimeout(t);
     }
     setPhase('closed');
