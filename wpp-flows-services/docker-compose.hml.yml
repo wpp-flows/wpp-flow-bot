@@ -49,6 +49,8 @@ services:
     networks:
       - wpp-flows-network
       - coolify
+    labels:
+      - traefik.docker.network=coolify
 
 volumes:
   redis-data:
