@@ -102,7 +102,7 @@ export function MercadoPagoSection({ organization: org, onUpdated }: Props) {
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-2xs text-muted-foreground">
           URL para configurar no painel do Mercado Pago:{' '}
           <code className="break-all rounded bg-muted px-1 py-0.5 font-mono">
-            /webhook/mercadopago/{org?.id ?? '<organizationId>'}
+            https://api.placeconsult.com.br/webhook/mercadopago/{org?.id ?? '<organizationId>'}
           </code>
         </div>
         <div className="flex justify-end">
