@@ -1,6 +1,9 @@
+import { Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { toast } from '@/stores/uiStore';
 import type { Order, OrderStatus } from '@/types';
 import {
   PAYMENT_LABEL,
@@ -19,8 +22,21 @@ interface Props {
   onAdvance: (status: OrderStatus) => void;
 }
 
-export function OrderDetail({ order, pending, onAdvance }: Props) {
+export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
   const nextOptions = nextStatusOptions(order.status);
+  const [copied, setCopied] = useState(false);
+
+  const copyPaymentRef = async () => {
+    if (!order.paymentProviderRef) return;
+    try {
+      await navigator.clipboard.writeText(order.paymentProviderRef);
+      setCopied(true);
+      toast.success('ID copiado');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Não foi possível copiar');
+    }
+  };
   return (
     <Card className="space-y-4 p-4">
       <div className="space-y-1">
@@ -83,16 +99,27 @@ export function OrderDetail({ order, pending, onAdvance }: Props) {
         </Section>
       ) : null}
 
-      {order.receiptUrl ? (
+      {order.paymentProviderRef ? (
         <Section title="Comprovante de pagamento">
-          <a
-            href={order.receiptUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-primary underline-offset-4 hover:underline"
-          >
-            Abrir comprovante
-          </a>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="rounded-md bg-muted px-2 py-1 font-mono text-xs">
+                {order.paymentProviderRef}
+              </code>
+              <Button
+                size="sm"
+                variant="ghost"
+                leftIcon={copied ? <Check /> : <Copy />}
+                onClick={copyPaymentRef}
+              >
+                {copied ? 'Copiado' : 'Copiar ID'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O comprovante completo está disponível no app ou painel do Mercado Pago — busque
+              pelo ID acima.
+            </p>
+          </div>
         </Section>
       ) : null}
 

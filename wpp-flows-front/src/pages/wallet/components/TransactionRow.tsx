@@ -1,6 +1,4 @@
-import { X } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import type { WalletTransaction } from '@/types';
 import {
   TX_KIND_LABEL,
@@ -12,11 +10,9 @@ import {
 
 interface Props {
   tx: WalletTransaction;
-  canceling: boolean;
-  onCancel: () => void;
 }
 
-export function TransactionRow({ tx, canceling, onCancel }: Props) {
+export function TransactionRow({ tx }: Readonly<Props>) {
   const sign = tx.kind === 'CREDIT' ? '+' : '−';
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
@@ -39,17 +35,6 @@ export function TransactionRow({ tx, canceling, onCancel }: Props) {
       >
         {sign} {formatBRL(tx.amount)}
       </p>
-      {tx.kind === 'WITHDRAWAL' && tx.status === 'PENDING' ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          leftIcon={<X />}
-          loading={canceling}
-          onClick={onCancel}
-        >
-          Cancelar
-        </Button>
-      ) : null}
     </div>
   );
 }

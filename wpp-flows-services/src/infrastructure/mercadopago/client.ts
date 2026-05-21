@@ -63,20 +63,6 @@ export interface MpPaymentResponse {
 
 export type MpPixKeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
-export interface MpWithdrawalInput {
-    amount: number;
-    pixKey: string;
-    pixKeyType: MpPixKeyType;
-    description?: string;
-    externalReference: string;
-}
-
-export interface MpWithdrawalResponse {
-    id: string;
-    status: "approved" | "pending" | "rejected" | string;
-    status_detail?: string;
-}
-
 /**
  * Verifies the Mercado Pago `x-signature` header on a webhook call.
  *
@@ -177,31 +163,6 @@ export class MercadoPagoClient {
         );
     }
 
-    /**
-     * Sends a PIX withdrawal from the seller's Mercado Pago account to the
-     * configured PIX key. Returns the MP withdrawal record.
-     *
-     * Note: MP only accepts this call for accounts with the "Money Out / PIX
-     * cashout" feature enabled (you may need to request it on your MP
-     * dashboard). Errors surface here as {@link MercadoPagoError}.
-     */
-    createPixWithdrawal(
-        input: MpWithdrawalInput,
-    ): Promise<MpWithdrawalResponse> {
-        return this.request<MpWithdrawalResponse>("/v1/withdrawals", {
-            method: "POST",
-            body: JSON.stringify({
-                amount: input.amount,
-                description: input.description ?? "Saque",
-                external_reference: input.externalReference,
-                payment_method: {
-                    type: "pix",
-                    key_type: input.pixKeyType,
-                    key: input.pixKey,
-                },
-            }),
-        });
-    }
 }
 
 function safeJson(text: string): unknown {

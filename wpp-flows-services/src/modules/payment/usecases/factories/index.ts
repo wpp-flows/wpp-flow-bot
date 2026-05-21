@@ -7,11 +7,8 @@ import {
     HandleMercadoPagoWebhookUseCase,
 } from "../mercadopago-usecases";
 import {
-    CancelWithdrawalUseCase,
     GetWalletUseCase,
     ListWalletTransactionsUseCase,
-    ProcessWithdrawalUseCase,
-    RequestWithdrawalUseCase,
 } from "../wallet-usecases";
 
 const walletRepo = new PrismaWalletRepository();
@@ -23,14 +20,9 @@ const handleMercadoPagoWebhook = new HandleMercadoPagoWebhookUseCase(
     walletRepo,
     notificationEmitter,
 );
-const processWithdrawal = new ProcessWithdrawalUseCase(walletRepo, organizationRepo);
 
 export const makeGetWallet = () => new GetWalletUseCase(walletRepo);
 export const makeListWalletTransactions = () =>
     new ListWalletTransactionsUseCase(walletRepo);
-export const makeRequestWithdrawal = () =>
-    new RequestWithdrawalUseCase(walletRepo, processWithdrawal);
-export const makeCancelWithdrawal = () => new CancelWithdrawalUseCase(walletRepo);
-export const makeProcessWithdrawal = () => processWithdrawal;
 
 export { walletRepo, createPaymentLink, handleMercadoPagoWebhook };

@@ -1,21 +1,19 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDownToLine, Receipt } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { FileDown, Receipt, Info } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { walletService } from '@/services/walletService';
-import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
-import { toast } from '@/stores/uiStore';
+import { queryKeys } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 import { TransactionRow } from './components/TransactionRow';
-import { WithdrawModal } from './components/WithdrawModal';
 import { formatBRL } from './wallet-helpers';
+import { openWalletReport } from './wallet-report';
 
 export function WalletPage() {
-  const qc = useQueryClient();
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const { organization } = useAuth();
 
   const walletQ = useQuery({
     queryKey: queryKeys.wallet.me,
@@ -26,44 +24,52 @@ export function WalletPage() {
     queryFn: walletService.listTransactions,
   });
 
-  const invalidateAll = () =>
-    invalidateQueriesByFilters(qc, [
-      { queryKey: queryKeys.wallet.me },
-      { queryKey: queryKeys.wallet.transactions },
-    ]);
-
-  const cancel = useMutation({
-    mutationFn: walletService.cancelWithdrawal,
-    onSuccess: () => {
-      void invalidateAll();
-      toast.success('Saque cancelado');
-    },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Falha ao cancelar'),
-  });
-
   const balance = walletQ.data?.balance ?? '0';
   const transactions = txQ.data ?? [];
+
+  const handleGenerateReport = () => {
+    if (!walletQ.data) return;
+    openWalletReport({
+      organizationName: organization?.name ?? '—',
+      wallet: walletQ.data,
+      transactions,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Carteira"
-        description="Saldo recebido por pedidos pagos via Mercado Pago. Solicite saques para a sua conta MP."
+        description="Resumo do que foi recebido por pedidos pagos via Mercado Pago. Para sacar, use o painel do MP."
         actions={
           <Button
-            leftIcon={<ArrowDownToLine />}
-            onClick={() => setWithdrawOpen(true)}
-            disabled={Number.parseFloat(balance) <= 0}
+            leftIcon={<FileDown />}
+            onClick={handleGenerateReport}
+            disabled={walletQ.isLoading || !walletQ.data}
           >
-            Solicitar saque
+            Gerar relatório
           </Button>
         }
       />
 
+      <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft/40 p-4 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+        <div className="space-y-1">
+          <p className="font-medium tracking-tight text-foreground">
+            Os valores ficam na sua conta do Mercado Pago.
+          </p>
+          <p className="text-muted-foreground">
+            Cada pedido aprovado vai direto para o saldo da sua conta MP. Para sacar para a sua
+            conta bancária ou chave PIX, acesse o aplicativo ou painel do Mercado Pago. Aqui você
+            acompanha o histórico e gera relatórios financeiros.
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-1">
           <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Saldo disponível
+            Total recebido
           </p>
           {walletQ.isLoading ? (
             <Skeleton className="mt-2 h-9 w-32" />
@@ -73,7 +79,7 @@ export function WalletPage() {
             </p>
           )}
           <p className="mt-2 text-xs text-muted-foreground">
-            Valores em {walletQ.data?.currency ?? 'BRL'}.
+            Valores em {walletQ.data?.currency ?? 'BRL'} · disponível na sua conta MP.
           </p>
         </Card>
 
@@ -82,9 +88,9 @@ export function WalletPage() {
             Como funciona
           </p>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>· Cada pedido aprovado pelo Mercado Pago credita seu valor aqui automaticamente.</li>
-            <li>· O saque cria uma solicitação pendente; assim que aprovada, o valor sai da carteira.</li>
-            <li>· O valor de um saque pendente é descontado do saldo imediatamente.</li>
+            <li>· Cada pedido pago credita o valor automaticamente na sua conta Mercado Pago.</li>
+            <li>· Aqui você vê o histórico das entradas para acompanhar o que foi recebido.</li>
+            <li>· Use <span className="font-medium text-foreground">Gerar relatório</span> para baixar um PDF com todas as movimentações.</li>
           </ul>
         </Card>
       </div>
@@ -101,28 +107,16 @@ export function WalletPage() {
           <EmptyState
             icon={<Receipt />}
             title="Sem movimentações ainda"
-            description="As entradas aparecem aqui quando um pedido é pago e os saques quando você solicitar."
+            description="As entradas aparecem aqui quando um pedido é pago via Mercado Pago."
           />
         ) : (
           <div className="space-y-2">
             {transactions.map((tx) => (
-              <TransactionRow
-                key={tx.id}
-                tx={tx}
-                onCancel={() => cancel.mutate(tx.id)}
-                canceling={cancel.isPending}
-              />
+              <TransactionRow key={tx.id} tx={tx} />
             ))}
           </div>
         )}
       </div>
-
-      <WithdrawModal
-        open={withdrawOpen}
-        onClose={() => setWithdrawOpen(false)}
-        balance={balance}
-        onCompleted={() => void invalidateAll()}
-      />
     </div>
   );
 }

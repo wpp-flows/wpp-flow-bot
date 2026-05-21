@@ -143,7 +143,7 @@ export class HandleMercadoPagoWebhookUseCase {
                     paymentStatus: "PAID",
                     paymentProvider: "MERCADO_PAGO",
                     paymentProviderRef: String(payment.id),
-                    receiptUrl: `https://www.mercadopago.com.br/payments/${payment.id}`,
+                    receiptUrl: null,
                 });
                 const wallet = await this.walletRepo.getOrCreate(input.organizationId);
                 await this.walletRepo.appendTransaction({
