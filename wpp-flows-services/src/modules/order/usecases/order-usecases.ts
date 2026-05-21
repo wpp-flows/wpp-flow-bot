@@ -7,6 +7,7 @@ import type {
     OrderStatus,
 } from "../repositories/order-repo";
 import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
+import type { NotifyCustomerOrderStatusChangeUseCase } from "./notify-customer-status-change";
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
     RECEIVED: ["PREPARING", "CANCELED"],
@@ -36,7 +37,10 @@ export class GetOrderUseCase {
 }
 
 export class UpdateOrderStatusUseCase {
-    constructor(private readonly repo: OrderRepository) {}
+    constructor(
+        private readonly repo: OrderRepository,
+        private readonly notifyCustomer: NotifyCustomerOrderStatusChangeUseCase,
+    ) {}
     async execute(input: {
         organizationId: string;
         id: string;
@@ -52,7 +56,11 @@ export class UpdateOrderStatusUseCase {
                 `Transição de ${order.status} para ${input.status} não é permitida.`,
             );
         }
-        return this.repo.updateStatus(input.id, input.status);
+        const updated = await this.repo.updateStatus(input.id, input.status);
+        // Best-effort WhatsApp ping to the customer. Never blocks the status
+        // update — the notifier swallows its own errors.
+        void this.notifyCustomer.execute(updated, input.status);
+        return updated;
     }
 }
 

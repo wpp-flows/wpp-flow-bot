@@ -386,10 +386,22 @@ export class FlowRunner {
             if (isInteractiveStep(step.type)) return;
 
             const next = nextStep(input.allSteps, step.id);
-            if (!next) return;
+            if (!next) {
+                await this.resetConversationForRestart(input.conversation);
+                return;
+            }
             step = next;
             state = { ...state, phase: phaseForStep(next), lastOptionMap: undefined };
         }
+    }
+
+    private async resetConversationForRestart(
+        conversation: Conversation,
+    ): Promise<void> {
+        await this.conversationRepo.update(conversation.id, {
+            currentStepId: null,
+            flowState: initialState(),
+        });
     }
 
     /** Delivers exactly one step. Returns false when the send failed. */
