@@ -174,11 +174,8 @@ class EvolutionApi {
                 method: "POST",
                 body: JSON.stringify({
                     number: params.number,
-                    options: {
-                        delay: params.delayMs ?? 1500,
-                        presence: params.presence,
-                        number: params.number,
-                    },
+                    presence: params.presence,
+                    delay: params.delayMs ?? 1500,
                 }),
             },
         );
