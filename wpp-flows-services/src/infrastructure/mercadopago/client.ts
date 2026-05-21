@@ -80,10 +80,13 @@ export interface MpWithdrawalResponse {
 /**
  * Verifies the Mercado Pago `x-signature` header on a webhook call.
  *
- * MP signs `id={data.id};request-id={x-request-id};ts={ts}` with HMAC-SHA256
- * using the org's webhook secret. The header arrives as
- * `ts=<timestamp>,v1=<hex-hmac>`. Returns true when the computed hmac matches
- * `v1` in constant time.
+ * MP signs the manifest `id:{data.id};request-id:{x-request-id};ts:{ts};`
+ * with HMAC-SHA256 using the org's webhook secret. The header arrives as
+ * `ts=<timestamp>,v1=<hex-hmac>` (the header parts use `=`, but the SIGNED
+ * manifest uses `:` between key and value — getting these mixed up causes
+ * every signature to mismatch).
+ *
+ * Returns true when the computed hmac matches `v1` in constant time.
  */
 export function verifyMercadoPagoSignature(input: {
     secret: string;
@@ -101,7 +104,10 @@ export function verifyMercadoPagoSignature(input: {
     const ts = map.get("ts");
     const v1 = map.get("v1");
     if (!ts || !v1) return false;
-    const payload = `id=${input.dataId};request-id=${input.requestId ?? ""};ts=${ts};`;
+    // MP lowercases data.id in the manifest. Trim defensively in case the
+    // caller forwarded a value with surrounding whitespace.
+    const dataId = String(input.dataId).trim().toLowerCase();
+    const payload = `id:${dataId};request-id:${input.requestId ?? ""};ts:${ts};`;
     const expected = createHmac("sha256", input.secret).update(payload).digest("hex");
     const a = Buffer.from(expected, "hex");
     const b = Buffer.from(v1, "hex");
