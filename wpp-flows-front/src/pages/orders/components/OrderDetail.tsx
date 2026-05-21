@@ -87,17 +87,17 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
         </div>
       </Section>
 
-      {order.address ? (
-        <Section title="Endereço de entrega">
-          <p className="text-sm">{order.address}</p>
-        </Section>
-      ) : null}
+      <Section title="Endereço de entrega">
+        <p className={`text-sm ${order.address ? '' : 'italic text-muted-foreground'}`}>
+          {order.address?.trim() || 'Não informado'}
+        </p>
+      </Section>
 
-      {order.observation ? (
-        <Section title="Observação do cliente">
-          <p className="text-sm">{order.observation}</p>
-        </Section>
-      ) : null}
+      <Section title="Observação do cliente">
+        <p className={`text-sm ${order.observation ? '' : 'italic text-muted-foreground'}`}>
+          {order.observation?.trim() || 'Sem observação'}
+        </p>
+      </Section>
 
       {order.paymentProviderRef ? (
         <Section title="Comprovante de pagamento">

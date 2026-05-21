@@ -139,4 +139,15 @@ export class PrismaOrderRepository implements OrderRepository {
         });
         return toOrder(row);
     }
+
+    async updateDetails(
+        id: string,
+        data: Partial<{ observation: string | null; address: string | null }>,
+    ): Promise<Order> {
+        const row = await prisma.order.update({
+            where: { id },
+            data,
+        });
+        return toOrder(row);
+    }
 }

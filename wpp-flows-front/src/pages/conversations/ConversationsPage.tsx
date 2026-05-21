@@ -16,7 +16,7 @@ import {
 } from "@/lib/queryClient";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { cn } from "@/lib/utils";
-import type { Conversation, ConversationStatus } from "@/types";
+import type { BotInstance, Conversation, ConversationStatus } from "@/types";
 import { ConversationList } from "./components/ConversationList";
 import { ChatPanel } from "./components/ChatPanel";
 
@@ -87,6 +87,12 @@ export function ConversationsPage() {
   const botNamesById = useMemo(() => {
     const map: Record<string, string> = {};
     for (const b of bots.data ?? []) map[b.id] = b.name;
+    return map;
+  }, [bots.data]);
+
+  const botStatusById = useMemo(() => {
+    const map: Record<string, BotInstance['status']> = {};
+    for (const b of bots.data ?? []) map[b.id] = b.status;
     return map;
   }, [bots.data]);
 
@@ -242,6 +248,7 @@ export function ConversationsPage() {
               <ChatPanel
                 conversation={selected}
                 botName={botNamesById[selected.botId]}
+                botStatus={botStatusById[selected.botId]}
                 key={selected.id}
               />
             </>

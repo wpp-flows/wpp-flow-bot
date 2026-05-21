@@ -82,4 +82,8 @@ export interface OrderRepository {
             receiptUrl: string | null;
         }>,
     ): Promise<Order>;
+    updateDetails(
+        id: string,
+        data: Partial<{ observation: string | null; address: string | null }>,
+    ): Promise<Order>;
 }

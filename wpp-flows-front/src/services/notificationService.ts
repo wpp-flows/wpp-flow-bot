@@ -24,12 +24,14 @@ export const notificationService = {
     return apiCall<Notification>({
       endpoint: `/api/notifications/${id}/read`,
       method: 'PATCH',
+      body: {},
     });
   },
   markAllRead(): Promise<{ count: number }> {
     return apiCall<{ count: number }>({
       endpoint: '/api/notifications/read-all',
       method: 'PATCH',
+      body: {},
     });
   },
 };

@@ -157,8 +157,6 @@ export function StepNode({
       )}
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* Touch devices can't use HTML5 drag — show explicit up/down arrows
-            on mobile. Drag handle stays for pointer devices. */}
         <button
           {...dragHandleProps}
           className="hidden h-7 w-7 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing sm:flex"

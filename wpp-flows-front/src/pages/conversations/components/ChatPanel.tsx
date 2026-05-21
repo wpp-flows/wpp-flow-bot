@@ -16,7 +16,7 @@ import {
 } from "@/lib/queryClient";
 import { toast } from "@/stores/uiStore";
 import { formatDateTime } from "@/lib/utils";
-import type { Conversation } from "@/types";
+import type { BotStatus, Conversation } from "@/types";
 import { MessageBubble } from "./MessageBubble";
 
 const STATUS_TONE: Record<
@@ -37,7 +37,23 @@ const STATUS_LABEL: Record<Conversation["status"], string> = {
 export function ChatPanel({
   conversation,
   botName,
-}: Readonly<{ conversation: Conversation; botName?: string }>) {
+  botStatus,
+}: Readonly<{
+  conversation: Conversation;
+  botName?: string;
+  botStatus?: BotStatus;
+}>) {
+  // Effective bot state for the badge: a paused per-conversation toggle takes
+  // priority, then the instance-level Evolution status (offline/error/connecting).
+  // Only when both are healthy do we show "bot ativo".
+  const botBadge: { tone: "success" | "warning" | "destructive"; label: string } =
+    !conversation.botActive
+      ? { tone: "warning", label: "bot pausado" }
+      : botStatus === "OFFLINE" || botStatus === "ERROR"
+        ? { tone: "destructive", label: "bot offline" }
+        : botStatus === "CONNECTING"
+          ? { tone: "warning", label: "bot conectando" }
+          : { tone: "success", label: "bot ativo" };
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -132,12 +148,8 @@ export function ChatPanel({
             <Badge tone={STATUS_TONE[conversation.status]} size="sm" dot>
               {STATUS_LABEL[conversation.status]}
             </Badge>
-            <Badge
-              tone={conversation.botActive ? "success" : "warning"}
-              size="sm"
-              dot
-            >
-              {conversation.botActive ? "bot ativo" : "bot pausado"}
+            <Badge tone={botBadge.tone} size="sm" dot>
+              {botBadge.label}
             </Badge>
           </div>
           <p className="truncate text-2xs text-muted-foreground font-mono">

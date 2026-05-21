@@ -33,6 +33,7 @@ export const flowRunner = new FlowRunner(
     conversationRepo,
     messageRepo,
     customerRepo,
+    orderRepo,
     createOrderFromCart,
     promotionRepo,
     notificationEmitter,

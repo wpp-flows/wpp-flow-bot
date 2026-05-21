@@ -31,6 +31,19 @@ app.register(fastifyCors, {
   maxAge: 86400,
 });
 
+// tava dando uns erro random de webhook, isso aq soluciona
+app.addContentTypeParser("*", { parseAs: "string" }, (_req, body, done) => {
+  if (!body || (typeof body === "string" && body.length === 0)) {
+    done(null, undefined);
+    return;
+  }
+  try {
+    done(null, JSON.parse(body as string));
+  } catch {
+    done(null, body);
+  }
+});
+
 app.setErrorHandler(globalErrorHandler);
 
 registerRoutes(app, [

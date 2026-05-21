@@ -15,6 +15,7 @@ import type {
     FlowWithSteps,
 } from "@/modules/flow/repositories/flow-repo";
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
+import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import type { CreateOrderFromCartUseCase } from "@/modules/order/usecases/order-usecases";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluator";
@@ -56,6 +57,7 @@ export class FlowRunner {
         private readonly conversationRepo: ConversationRepository,
         private readonly messageRepo: MessageRepository,
         private readonly customerRepo: CustomerRepository,
+        private readonly orderRepo: OrderRepository,
         private readonly createOrderFromCart: CreateOrderFromCartUseCase,
         private readonly promotionRepo: PromotionRepository,
         private readonly notificationEmitter: NotificationEmitter,
@@ -267,6 +269,23 @@ export class FlowRunner {
             inputs: { ...input.state.inputs, [fieldKey]: value },
             awaitingInputForStepId: null,
         };
+
+        if (
+            captured.orderId &&
+            (fieldKey === "address" || fieldKey === "observation")
+        ) {
+            try {
+                await this.orderRepo.updateDetails(captured.orderId, {
+                    [fieldKey]: value || null,
+                });
+            } catch (err) {
+                console.warn(
+                    `Failed to patch order ${captured.orderId} with ${fieldKey}:`,
+                    err,
+                );
+            }
+        }
+
         const next = nextStep(input.allSteps, input.step.id);
         if (!next) {
             await this.persistTerminalState(input.conversation, input.step, captured);
