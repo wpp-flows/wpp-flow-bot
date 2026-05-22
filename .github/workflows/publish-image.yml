@@ -90,27 +90,32 @@ jobs:
     steps:
       - name: Update APP_IMAGE_TAG env on Coolify
         env:
-          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+          COOLIFY_URL_RAW: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN_RAW: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID_RAW: ${{ secrets.COOLIFY_APP_UUID }}
           NEW_TAG: ${{ needs.build-push.outputs.sha }}
         run: |
           set -euo pipefail
-          echo "→ Pointing APP_IMAGE_TAG at $NEW_TAG"
-          # Capture both body and HTTP status so we can fail loud on non-2xx.
+          COOLIFY_URL=$(printf '%s' "$COOLIFY_URL_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//' | sed 's|/*$||')
+          COOLIFY_TOKEN=$(printf '%s' "$COOLIFY_TOKEN_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//')
+          COOLIFY_APP_UUID=$(printf '%s' "$COOLIFY_APP_UUID_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//')
+
+          if [ -z "$COOLIFY_URL" ] || [ -z "$COOLIFY_TOKEN" ] || [ -z "$COOLIFY_APP_UUID" ]; then
+            echo "::error::One or more Coolify secrets are empty. Check Settings → Environments → hml."
+            exit 1
+          fi
+
+          target="$COOLIFY_URL/api/v1/applications/$COOLIFY_APP_UUID/envs"
+          echo "→ PATCH $target"
+          echo "→ APP_IMAGE_TAG = $NEW_TAG"
+
           response=$(mktemp)
           status=$(curl -sS -o "$response" -w "%{http_code}" \
             -X PATCH \
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            "$COOLIFY_URL/api/v1/applications/$COOLIFY_APP_UUID/envs" \
-            -d "{
-              \"key\": \"APP_IMAGE_TAG\",
-              \"value\": \"$NEW_TAG\",
-              \"is_preview\": false,
-              \"is_build_time\": false,
-              \"is_literal\": false
-            }")
+            "$target" \
+            -d "{\"key\":\"APP_IMAGE_TAG\",\"value\":\"$NEW_TAG\",\"is_preview\":false,\"is_build_time\":false,\"is_literal\":false}")
           echo "  status=$status"
           cat "$response"
           echo ""
@@ -121,20 +126,26 @@ jobs:
 
       - name: Trigger Coolify redeploy
         env:
-          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+          COOLIFY_URL_RAW: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN_RAW: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID_RAW: ${{ secrets.COOLIFY_APP_UUID }}
         run: |
           set -euo pipefail
-          echo "→ Triggering redeploy of $COOLIFY_APP_UUID"
+          COOLIFY_URL=$(printf '%s' "$COOLIFY_URL_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//' | sed 's|/*$||')
+          COOLIFY_TOKEN=$(printf '%s' "$COOLIFY_TOKEN_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//')
+          COOLIFY_APP_UUID=$(printf '%s' "$COOLIFY_APP_UUID_RAW" | tr -d '\r\n' | sed 's/[[:space:]]*$//')
+
+          target="$COOLIFY_URL/api/v1/deploy?uuid=$COOLIFY_APP_UUID&force=true"
+          echo "→ GET $target"
+
           response=$(mktemp)
-          # force=true so Coolify always re-pulls the image (the tag stayed
-          # the same lexically if we kept :latest, but we just changed the
-          # APP_IMAGE_TAG var which docker-compose will substitute on up).
+          # force=true so Coolify always re-pulls the image even if the tag
+          # alone wouldn't produce a layer diff (we just set APP_IMAGE_TAG
+          # which docker-compose substitutes on `up`).
           status=$(curl -sS -o "$response" -w "%{http_code}" \
             -X GET \
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
-            "$COOLIFY_URL/api/v1/deploy?uuid=$COOLIFY_APP_UUID&force=true")
+            "$target")
           echo "  status=$status"
           cat "$response"
           echo ""
