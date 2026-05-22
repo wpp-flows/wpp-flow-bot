@@ -98,4 +98,11 @@ export class PrismaNotificationRepository implements NotificationRepository {
         });
         return result.count;
     }
+
+    async deleteAllForOrg(organizationId: string): Promise<number> {
+        const result = await prisma.notification.deleteMany({
+            where: { organizationId },
+        });
+        return result.count;
+    }
 }

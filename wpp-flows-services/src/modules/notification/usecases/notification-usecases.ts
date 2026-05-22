@@ -75,3 +75,12 @@ export class MarkAllNotificationsReadUseCase {
             .then((count) => ({ count }));
     }
 }
+
+export class DeleteAllNotificationsUseCase {
+    constructor(private readonly repo: NotificationRepository) {}
+    execute(organizationId: string): Promise<{ count: number }> {
+        return this.repo
+            .deleteAllForOrg(organizationId)
+            .then((count) => ({ count }));
+    }
+}

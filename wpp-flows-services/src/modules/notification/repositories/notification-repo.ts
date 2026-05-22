@@ -48,4 +48,5 @@ export interface NotificationRepository {
      * milliseconds ago. Run lazily on every fetch — keeps the table small.
      */
     cleanupReadOlderThan(olderThanMs: number): Promise<number>;
+    deleteAllForOrg(organizationId: string): Promise<number>;
 }

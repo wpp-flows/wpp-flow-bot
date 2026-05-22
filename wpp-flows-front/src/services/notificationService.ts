@@ -34,4 +34,10 @@ export const notificationService = {
       body: {},
     });
   },
+  deleteAll(): Promise<{ count: number }> {
+    return apiCall<{ count: number }>({
+      endpoint: '/api/notifications',
+      method: 'DELETE',
+    });
+  },
 };

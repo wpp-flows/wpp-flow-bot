@@ -4,6 +4,7 @@ import { NotificationEmitter } from "../notification-emitter";
 import {
     CountUnreadNotificationsUseCase,
     CreateNotificationUseCase,
+    DeleteAllNotificationsUseCase,
     ListNotificationsUseCase,
     ListRecentNotificationsUseCase,
     MarkAllNotificationsReadUseCase,
@@ -25,5 +26,7 @@ export const makeCountUnreadNotifications = () =>
 export const makeMarkNotificationRead = () => new MarkNotificationReadUseCase(repo);
 export const makeMarkAllNotificationsRead = () =>
     new MarkAllNotificationsReadUseCase(repo);
+export const makeDeleteAllNotifications = () =>
+    new DeleteAllNotificationsUseCase(repo);
 
 export { repo as notificationRepo };

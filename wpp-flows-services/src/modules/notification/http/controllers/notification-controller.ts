@@ -3,6 +3,7 @@ import { requireOrganization } from "@/infrastructure/http/middlewares/auth";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
     makeCountUnreadNotifications,
+    makeDeleteAllNotifications,
     makeListNotifications,
     makeListRecentNotifications,
     makeMarkAllNotificationsRead,
@@ -53,6 +54,16 @@ export class NotificationController {
     })
     async markAllRead(request: FastifyRequest, reply: FastifyReply) {
         const result = await makeMarkAllNotificationsRead().execute(
+            request.organizationId,
+        );
+        return reply.send(result);
+    }
+
+    @Route("DELETE", "/api/notifications", {
+        middlewares: [requireOrganization],
+    })
+    async deleteAll(request: FastifyRequest, reply: FastifyReply) {
+        const result = await makeDeleteAllNotifications().execute(
             request.organizationId,
         );
         return reply.send(result);

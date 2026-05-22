@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
@@ -24,6 +26,7 @@ import {
 export function NotificationsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const query = useInfiniteQuery({
     queryKey: queryKeys.notifications.list,
@@ -50,6 +53,20 @@ export function NotificationsPage() {
       toast.success('Todas marcadas como lidas');
     },
   });
+  const clearAll = useMutation({
+    mutationFn: notificationService.deleteAll,
+    onSuccess: (result) => {
+      invalidateAll();
+      setConfirmClearOpen(false);
+      toast.success(
+        result.count > 0
+          ? `${result.count} notificação${result.count === 1 ? '' : 'ões'} apagada${result.count === 1 ? '' : 's'}`
+          : 'Nada para apagar',
+      );
+    },
+    onError: (err) =>
+      toast.error('Falha ao apagar', err instanceof Error ? err.message : undefined),
+  });
 
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   const hasAny = items.length > 0;
@@ -66,14 +83,24 @@ export function NotificationsPage() {
         description="Tudo que aconteceu na sua operação. Notificações marcadas como lidas são removidas automaticamente em 24 horas."
         actions={
           hasAny ? (
-            <Button
-              variant="outline"
-              leftIcon={<CheckCheck />}
-              loading={markAll.isPending}
-              onClick={() => markAll.mutate()}
-            >
-              Marcar todas como lidas
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                leftIcon={<CheckCheck />}
+                loading={markAll.isPending}
+                onClick={() => markAll.mutate()}
+              >
+                Marcar todas como lidas
+              </Button>
+              <Button
+                variant="outline"
+                leftIcon={<Trash2 />}
+                className="text-destructive"
+                onClick={() => setConfirmClearOpen(true)}
+              >
+                Limpar tudo
+              </Button>
+            </>
           ) : null
         }
       />
@@ -115,6 +142,33 @@ export function NotificationsPage() {
           ) : null}
         </>
       )}
+
+      <Modal
+        open={confirmClearOpen}
+        onClose={() => setConfirmClearOpen(false)}
+        title="Apagar todas as notificações?"
+        description="Esta ação remove todo o histórico — lidas e não lidas — e não pode ser desfeita."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmClearOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              loading={clearAll.isPending}
+              onClick={() => clearAll.mutate()}
+            >
+              Sim, apagar tudo
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">
+          As notificações ficam armazenadas só para sua referência —
+          mensagens, pedidos e pagamentos continuam intactos.
+        </p>
+      </Modal>
     </div>
   );
 }
