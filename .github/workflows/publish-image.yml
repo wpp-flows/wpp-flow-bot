@@ -115,7 +115,7 @@ jobs:
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
             -H "Content-Type: application/json" \
             "$target" \
-            -d "{\"key\":\"APP_IMAGE_TAG\",\"value\":\"$NEW_TAG\",\"is_preview\":false,\"is_build_time\":false,\"is_literal\":false}")
+            -d "{\"key\":\"APP_IMAGE_TAG\",\"value\":\"$NEW_TAG\"}")
           echo "  status=$status"
           cat "$response"
           echo ""
