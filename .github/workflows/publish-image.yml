@@ -26,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+      extra_tag: ${{ steps.meta.outputs.extra_tag }}
 
     steps:
       - name: Checkout
@@ -77,3 +80,75 @@ jobs:
 
           echo "✅ Published ${{ env.IMAGE }}:${{ steps.meta.outputs.sha }}"
           echo "✅ Published ${{ env.IMAGE }}:${{ steps.meta.outputs.extra_tag }}"
+
+  deploy-coolify:
+    name: Deploy to Coolify (HML)
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: hml
+
+    steps:
+      - name: Update APP_IMAGE_TAG env on Coolify
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+          NEW_TAG: ${{ needs.build-push.outputs.sha }}
+        run: |
+          set -euo pipefail
+          echo "→ Pointing APP_IMAGE_TAG at $NEW_TAG"
+          # Capture both body and HTTP status so we can fail loud on non-2xx.
+          response=$(mktemp)
+          status=$(curl -sS -o "$response" -w "%{http_code}" \
+            -X PATCH \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$COOLIFY_URL/api/v1/applications/$COOLIFY_APP_UUID/envs" \
+            -d "{
+              \"key\": \"APP_IMAGE_TAG\",
+              \"value\": \"$NEW_TAG\",
+              \"is_preview\": false,
+              \"is_build_time\": false,
+              \"is_literal\": false
+            }")
+          echo "  status=$status"
+          cat "$response"
+          echo ""
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "::error::Coolify env update failed with status $status"
+            exit 1
+          fi
+
+      - name: Trigger Coolify redeploy
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        run: |
+          set -euo pipefail
+          echo "→ Triggering redeploy of $COOLIFY_APP_UUID"
+          response=$(mktemp)
+          # force=true so Coolify always re-pulls the image (the tag stayed
+          # the same lexically if we kept :latest, but we just changed the
+          # APP_IMAGE_TAG var which docker-compose will substitute on up).
+          status=$(curl -sS -o "$response" -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_URL/api/v1/deploy?uuid=$COOLIFY_APP_UUID&force=true")
+          echo "  status=$status"
+          cat "$response"
+          echo ""
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "::error::Coolify deploy trigger failed with status $status"
+            exit 1
+          fi
+
+      - name: Summarize
+        run: |
+          {
+            echo "### Deployed to Coolify"
+            echo ""
+            echo "- App UUID: \`${{ secrets.COOLIFY_APP_UUID }}\`"
+            echo "- APP_IMAGE_TAG → \`${{ needs.build-push.outputs.sha }}\`"
+            echo "- Redeploy triggered. Tail the build log in Coolify."
+          } >> "$GITHUB_STEP_SUMMARY"
