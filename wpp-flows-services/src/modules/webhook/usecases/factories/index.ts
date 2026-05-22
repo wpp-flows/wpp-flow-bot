@@ -11,13 +11,14 @@ import { promotionRepo } from "@/modules/promotion/usecases/factories";
 import { FlowRunner } from "../flow-runner";
 import { FlowStateMachine } from "../flow/flow-state-machine";
 import { FlowStepSender } from "../flow/flow-step-sender";
+import { paymentTimeoutScheduler } from "../flow/scheduler/payment-timeout-scheduler";
 import { defaultStepStrategies } from "../flow/strategies";
 import { HandleEvolutionEventUseCase } from "../handle-evolution-event";
 import { defaultWebhookStrategies } from "../strategies";
 
 const createOrderFromCart = new CreateOrderFromCartUseCase(orderRepo, customerRepo);
 
-const flowStateMachine = new FlowStateMachine(itemRepo);
+const flowStateMachine = new FlowStateMachine(itemRepo, promotionRepo);
 const flowStepSender = new FlowStepSender(
     defaultStepStrategies({
         categoryRepo,
@@ -33,6 +34,7 @@ export const flowRunner = new FlowRunner(
     conversationRepo,
     messageRepo,
     customerRepo,
+    botRepo,
     orderRepo,
     createOrderFromCart,
     promotionRepo,
@@ -40,6 +42,8 @@ export const flowRunner = new FlowRunner(
     flowStateMachine,
     flowStepSender,
 );
+
+paymentTimeoutScheduler.start();
 
 const webhookStrategies = defaultWebhookStrategies();
 

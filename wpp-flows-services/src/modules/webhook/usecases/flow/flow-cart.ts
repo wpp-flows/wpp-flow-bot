@@ -1,5 +1,6 @@
 import type { ListSection } from "./flow-list-types";
 import type {
+    BundleProgress,
     FlowCartItem,
     FlowState,
 } from "@/modules/chat/repositories/chat-repo";
@@ -7,7 +8,8 @@ import type {
     MenuCategory,
     MenuItem,
 } from "@/modules/menu/repositories/menu-repo";
-import { CATEGORY_PREFIX, ITEM_PREFIX } from "./flow-shared";
+import type { Promotion } from "@/modules/promotion/repositories/promotion-repo";
+import { BUNDLE_PREFIX, CATEGORY_PREFIX, ITEM_PREFIX } from "./flow-shared";
 
 export const initialState = (): FlowState => ({
     phase: "CATEGORY",
@@ -32,6 +34,28 @@ export function appendToCart(
             name: item.name,
             price: String(item.price),
             qty: 1,
+        },
+    ];
+}
+
+export function appendBundleToCart(
+    cart: FlowCartItem[],
+    bundle: Promotion,
+    progress: BundleProgress,
+): FlowCartItem[] {
+    const price = bundle.bundle?.price ?? "0";
+    return [
+        ...cart,
+        {
+            itemId: `${BUNDLE_PREFIX}${bundle.id}:${Date.now()}`,
+            name: bundle.name,
+            price,
+            qty: 1,
+            bundle: {
+                bundleId: bundle.id,
+                picks: progress.picks,
+                answers: progress.answers,
+            },
         },
     ];
 }

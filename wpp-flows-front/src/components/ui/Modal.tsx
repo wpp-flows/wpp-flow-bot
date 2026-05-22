@@ -57,7 +57,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         className={cn(
-          'relative w-full rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg animate-scale-in',
+          'relative flex w-full max-h-[90vh] flex-col rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg animate-scale-in',
           SIZES[size],
         )}
       >
@@ -70,7 +70,7 @@ export function Modal({
           <X className="h-4 w-4" />
         </button>
         {(title || description) && (
-          <div className="flex flex-col gap-0.5 px-6 pt-5 pb-3 pr-12">
+          <div className="shrink-0 flex flex-col gap-0.5 px-6 pt-5 pb-3 pr-12">
             {title ? (
               <h2 id="modal-title" className="text-base font-semibold tracking-tight">
                 {title}
@@ -81,9 +81,16 @@ export function Modal({
             ) : null}
           </div>
         )}
-        <div className={cn('px-6', title || description ? 'pb-5' : 'pt-10 pb-5')}>{children}</div>
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-6',
+            title || description ? 'pb-5' : 'pt-10 pb-5',
+          )}
+        >
+          {children}
+        </div>
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+          <div className="shrink-0 flex items-center justify-end gap-2 border-t border-border px-6 py-4">
             {footer}
           </div>
         ) : null}

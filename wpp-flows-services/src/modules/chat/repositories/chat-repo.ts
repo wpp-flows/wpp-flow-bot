@@ -2,13 +2,38 @@ export type ConversationStatus = "OPEN" | "CLOSED" | "PENDING";
 export type MessageAuthor = "BOT" | "USER" | "AGENT" | "SYSTEM";
 export type MessageStatus = "SENT" | "DELIVERED" | "READ" | "FAILED";
 
-export type FlowPhase = "CATEGORY" | "PRODUCT" | "CONFIRMATION" | "DONE";
+export type FlowPhase =
+    | "CATEGORY"
+    | "PRODUCT"
+    | "CONFIRMATION"
+    | "DONE"
+    | "BUNDLE";
+
+export interface BundlePick {
+    componentId: string;
+    itemId: string;
+    itemName: string;
+}
 
 export interface FlowCartItem {
     itemId: string;
     name: string;
     price: string;
     qty: number;
+    bundle?: {
+        bundleId: string;
+        picks: BundlePick[];
+        answers: Record<string, string>;
+    } | null;
+}
+
+export interface BundleProgress {
+    bundleId: string;
+    componentIdx: number;
+    picks: BundlePick[];
+    questionIdx: number;
+    answers: Record<string, string>;
+    awaitingAnswer: boolean;
 }
 
 export interface FlowState {
@@ -40,6 +65,12 @@ export interface FlowState {
      * re-sends the payment link instead of advancing the flow.
      */
     awaitingPaymentForOrderId?: string | null;
+    /**
+     * Active BUNDLE sub-flow state. Set when the customer chooses a bundle from
+     * the "Promoções" virtual category and walks through its component picks +
+     * questions. Cleared when the bundle is added to the cart or canceled.
+     */
+    bundleProgress?: BundleProgress | null;
 }
 
 export interface Conversation {

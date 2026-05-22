@@ -13,9 +13,18 @@ export function buildListOptionMap(
     let n = 1;
     for (const section of sections) {
         for (const row of section.rows) {
+            const fullTitle = row.title.trim().toLowerCase();
             map[String(n)] = row.rowId;
-            map[row.title.trim().toLowerCase()] = row.rowId;
+            map[fullTitle] = row.rowId;
             map[row.rowId.toLowerCase()] = row.rowId;
+
+            const stripped = row.title
+                .replace(/^[^\p{L}\p{N}]+/u, "")
+                .trim()
+                .toLowerCase();
+            if (stripped && stripped !== fullTitle) {
+                map[stripped] = row.rowId;
+            }
             n += 1;
         }
     }

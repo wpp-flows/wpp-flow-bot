@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash } from 'lucide-react';
+import { Clock, MoreVertical, Power, Trash2, RefreshCw, Phone, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -11,11 +11,13 @@ import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { formatRelativeTime, cn } from '@/lib/utils';
 import type { BotInstance } from '@/types';
+import { BotWorkingHoursModal } from './BotWorkingHoursModal';
 
 export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [workingHoursOpen, setWorkingHoursOpen] = useState(false);
 
   const refresh = () => invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
 
@@ -65,7 +67,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
 
   return (
     <>
-      <Card className="group relative overflow-hidden transition-shadow hover:shadow-soft-md">
+      <Card className="group relative transition-shadow hover:shadow-soft-md">
         <CardContent className="space-y-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
@@ -96,7 +98,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                 </IconButton>
                 <div
                   className={cn(
-                    'absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-popover p-1 shadow-soft-md',
+                    'absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-border bg-popover p-1 shadow-soft-md',
                     'origin-top-right transition-all duration-150',
                     menuOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95',
                   )}
@@ -116,6 +118,14 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                     Atualizar status
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={() => setWorkingHoursOpen(true)}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    Horário de atendimento
                   </button>
                   <button
                     type="button"
@@ -189,6 +199,12 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
           </div>
         </CardContent>
       </Card>
+
+      <BotWorkingHoursModal
+        bot={bot}
+        open={workingHoursOpen}
+        onClose={() => setWorkingHoursOpen(false)}
+      />
 
       <Modal
         open={confirmDelete}

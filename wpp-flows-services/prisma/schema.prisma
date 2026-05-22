@@ -130,6 +130,10 @@ model Bot {
   flowId               String?
   flow                 Flow?     @relation(fields: [flowId], references: [id], onDelete: SetNull)
   lastConnectedAt      DateTime?
+  workingDaysOfWeek    Int[]     @default([])
+  workingStartTime     String?
+  workingEndTime       String?
+  outOfHoursMessage    String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -382,6 +386,11 @@ enum PromotionKind {
   NTH_ORDER_DISCOUNT
   /// Free-text "promotion of the day" message inserted before the menu.
   DAILY_MESSAGE
+  /// Orderable combo. Carries its full configuration in the `bundle` JSON
+  /// column (components/pools, fixed price, per-bundle questions). Shows up
+  /// as a virtual "Promoções" category in the menu and is picked by the
+  /// customer like any other item.
+  BUNDLE
 }
 
 enum PromotionDiscountType {
@@ -415,6 +424,13 @@ model Promotion {
   /// (e.g. shown on the 3rd order announcing the 5th-order bonus).
   teaserOrderOffset Int?
   teaserMessage     String?
+  /// BUNDLE: full combo configuration. Shape:
+  ///   { components: [{ id, label, itemIds, count, free }],
+  ///     price: "59.90",
+  ///     questions: [{ id, label, fieldKey }] }
+  /// Stored as JSON because the shape will evolve as we ship the orderable
+  /// promo experience and we don't query inside it.
+  bundle         Json?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

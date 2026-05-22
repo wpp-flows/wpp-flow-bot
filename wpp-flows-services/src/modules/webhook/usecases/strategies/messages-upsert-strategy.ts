@@ -54,13 +54,26 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
             if (existing) return;
         }
 
+        const incomingCustomerName = msg.key.fromMe ? undefined : msg.pushName;
         const conversation = await this.upsertConversation(ctx.conversationRepo, {
             organizationId: ctx.bot.organizationId,
             botId: ctx.bot.id,
             remoteJid: msg.key.remoteJid,
-            contactName: msg.pushName ?? msg.key.remoteJid.replace(/@.*$/, ""),
+            contactName:
+                incomingCustomerName ?? msg.key.remoteJid.replace(/@.*$/, ""),
             preview: text,
         });
+
+        if (
+            incomingCustomerName &&
+            incomingCustomerName !== conversation.contactName &&
+            /^\d+$/.test(conversation.contactName ?? "")
+        ) {
+            await ctx.conversationRepo.update(conversation.id, {
+                contactName: incomingCustomerName,
+            });
+            conversation.contactName = incomingCustomerName;
+        }
 
         const recorded = await ctx.messageRepo.create({
             conversationId: conversation.id,

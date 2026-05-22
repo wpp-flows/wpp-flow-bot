@@ -83,6 +83,23 @@ const setFieldKey = (step: FlowStep, fieldKey: string): FlowStep => ({
 
 const COMMON_FIELD_KEYS = ['observation', 'address', 'note'] as const;
 
+const getMetaString = (step: FlowStep, key: string): string => {
+  const v = (step.metadata as Record<string, unknown> | null)?.[key];
+  return typeof v === 'string' ? v : '';
+};
+
+const getMetaNumber = (step: FlowStep, key: string): string => {
+  const v = (step.metadata as Record<string, unknown> | null)?.[key];
+  if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+  if (typeof v === 'string') return v;
+  return '';
+};
+
+const setMetaField = (step: FlowStep, key: string, value: unknown): FlowStep => ({
+  ...step,
+  metadata: { ...(step.metadata ?? {}), [key]: value },
+});
+
 export function StepNode({
   step,
   index,
@@ -102,6 +119,7 @@ export function StepNode({
   const meta = TYPE_META[step.type];
   const supportsOptions = step.type === 'MENU';
   const isInput = step.type === 'INPUT';
+  const isPayment = step.type === 'PAYMENT';
   const options = getOptions(step);
   const usesMenuCategories = supportsOptions && menuCategoryOptions.length > 0;
   const visibleOptions = usesMenuCategories ? menuCategoryOptions : options;
@@ -313,6 +331,72 @@ export function StepNode({
               Clique para inserir no cursor. Variáveis sem valor no momento ficam vazias.
             </p>
           </div>
+
+          {isPayment ? (
+            <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/20 p-3">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Configurações do pagamento
+              </p>
+
+              <label className="block space-y-1.5">
+                <span className="text-2xs font-medium text-muted-foreground">
+                  Mensagem se o cliente cancelar
+                </span>
+                <Textarea
+                  rows={2}
+                  value={getMetaString(step, 'cancelMessage')}
+                  onChange={(e) =>
+                    onChange(setMetaField(step, 'cancelMessage', e.target.value))
+                  }
+                  placeholder="Ex: Que pena, quem sabe na próxima!"
+                />
+              </label>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
+                <label className="block space-y-1.5">
+                  <span className="text-2xs font-medium text-muted-foreground">
+                    Mensagem se o pagamento expirar
+                  </span>
+                  <Textarea
+                    rows={2}
+                    value={getMetaString(step, 'timeoutMessage')}
+                    onChange={(e) =>
+                      onChange(setMetaField(step, 'timeoutMessage', e.target.value))
+                    }
+                    placeholder="Ex: Seu pedido demorou demais para ser pago e foi cancelado."
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-2xs font-medium text-muted-foreground">
+                    Tempo limite (min)
+                  </span>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={getMetaNumber(step, 'timeoutMinutes')}
+                    placeholder="15"
+                    onChange={(e) => {
+                      const parsed = Number.parseInt(e.target.value, 10);
+                      onChange(
+                        setMetaField(
+                          step,
+                          'timeoutMinutes',
+                          Number.isFinite(parsed) && parsed > 0 ? parsed : null,
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+              </div>
+
+              <p className="text-2xs text-muted-foreground">
+                Se o pagamento não chegar no tempo limite o pedido é cancelado
+                automaticamente. O cliente também pode responder{' '}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono">cancelar</code>{' '}
+                a qualquer momento para encerrar o pedido.
+              </p>
+            </div>
+          ) : null}
 
           {supportsOptions ? (
             <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/20 p-3">

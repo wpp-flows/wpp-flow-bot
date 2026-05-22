@@ -7,11 +7,24 @@ export type OrderStatus =
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
+export interface OrderItemBundlePick {
+  componentId: string;
+  itemId: string;
+  itemName: string;
+}
+
+export interface OrderItemBundle {
+  bundleId: string;
+  picks: OrderItemBundlePick[];
+  answers: Record<string, string>;
+}
+
 export interface OrderItem {
   itemId: string;
   name: string;
   price: string;
   qty: number;
+  bundle?: OrderItemBundle | null;
 }
 
 export interface Order {

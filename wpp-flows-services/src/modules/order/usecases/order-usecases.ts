@@ -57,8 +57,6 @@ export class UpdateOrderStatusUseCase {
             );
         }
         const updated = await this.repo.updateStatus(input.id, input.status);
-        // Best-effort WhatsApp ping to the customer. Never blocks the status
-        // update — the notifier swallows its own errors.
         void this.notifyCustomer.execute(updated, input.status);
         return updated;
     }

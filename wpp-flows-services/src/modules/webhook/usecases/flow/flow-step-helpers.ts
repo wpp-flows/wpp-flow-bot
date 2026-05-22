@@ -56,3 +56,28 @@ export function readInputFieldKey(step: FlowStep): string {
     const key = (step.metadata as { fieldKey?: unknown } | null)?.fieldKey;
     return typeof key === "string" && key.trim() ? key.trim() : "value";
 }
+
+export function readPaymentCancelMessage(step: FlowStep): string {
+    const raw = (step.metadata as { cancelMessage?: unknown } | null)
+        ?.cancelMessage;
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+    return "Que pena, quem sabe na próxima! Seu pedido foi cancelado.";
+}
+
+export function readPaymentTimeoutMessage(step: FlowStep): string {
+    const raw = (step.metadata as { timeoutMessage?: unknown } | null)
+        ?.timeoutMessage;
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+    return "Seu pedido demorou demais para ser pago e foi cancelado. Quando quiser, é só chamar de novo!";
+}
+
+export function readPaymentTimeoutMinutes(step: FlowStep): number {
+    const raw = (step.metadata as { timeoutMinutes?: unknown } | null)
+        ?.timeoutMinutes;
+    if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) return raw;
+    if (typeof raw === "string") {
+        const parsed = Number.parseInt(raw, 10);
+        if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+    return 15;
+}

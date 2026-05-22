@@ -8,6 +8,9 @@ export const ADD_MORE_ID = "add_more";
 export const CANCEL_ID = "cancel";
 export const CATEGORY_PREFIX = "cat:";
 export const ITEM_PREFIX = "item:";
+export const BUNDLE_PREFIX = "bundle:";
+
+export const BUNDLE_CATEGORY_ID = "promotions";
 
 /**
  * Safety cap on auto-chained step deliveries per inbound message. Prevents an

@@ -43,9 +43,6 @@ export function ChatPanel({
   botName?: string;
   botStatus?: BotStatus;
 }>) {
-  // Effective bot state for the badge: a paused per-conversation toggle takes
-  // priority, then the instance-level Evolution status (offline/error/connecting).
-  // Only when both are healthy do we show "bot ativo".
   const botBadge: { tone: "success" | "warning" | "destructive"; label: string } =
     !conversation.botActive
       ? { tone: "warning", label: "bot pausado" }

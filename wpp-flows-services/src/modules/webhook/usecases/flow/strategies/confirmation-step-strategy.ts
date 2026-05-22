@@ -1,4 +1,5 @@
 import { evolutionApi } from "@/infrastructure/evolution/client";
+import type { FlowCartItem } from "@/modules/chat/repositories/chat-repo";
 import type { FlowStep } from "@/modules/flow/repositories/flow-repo";
 import { renderMessage } from "../../render-message";
 import type { ButtonOption } from "../flow-list-types";
@@ -23,9 +24,7 @@ export class ConfirmationStepStrategy implements FlowStepStrategy {
     async send(input: FlowStepSenderContext): Promise<SendResult> {
         const { bot, phoneNumber, step, state, ctx } = input;
         const cartLines = state.cart.length
-            ? state.cart
-                .map((entry) => `• ${entry.qty}x ${entry.name} (R$ ${entry.price})`)
-                .join("\n")
+            ? state.cart.map(renderCartLine).join("\n")
             : "Seu carrinho está vazio.";
         const prompt = `${renderMessage(step.content, ctx)}\n\n${cartLines}`;
         const buttons: ButtonOption[] = [
@@ -43,4 +42,14 @@ export class ConfirmationStepStrategy implements FlowStepStrategy {
         });
         return { evolutionResp, preview: prompt, optionMap };
     }
+}
+
+function renderCartLine(entry: FlowCartItem): string {
+    const head = `• ${entry.qty}x ${entry.name} (R$ ${entry.price})`;
+    if (!entry.bundle) return head;
+    const pickLines = entry.bundle.picks.map((p) => `   ↳ ${p.itemName}`);
+    const answerLines = Object.entries(entry.bundle.answers).map(
+        ([key, value]) => `   ↳ ${key}: ${value}`,
+    );
+    return [head, ...pickLines, ...answerLines].join("\n");
 }

@@ -1,29 +1,48 @@
 import { evolutionApi } from "@/infrastructure/evolution/client";
 import type { Bot } from "@/modules/bot/repositories/bot-repo";
+import type { BundleProgress } from "@/modules/chat/repositories/chat-repo";
 import type { FlowStep } from "@/modules/flow/repositories/flow-repo";
 import type {
     CategoryRepository,
     ItemRepository,
+    MenuItem,
 } from "@/modules/menu/repositories/menu-repo";
-import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
+import type {
+    BundleComponent,
+    BundleQuestion,
+    Promotion,
+    PromotionRepository,
+} from "@/modules/promotion/repositories/promotion-repo";
 import { evaluateGreetingPromotions } from "@/modules/promotion/usecases/promotion-evaluator";
 import { renderMessage, type RenderContext } from "../../render-message";
 import { buildCategorySections, buildItemSections } from "../flow-cart";
 import type { ListSection } from "../flow-list-types";
 import { buildListOptionMap, renderListAsText } from "../flow-option-map";
-import { BACK_ID, type SendResult } from "../flow-shared";
+import {
+    BACK_ID,
+    BUNDLE_CATEGORY_ID,
+    BUNDLE_PREFIX,
+    CATEGORY_PREFIX,
+    ITEM_PREFIX,
+    type SendResult,
+} from "../flow-shared";
 import type {
     FlowStepSenderContext,
     FlowStepStrategy,
 } from "./step-strategy";
 
 /**
- * Renders MENU steps as a numbered plain-text list. Two phases, switched by
- * `flowState.phase`:
- *  - CATEGORY: lists all org categories. Prepended with any active greeting
- *    promotions (daily message + Nth-order teasers) and their featured item.
- *  - PRODUCT: lists items inside `flowState.selectedCategoryId`, filtered by
- *    `availableDaysOfWeek` so day-restricted items only show on their days.
+ * Renders MENU steps as a numbered plain-text list. Five modes, switched by
+ * `flowState.phase` and the bundle state:
+ *  - CATEGORY (no bundleProgress): all org categories, with active greeting
+ *    promotions prepended and a synthetic "Promoções" row when active BUNDLE
+ *    promos exist.
+ *  - PRODUCT + selectedCategoryId="promotions": the list of available bundles.
+ *  - PRODUCT + real category id: items inside that category.
+ *  - BUNDLE (bundleProgress active, awaitingAnswer=false): pool picker for the
+ *    bundle's current component.
+ *  - BUNDLE (bundleProgress active, awaitingAnswer=true): question prompt for
+ *    the bundle's current question.
  *
  * Customers reply with the row number or its title; the option-map fallback
  * maps that typed text back to the rowId.
@@ -43,6 +62,17 @@ export class MenuStepStrategy implements FlowStepStrategy {
         const { bot, phoneNumber, step, state, ctx } = input;
         const organizationId = bot.organizationId;
 
+        if (state.phase === "BUNDLE" && state.bundleProgress) {
+            return this.sendBundleStep({
+                bot,
+                phoneNumber,
+                progress: state.bundleProgress,
+                organizationId,
+            });
+        }
+        if (state.phase === "PRODUCT" && state.selectedCategoryId === BUNDLE_CATEGORY_ID) {
+            return this.sendBundleList({ bot, phoneNumber, organizationId });
+        }
         if (state.phase === "PRODUCT" && state.selectedCategoryId) {
             return this.sendProductList({
                 bot,
@@ -69,9 +99,6 @@ export class MenuStepStrategy implements FlowStepStrategy {
         const { bot, phoneNumber, selectedCategoryId, organizationId } = input;
         const allItems = await this.itemRepo.listByCategory(selectedCategoryId);
         const today = new Date().getDay();
-        // Items with an empty `availableDaysOfWeek` are available every day;
-        // otherwise only on the listed weekdays. Items flagged `available=false`
-        // are always hidden.
         const items = allItems.filter(
             (it) =>
                 it.available &&
@@ -113,7 +140,23 @@ export class MenuStepStrategy implements FlowStepStrategy {
     }): Promise<SendResult> {
         const { bot, phoneNumber, step, ctx, organizationId } = input;
         const categories = await this.categoryRepo.listByOrg(organizationId);
-        const sections = buildCategorySections(categories);
+        const baseSections = buildCategorySections(categories);
+        const bundles = await this.activeBundles(organizationId);
+        const sections = bundles.length > 0
+            ? [
+                {
+                    title: "Promoções",
+                    rows: [
+                        {
+                            rowId: `${CATEGORY_PREFIX}${BUNDLE_CATEGORY_ID}`,
+                            title: "🎁 Promoções",
+                            description: "Combos com preço especial",
+                        },
+                    ],
+                },
+                ...baseSections,
+            ]
+            : baseSections;
         const description = await this.buildGreetingDescription({
             ctx,
             categoriesCount: categories.length,
@@ -130,6 +173,164 @@ export class MenuStepStrategy implements FlowStepStrategy {
             backRow: null,
             preview: `${title}: ${categories.length} categorias`,
         });
+    }
+
+    private async sendBundleList(input: {
+        bot: Bot;
+        phoneNumber: string;
+        organizationId: string;
+    }): Promise<SendResult> {
+        const { bot, phoneNumber, organizationId } = input;
+        const bundles = await this.activeBundles(organizationId);
+        const sections: ListSection[] = bundles.length === 0
+            ? []
+            : [
+                {
+                    title: "Combos disponíveis",
+                    rows: bundles.map((b) => ({
+                        rowId: `${BUNDLE_PREFIX}${b.id}`,
+                        title: b.name,
+                        description: bundleSummary(b),
+                    })),
+                },
+            ];
+        const description = bundles.length === 0
+            ? "Nenhum combo ativo no momento."
+            : "Escolha um combo para começar a montar.";
+        return this.sendMenuText({
+            bot,
+            phoneNumber,
+            title: "🎁 Promoções",
+            description,
+            sections,
+            backRow: { rowId: BACK_ID, title: "⬅️ Voltar para categorias" },
+            preview: `Promoções: ${bundles.length} combos`,
+        });
+    }
+
+    private async sendBundleStep(input: {
+        bot: Bot;
+        phoneNumber: string;
+        progress: BundleProgress;
+        organizationId: string;
+    }): Promise<SendResult> {
+        const { bot, phoneNumber, progress, organizationId } = input;
+        const bundle = await this.promotionRepo.findByIdInOrg(
+            organizationId,
+            progress.bundleId,
+        );
+        const config = bundle?.bundle;
+        if (!bundle || !config) {
+            // bundle was deleted mid-flow; bail with a friendly note.
+            return this.sendPlain({
+                bot,
+                phoneNumber,
+                text: "Esse combo não está mais disponível. Vamos voltar para o cardápio.",
+            });
+        }
+
+        if (progress.awaitingAnswer) {
+            const question = config.questions[progress.questionIdx];
+            if (!question) {
+                // defensive — shouldn't happen if the state machine is consistent.
+                return this.sendPlain({
+                    bot,
+                    phoneNumber,
+                    text: "Tudo certo! Combo adicionado ao pedido.",
+                });
+            }
+            return this.sendBundleQuestion({ bot, phoneNumber, bundle, question });
+        }
+
+        const component = config.components[progress.componentIdx];
+        if (!component) {
+            // all components done — would normally be question time, but
+            // sendBundleStep is also called right after the last pick before
+            // the runner advances. Fall back to a plain ack.
+            return this.sendPlain({
+                bot,
+                phoneNumber,
+                text: "Tudo certo! Combo pronto.",
+            });
+        }
+        return this.sendBundleComponentPicker({
+            bot,
+            phoneNumber,
+            bundle,
+            component,
+            progress,
+            organizationId,
+        });
+    }
+
+    private async sendBundleComponentPicker(input: {
+        bot: Bot;
+        phoneNumber: string;
+        bundle: Promotion;
+        component: BundleComponent;
+        progress: BundleProgress;
+        organizationId: string;
+    }): Promise<SendResult> {
+        const { bot, phoneNumber, bundle, component, progress, organizationId } = input;
+        const allItems = await this.itemRepo.listByOrg(organizationId);
+        const poolItems = component.itemIds
+            .map((id) => allItems.find((it) => it.id === id))
+            .filter((it): it is MenuItem => !!it && it.available);
+
+        const picksForThisComponent = progress.picks.filter(
+            (p) => p.componentId === component.id,
+        ).length;
+        const remaining = Math.max(0, component.count - picksForThisComponent);
+        const freeTag = component.free ? " (grátis)" : "";
+
+        const title = `${bundle.name} · ${component.label}${freeTag}`;
+        const description = remaining > 1
+            ? `Escolha ${remaining} de ${component.label.toLowerCase()}.`
+            : `Escolha 1 ${component.label.toLowerCase()}.`;
+
+        const sections: ListSection[] = poolItems.length === 0
+            ? []
+            : [
+                {
+                    title: component.label,
+                    rows: poolItems.map((item) => ({
+                        rowId: `${ITEM_PREFIX}${item.id}`,
+                        title: item.name,
+                        description: `R$ ${item.price}${
+                            item.description ? ` — ${item.description}` : ""
+                        }`,
+                    })),
+                },
+            ];
+        return this.sendMenuText({
+            bot,
+            phoneNumber,
+            title,
+            description,
+            sections,
+            backRow: { rowId: BACK_ID, title: "⬅️ Cancelar combo" },
+            preview: `${bundle.name} — pick ${component.label}`,
+        });
+    }
+
+    private async sendBundleQuestion(input: {
+        bot: Bot;
+        phoneNumber: string;
+        bundle: Promotion;
+        question: BundleQuestion;
+    }): Promise<SendResult> {
+        const { bot, phoneNumber, bundle, question } = input;
+        const text = `${bundle.name}\n\n${question.label}`;
+        const evolutionResp = await evolutionApi.sendText({
+            instanceName: bot.evolutionInstanceName,
+            number: phoneNumber,
+            text,
+        });
+        return {
+            evolutionResp,
+            preview: `Pergunta combo: ${question.label}`,
+            optionMap: {},
+        };
     }
 
     /**
@@ -156,7 +357,6 @@ export class MenuStepStrategy implements FlowStepStrategy {
         });
         if (greetings.length === 0) return baseDescription;
 
-        // Parallel lookups for featured items; missing/deleted items are skipped.
         const featuredIds = Array.from(
             new Set(
                 greetings
@@ -195,6 +395,26 @@ export class MenuStepStrategy implements FlowStepStrategy {
         });
 
         return `${greetingLines.join("\n\n")}\n\n${baseDescription}`;
+    }
+
+    private async activeBundles(organizationId: string): Promise<Promotion[]> {
+        const all = await this.promotionRepo.listActive(organizationId);
+        return all.filter(
+            (p) => p.kind === "BUNDLE" && (p.bundle?.components.length ?? 0) > 0,
+        );
+    }
+
+    private async sendPlain(input: {
+        bot: Bot;
+        phoneNumber: string;
+        text: string;
+    }): Promise<SendResult> {
+        const evolutionResp = await evolutionApi.sendText({
+            instanceName: input.bot.evolutionInstanceName,
+            number: input.phoneNumber,
+            text: input.text,
+        });
+        return { evolutionResp, preview: input.text, optionMap: {} };
     }
 
     /**
@@ -236,4 +456,11 @@ export class MenuStepStrategy implements FlowStepStrategy {
         });
         return { evolutionResp, preview: input.preview, optionMap };
     }
+}
+
+function bundleSummary(promo: Promotion): string {
+    const bundle = promo.bundle;
+    if (!bundle) return "Combo";
+    const slots = bundle.components.reduce((sum, c) => sum + c.count, 0);
+    return `R$ ${bundle.price} · ${slots} item${slots === 1 ? "" : "s"}`;
 }

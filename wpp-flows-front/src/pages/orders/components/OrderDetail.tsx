@@ -57,15 +57,34 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
       </div>
 
       <Section title="Itens">
-        <ul className="space-y-1.5 text-sm">
+        <ul className="space-y-2 text-sm">
           {order.items.map((it) => (
-            <li key={it.itemId} className="flex justify-between gap-3">
-              <span className="truncate">
-                {it.qty}× {it.name}
-              </span>
-              <span className="font-mono text-muted-foreground">
-                {formatBRL(Number.parseFloat(it.price) * it.qty)}
-              </span>
+            <li key={it.itemId} className="space-y-1">
+              <div className="flex justify-between gap-3">
+                <span className="truncate">
+                  {it.qty}× {it.name}
+                  {it.bundle ? (
+                    <Badge tone="primary" size="sm" className="ml-2">
+                      Combo
+                    </Badge>
+                  ) : null}
+                </span>
+                <span className="font-mono text-muted-foreground">
+                  {formatBRL(Number.parseFloat(it.price) * it.qty)}
+                </span>
+              </div>
+              {it.bundle ? (
+                <ul className="ml-4 space-y-0.5 border-l border-border pl-3 text-xs text-muted-foreground">
+                  {it.bundle.picks.map((p, idx) => (
+                    <li key={`${it.itemId}-pick-${idx}`}>↳ {p.itemName}</li>
+                  ))}
+                  {Object.entries(it.bundle.answers).map(([key, value]) => (
+                    <li key={`${it.itemId}-q-${key}`} className="italic">
+                      ↳ {key}: {value}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -142,7 +161,7 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
   );
 }
 
-function Section(props: { title: string; children: React.ReactNode }) {
+function Section(props: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <div className="space-y-1.5">
       <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">

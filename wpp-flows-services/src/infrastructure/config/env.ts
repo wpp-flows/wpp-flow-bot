@@ -17,6 +17,7 @@ const schema = z.object({
      */
     PUBLIC_API_URL: z.string().optional(),
     COOKIE_DOMAIN: z.string().optional(),
+    REDIS_URL: z.string().default("redis://redis:6379"),
 })
 
 const parsed = schema.safeParse(process.env)

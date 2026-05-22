@@ -11,6 +11,13 @@ export interface BotInstance {
   flowId?: string | null;
   webhookUrl?: string | null;
   lastConnectedAt?: string | null;
+  /** days (0=Sunday..6=Saturday) the bot replies. empty = every day. */
+  workingDaysOfWeek: number[];
+  /** "HH:MM" 24h. Null = no time restriction. */
+  workingStartTime: string | null;
+  workingEndTime: string | null;
+  /** custom out-of-hours reply; null/blank uses an auto-built default. */
+  outOfHoursMessage: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,4 +35,8 @@ export interface UpdateBotPayload {
   phoneNumber?: string | null;
   webhookUrl?: string | null;
   flowId?: string | null;
+  workingDaysOfWeek?: number[];
+  workingStartTime?: string | null;
+  workingEndTime?: string | null;
+  outOfHoursMessage?: string | null;
 }

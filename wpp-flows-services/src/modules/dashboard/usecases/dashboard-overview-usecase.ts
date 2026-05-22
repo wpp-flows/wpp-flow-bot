@@ -59,6 +59,12 @@ export class GetDashboardOverviewUseCase {
             Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1),
         );
 
+        const paidWhere = {
+            organizationId,
+            paymentStatus: "PAID",
+            status: { not: "CANCELED" },
+        } as const;
+
         const [
             todayAgg,
             weekAgg,
@@ -71,27 +77,18 @@ export class GetDashboardOverviewUseCase {
             topItemRows,
         ] = await Promise.all([
             prisma.order.aggregate({
-                where: {
-                    organizationId,
-                    createdAt: { gte: today },
-                    status: { not: "CANCELED" },
-                },
+                where: { ...paidWhere, createdAt: { gte: today } },
                 _count: { _all: true },
                 _sum: { total: true },
             }),
             prisma.order.aggregate({
-                where: {
-                    organizationId,
-                    createdAt: { gte: sevenDaysAgo },
-                    status: { not: "CANCELED" },
-                },
+                where: { ...paidWhere, createdAt: { gte: sevenDaysAgo } },
                 _sum: { total: true },
             }),
             prisma.order.aggregate({
                 where: {
-                    organizationId,
+                    ...paidWhere,
                     createdAt: { gte: prevWeekStart, lt: sevenDaysAgo },
-                    status: { not: "CANCELED" },
                 },
                 _sum: { total: true },
             }),
@@ -106,27 +103,16 @@ export class GetDashboardOverviewUseCase {
                 select: { status: true },
             }),
             prisma.order.findMany({
-                where: {
-                    organizationId,
-                    createdAt: { gte: fourteenDaysAgo },
-                    status: { not: "CANCELED" },
-                },
+                where: { ...paidWhere, createdAt: { gte: fourteenDaysAgo } },
                 select: { createdAt: true, total: true },
             }),
             prisma.order.groupBy({
                 by: ["status"],
-                where: {
-                    organizationId,
-                    createdAt: { gte: sevenDaysAgo },
-                },
+                where: { ...paidWhere, createdAt: { gte: sevenDaysAgo } },
                 _count: { _all: true },
             }),
             prisma.order.findMany({
-                where: {
-                    organizationId,
-                    createdAt: { gte: sevenDaysAgo },
-                    status: { not: "CANCELED" },
-                },
+                where: { ...paidWhere, createdAt: { gte: sevenDaysAgo } },
                 select: { items: true },
             }),
         ]);

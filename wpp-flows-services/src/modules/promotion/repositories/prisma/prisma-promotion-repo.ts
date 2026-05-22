@@ -1,11 +1,24 @@
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
 import type {
+    BundleConfig,
     Promotion,
     PromotionDiscountType,
     PromotionInput,
     PromotionKind,
     PromotionRepository,
 } from "../promotion-repo";
+
+const toBundle = (raw: unknown): BundleConfig | null => {
+    if (!raw || typeof raw !== "object") return null;
+    const obj = raw as Partial<BundleConfig>;
+    if (!Array.isArray(obj.components)) return null;
+    return {
+        components: obj.components,
+        price: typeof obj.price === "string" ? obj.price : "0",
+        questions: Array.isArray(obj.questions) ? obj.questions : [],
+    };
+};
 
 const toPromotion = (row: any): Promotion => ({
     id: row.id,
@@ -22,6 +35,7 @@ const toPromotion = (row: any): Promotion => ({
     promotionalPrice: row.promotionalPrice == null ? null : String(row.promotionalPrice),
     teaserOrderOffset: row.teaserOrderOffset,
     teaserMessage: row.teaserMessage,
+    bundle: toBundle(row.bundle),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
@@ -72,15 +86,23 @@ export class PrismaPromotionRepository implements PromotionRepository {
                 promotionalPrice: data.promotionalPrice ?? null,
                 teaserOrderOffset: data.teaserOrderOffset ?? null,
                 teaserMessage: data.teaserMessage ?? null,
+                bundle: data.bundle
+                    ? (data.bundle as unknown as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
             },
         });
         return toPromotion(row);
     }
 
     async update(id: string, data: Partial<PromotionInput>): Promise<Promotion> {
+        const { bundle, ...rest } = data;
+        const payload: Record<string, unknown> = { ...rest };
+        if (bundle !== undefined) {
+            payload.bundle = bundle ?? Prisma.DbNull;
+        }
         const row = await prisma.promotion.update({
             where: { id },
-            data: data as any,
+            data: payload as any,
         });
         return toPromotion(row);
     }

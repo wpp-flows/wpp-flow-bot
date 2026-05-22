@@ -3,7 +3,7 @@ import type { FlowStep } from "@/modules/flow/repositories/flow-repo";
 import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import type { CreatePaymentLinkUseCase } from "@/modules/payment/usecases/mercadopago-usecases";
 import { renderMessage } from "../../render-message";
-import type { SendResult } from "../flow-shared";
+import { CANCEL_ID, type SendResult } from "../flow-shared";
 import type {
     FlowStepSenderContext,
     FlowStepStrategy,
@@ -69,16 +69,25 @@ export class PaymentStepStrategy implements FlowStepStrategy {
             }
         }
 
-        const text = `${baseText}\n\nPague aqui: ${paymentLink}`;
+        const text = [
+            baseText,
+            "",
+            `Pague aqui: ${paymentLink}`,
+            "",
+            "Se preferir desistir, responda *cancelar* para encerrar o pedido.",
+        ].join("\n");
+
         const resp = await evolutionApi.sendText({
             instanceName: bot.evolutionInstanceName,
             number: phoneNumber,
             text,
         });
+        // Option map gives the runner a way to detect the customer's "cancelar"
+        // typed reply on this step and route it to the cancel handler.
         return {
             evolutionResp: resp,
             preview: text,
-            optionMap: {},
+            optionMap: { cancelar: CANCEL_ID, cancel: CANCEL_ID },
             statePatch: { awaitingPaymentForOrderId: state.orderId },
         };
     }

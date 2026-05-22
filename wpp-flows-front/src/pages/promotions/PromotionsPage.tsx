@@ -88,46 +88,15 @@ export function PromotionsPage() {
       promotionalPrice: promo.promotionalPrice ?? '',
       teaserOrderOffset: promo.teaserOrderOffset?.toString() ?? '',
       teaserMessage: promo.teaserMessage ?? '',
+      bundleComponents: promo.bundle?.components ?? [],
+      bundlePrice: promo.bundle?.price ?? '',
+      bundleQuestions: promo.bundle?.questions ?? [],
     });
     setModalOpen(true);
   };
 
   const onSubmit = () => {
-    const promoPriceRaw = form.promotionalPrice.replace(',', '.').trim();
-    const promoPrice = promoPriceRaw ? Number.parseFloat(promoPriceRaw) : null;
-    const payload: PromotionInput = {
-      kind: form.kind,
-      name: form.name.trim(),
-      isActive: form.isActive,
-      nthOrder:
-        form.kind === 'NTH_ORDER_DISCOUNT' ? Number.parseInt(form.nthOrder, 10) : null,
-      discountType: form.kind === 'NTH_ORDER_DISCOUNT' ? form.discountType : null,
-      discountValue:
-        form.kind === 'NTH_ORDER_DISCOUNT'
-          ? Number.parseFloat(form.discountValue.replace(',', '.'))
-          : null,
-      daysOfWeek: form.kind === 'DAILY_MESSAGE' ? form.daysOfWeek : [],
-      message: form.kind === 'DAILY_MESSAGE' ? form.message.trim() : null,
-      featuredItemId:
-        form.kind === 'DAILY_MESSAGE' && form.featuredItemId
-          ? form.featuredItemId
-          : null,
-      promotionalPrice:
-        form.kind === 'DAILY_MESSAGE' &&
-        form.featuredItemId &&
-        promoPrice != null &&
-        Number.isFinite(promoPrice)
-          ? promoPrice
-          : null,
-      teaserOrderOffset:
-        form.kind === 'NTH_ORDER_DISCOUNT' && form.teaserOrderOffset
-          ? Number.parseInt(form.teaserOrderOffset, 10)
-          : null,
-      teaserMessage:
-        form.kind === 'NTH_ORDER_DISCOUNT' && form.teaserMessage.trim()
-          ? form.teaserMessage.trim()
-          : null,
-    };
+    const payload = buildPayload(form);
     if (!payload.name) {
       toast.error('Informe um nome para a promoção.');
       return;
@@ -141,6 +110,7 @@ export function PromotionsPage() {
     () => ({
       discounts: promotions.filter((p) => p.kind === 'NTH_ORDER_DISCOUNT'),
       daily: promotions.filter((p) => p.kind === 'DAILY_MESSAGE'),
+      bundles: promotions.filter((p) => p.kind === 'BUNDLE'),
     }),
     [promotions],
   );
@@ -213,6 +183,25 @@ export function PromotionsPage() {
               </div>
             )}
           </Section>
+
+          <Section title="Combos">
+            {grouped.bundles.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhum combo configurado. Crie um para vender pacotes como "2 pizzas + refri grátis".
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {grouped.bundles.map((promo) => (
+                  <PromotionRow
+                    key={promo.id}
+                    promo={promo}
+                    onEdit={() => openEdit(promo)}
+                    onDelete={() => remove.mutate(promo.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </Section>
         </div>
       )}
 
@@ -252,4 +241,65 @@ function Section(props: { title: string; children: React.ReactNode }) {
       {props.children}
     </div>
   );
+}
+
+function buildPayload(form: PromotionFormState): PromotionInput {
+  const base: PromotionInput = {
+    kind: form.kind,
+    name: form.name.trim(),
+    isActive: form.isActive,
+    nthOrder: null,
+    discountType: null,
+    discountValue: null,
+    daysOfWeek: [],
+    message: null,
+    featuredItemId: null,
+    promotionalPrice: null,
+    teaserOrderOffset: null,
+    teaserMessage: null,
+    bundle: null,
+  };
+  switch (form.kind) {
+    case 'NTH_ORDER_DISCOUNT':
+      return { ...base, ...buildNthOrderPayload(form) };
+    case 'DAILY_MESSAGE':
+      return { ...base, ...buildDailyMessagePayload(form) };
+    case 'BUNDLE':
+      return { ...base, ...buildBundlePayload(form) };
+  }
+}
+
+function buildNthOrderPayload(form: PromotionFormState): Partial<PromotionInput> {
+  return {
+    nthOrder: Number.parseInt(form.nthOrder, 10),
+    discountType: form.discountType,
+    discountValue: Number.parseFloat(form.discountValue.replace(',', '.')),
+    teaserOrderOffset: form.teaserOrderOffset
+      ? Number.parseInt(form.teaserOrderOffset, 10)
+      : null,
+    teaserMessage: form.teaserMessage.trim() || null,
+  };
+}
+
+function buildDailyMessagePayload(form: PromotionFormState): Partial<PromotionInput> {
+  const promoPriceRaw = form.promotionalPrice.replace(',', '.').trim();
+  const promoPrice = promoPriceRaw ? Number.parseFloat(promoPriceRaw) : null;
+  const hasValidPrice = promoPrice != null && Number.isFinite(promoPrice);
+  return {
+    daysOfWeek: form.daysOfWeek,
+    message: form.message.trim(),
+    featuredItemId: form.featuredItemId || null,
+    promotionalPrice:
+      form.featuredItemId && hasValidPrice ? promoPrice : null,
+  };
+}
+
+function buildBundlePayload(form: PromotionFormState): Partial<PromotionInput> {
+  return {
+    bundle: {
+      components: form.bundleComponents,
+      price: form.bundlePrice.replace(',', '.').trim() || '0',
+      questions: form.bundleQuestions,
+    },
+  };
 }

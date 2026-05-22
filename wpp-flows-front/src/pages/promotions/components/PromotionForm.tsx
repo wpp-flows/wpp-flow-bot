@@ -9,7 +9,11 @@ import type {
   PromotionDiscountType,
   PromotionKind,
 } from '@/types';
-import { DAY_LABELS, type PromotionFormState } from '../promotions-constants';
+import {
+  DAY_LABELS,
+  type PromotionFormState,
+} from '../promotions-constants';
+import { BundleFields } from './BundleFields';
 
 interface Props {
   form: PromotionFormState;
@@ -17,7 +21,7 @@ interface Props {
   menuItems: MenuItem[];
 }
 
-export function PromotionForm({ form, setForm, menuItems }: Props) {
+export function PromotionForm({ form, setForm, menuItems }: Readonly<Props>) {
   const featuredItem = menuItems.find((it) => it.id === form.featuredItemId);
   const regularPrice = featuredItem ? Number.parseFloat(featuredItem.price) : null;
 
@@ -31,6 +35,7 @@ export function PromotionForm({ form, setForm, menuItems }: Props) {
         >
           <option value="NTH_ORDER_DISCOUNT">Desconto no Nº pedido</option>
           <option value="DAILY_MESSAGE">Mensagem do dia</option>
+          <option value="BUNDLE">Combo</option>
         </Select>
       </FormField>
       <FormField label="Nome" htmlFor="promo-name" required>
@@ -38,20 +43,24 @@ export function PromotionForm({ form, setForm, menuItems }: Props) {
           id="promo-name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Ex: 5º pedido com desconto"
+          placeholder="Ex: 2 pizzas + refri grátis"
         />
       </FormField>
 
       {form.kind === 'NTH_ORDER_DISCOUNT' ? (
         <NthOrderFields form={form} setForm={setForm} />
-      ) : (
+      ) : null}
+      {form.kind === 'DAILY_MESSAGE' ? (
         <DailyMessageFields
           form={form}
           setForm={setForm}
           menuItems={menuItems}
           regularPrice={regularPrice}
         />
-      )}
+      ) : null}
+      {form.kind === 'BUNDLE' ? (
+        <BundleFields form={form} setForm={setForm} menuItems={menuItems} />
+      ) : null}
 
       <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
         <div>
@@ -72,7 +81,7 @@ export function PromotionForm({ form, setForm, menuItems }: Props) {
 function NthOrderFields({
   form,
   setForm,
-}: Pick<Props, 'form' | 'setForm'>) {
+}: Readonly<Pick<Props, 'form' | 'setForm'>>) {
   return (
     <>
       <FormField label="Aplica no Nº" htmlFor="promo-n">
@@ -140,7 +149,7 @@ function DailyMessageFields({
   setForm,
   menuItems,
   regularPrice,
-}: Props & { regularPrice: number | null }) {
+}: Readonly<Props & { regularPrice: number | null }>) {
   return (
     <>
       <FormField label="Mensagem" htmlFor="promo-msg" required className="sm:col-span-2">
@@ -224,8 +233,8 @@ function DailyMessageFields({
             placeholder={regularPrice ? regularPrice.toFixed(2) : '0,00'}
           />
           {regularPrice &&
-          form.promotionalPrice &&
-          Number.parseFloat(form.promotionalPrice.replace(',', '.')) >= regularPrice ? (
+            form.promotionalPrice &&
+            Number.parseFloat(form.promotionalPrice.replace(',', '.')) >= regularPrice ? (
             <p className="mt-1 text-2xs text-warning">
               Preço promocional não é menor que o normal — nenhum desconto será aplicado.
             </p>
@@ -235,3 +244,4 @@ function DailyMessageFields({
     </>
   );
 }
+

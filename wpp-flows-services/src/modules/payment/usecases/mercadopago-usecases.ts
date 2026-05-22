@@ -7,6 +7,7 @@ import type { NotificationEmitter } from "@/modules/notification/usecases/notifi
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
 import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import type { WalletRepository } from "../repositories/wallet-repo";
 
 /**
@@ -138,6 +139,7 @@ export class HandleMercadoPagoWebhookUseCase {
         if (!order) return { orderId: null, paid: false };
 
         if (payment.status === "approved") {
+            paymentTimeoutScheduler.clear(order.id);
             if (order.paymentStatus !== "PAID") {
                 await this.orderRepo.updatePayment(order.id, {
                     paymentStatus: "PAID",

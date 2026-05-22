@@ -7,11 +7,30 @@ export type OrderStatus =
 
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 
+export interface OrderItemBundlePick {
+    componentId: string;
+    itemId: string;
+    itemName: string;
+}
+
+/**
+ * Bundle metadata attached to an order item that represents a completed BUNDLE
+ * promotion. The order line still has a single price (the bundle's locked
+ * price); this blob carries the picks + per-bundle question answers for
+ * rendering on the order detail and receipts.
+ */
+export interface OrderItemBundle {
+    bundleId: string;
+    picks: OrderItemBundlePick[];
+    answers: Record<string, string>;
+}
+
 export interface OrderItem {
     itemId: string;
     name: string;
     price: string;
     qty: number;
+    bundle?: OrderItemBundle | null;
 }
 
 export interface Order {
