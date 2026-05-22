@@ -6,7 +6,6 @@ import { useThemeStore } from '@/stores/themeStore';
 import { AppearanceSection } from './components/AppearanceSection';
 import { MercadoPagoSection } from './components/MercadoPagoSection';
 import { NotificationsSection } from './components/NotificationsSection';
-import { PayoutSection } from './components/PayoutSection';
 import { ProfileSection } from './components/ProfileSection';
 
 export function SettingsPage() {
@@ -31,7 +30,6 @@ export function SettingsPage() {
         }}
       />
       <MercadoPagoSection organization={organization} onUpdated={refreshOrganization} />
-      <PayoutSection organization={organization} onUpdated={refreshOrganization} />
       <AppearanceSection themeMode={themeMode} setTheme={setTheme} />
       <NotificationsSection organization={organization} onUpdated={refreshOrganization} />
     </div>
