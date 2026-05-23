@@ -24,7 +24,7 @@ export function PrivacyPage() {
       <ul>
         <li>Nome, e-mail e senha do usuário responsável pelo painel.</li>
         <li>
-          Nome, slug e dados operacionais da organização (chave PIX, credenciais
+          Nome, slug e dados operacionais da organização (credenciais
           do Mercado Pago, preferências de notificação).
         </li>
         <li>
