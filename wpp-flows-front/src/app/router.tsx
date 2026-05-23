@@ -41,6 +41,12 @@ const NotificationsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
+const PrivacyPage = lazy(() =>
+  import('@/pages/legal/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
+);
+const TermsPage = lazy(() =>
+  import('@/pages/legal/TermsPage').then((m) => ({ default: m.TermsPage })),
+);
 
 function PageFallback() {
   return (
@@ -54,6 +60,9 @@ export function AppRouter() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
+        <Route path={ROUTES.privacy} element={<PrivacyPage />} />
+        <Route path={ROUTES.terms} element={<TermsPage />} />
+
         <Route element={<RedirectIfAuthenticated />}>
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.login} element={<LoginPage />} />

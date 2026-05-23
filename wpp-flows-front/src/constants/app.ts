@@ -2,7 +2,7 @@ export const APP_CONFIG = {
   name: 'Mesa',
   tagline: 'WhatsApp chatbots para restaurantes',
   shortDescription: 'Crie e gerencie bots do WhatsApp para seus restaurantes.',
-  supportEmail: 'support@mesa.app',
+  supportEmail: 'medinamurilo4@gmail.com',
   version: '0.1.0',
 } as const;
 
@@ -30,6 +30,8 @@ export const ROUTES = {
   promotions: '/promotions',
   notifications: '/notifications',
   settings: '/settings',
+  privacy: '/privacidade',
+  terms: '/termos',
 } as const;
 
 export const API_LATENCY_MS = 600;
