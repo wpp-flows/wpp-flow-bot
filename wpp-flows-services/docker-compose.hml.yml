@@ -20,7 +20,9 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - wpp-flows-network
+      wpp-flows-network:
+        aliases:
+          - wpp-flows-redis
 
   evolution-api:
     image: ${EVOLUTION_IMAGE}
