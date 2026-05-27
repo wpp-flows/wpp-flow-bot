@@ -12,6 +12,7 @@ export function getRedisClient(): RedisClient {
         port: 6379,
         username: "default",
         password: "123",
+        family: 4,
         maxRetriesPerRequest: 3,
         retryStrategy: (attempts) => Math.min(attempts * 100, 5000),
     });
