@@ -8,12 +8,7 @@ services:
         "--appendonly",
         "yes",
         "--user",
-        "default",
-        "on",
-        ">123",
-        "~*",
-        "&*",
-        "+@all",
+        "default on >123 ~* &* +@all"
       ]
     volumes:
       - redis-data:/data
