@@ -12,10 +12,9 @@ export function getRedisClient(): RedisClient {
         port: 6379,
         username: "default",
         password: "123",
-        enableAutoPipelining: false,
-        lazyConnect: true,
+        maxRetriesPerRequest: 3,
+        retryStrategy: (attempts) => Math.min(attempts * 100, 5000),
     });
-
     client.on("error", (err) => {
         console.error("Redis error:", err.message);
     });

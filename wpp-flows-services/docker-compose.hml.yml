@@ -7,8 +7,13 @@ services:
         "redis-server",
         "--appendonly",
         "yes",
-        "--requirepass",
-        "${REDIS_PASSWORD}",
+        "--user",
+        "default",
+        "on",
+        ">123",
+        "~*",
+        "&*",
+        "+@all",
       ]
     volumes:
       - redis-data:/data
