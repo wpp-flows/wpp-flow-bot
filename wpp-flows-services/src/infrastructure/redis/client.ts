@@ -10,7 +10,7 @@ export function getRedisClient(): RedisClient {
     client = new Redis({
         host: "10.0.1.5",
         port: 6379,
-        username: "default",
+        // username: "default",
         password: "123",
         family: 4,
         maxRetriesPerRequest: 3,

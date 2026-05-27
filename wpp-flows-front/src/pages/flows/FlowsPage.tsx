@@ -16,7 +16,7 @@ import { generateId } from '@/lib/utils';
 import type { FlowStep } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
-import { useFlowsPage } from './hooks/useFlowsPage';
+import { useFlowsPage } from '@/pages/flows/hooks/useFlowsPage';
 
 type ViewMode = 'editor' | 'json';
 
