@@ -23,7 +23,7 @@ import { KpiCard } from './components/KpiCard';
 import { OrdersBarChart } from './components/OrdersBarChart';
 import { StatusBreakdown } from './components/StatusBreakdown';
 import { TopItemsList } from './components/TopItemsList';
-import { formatBRL } from './dashboard-helpers';
+import { formatBRL } from '../../helpers/dashboard-helpers';
 
 export function DashboardPage() {
   const { user } = useAuth();

@@ -47,7 +47,7 @@ export function CreateBotModal({ open, onClose }: Props) {
         onClose();
       }}
       title="Criar novo bot"
-      description="Crie uma nova instancia do WhatsApp via a Evolution API."
+      description="Crie uma nova instancia do WhatsApp."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} type="button">

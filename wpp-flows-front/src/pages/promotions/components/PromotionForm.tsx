@@ -131,6 +131,7 @@ function NthOrderFields({
         label="Mensagem do teaser"
         htmlFor="promo-teaser-msg"
         className="sm:col-span-2"
+        hint="Aparece no checkout para o cliente que está perto do pedido qualificante."
       >
         <Textarea
           id="promo-teaser-msg"
@@ -138,6 +139,20 @@ function NthOrderFields({
           value={form.teaserMessage}
           onChange={(e) => setForm({ ...form, teaserMessage: e.target.value })}
           placeholder="Ex: Este é seu 3º pedido — no 5º você ganha 10% off!"
+        />
+      </FormField>
+      <FormField
+        label="Mensagem ao ganhar o desconto"
+        htmlFor="promo-qualifying-msg"
+        className="sm:col-span-2"
+        hint="Aparece no checkout quando o cliente está exatamente no pedido qualificante. Em branco usa um texto padrão."
+      >
+        <Textarea
+          id="promo-qualifying-msg"
+          rows={2}
+          value={form.qualifyingMessage}
+          onChange={(e) => setForm({ ...form, qualifyingMessage: e.target.value })}
+          placeholder="Ex: 🎉 5º pedido — você ganhou 10% off, está aplicado já!"
         />
       </FormField>
     </>

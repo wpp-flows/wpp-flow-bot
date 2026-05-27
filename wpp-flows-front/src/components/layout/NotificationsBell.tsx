@@ -13,7 +13,7 @@ import {
   TYPE_ICON_TONE,
   TYPE_LABEL,
   formatRelative,
-} from '@/pages/notifications/notification-helpers';
+} from '@/helpers/notification-helpers';
 
 const POLL_MS = 60_000;
 
@@ -23,7 +23,6 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Close on outside click — small enough that one listener suffices.
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {

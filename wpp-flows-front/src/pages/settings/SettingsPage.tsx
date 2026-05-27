@@ -4,6 +4,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { AppearanceSection } from './components/AppearanceSection';
+import { DeliverySection } from './components/DeliverySection';
 import { MercadoPagoSection } from './components/MercadoPagoSection';
 import { NotificationsSection } from './components/NotificationsSection';
 import { ProfileSection } from './components/ProfileSection';
@@ -30,6 +31,7 @@ export function SettingsPage() {
         }}
       />
       <MercadoPagoSection organization={organization} onUpdated={refreshOrganization} />
+      <DeliverySection organization={organization} onUpdated={refreshOrganization} />
       <AppearanceSection themeMode={themeMode} setTheme={setTheme} />
       <NotificationsSection organization={organization} onUpdated={refreshOrganization} />
     </div>

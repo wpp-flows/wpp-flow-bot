@@ -35,6 +35,17 @@ const WalletPage = lazy(() =>
 const PromotionsPage = lazy(() =>
   import('@/pages/promotions/PromotionsPage').then((m) => ({ default: m.PromotionsPage })),
 );
+const CouponsPage = lazy(() =>
+  import('@/pages/coupons/CouponsPage').then((m) => ({ default: m.CouponsPage })),
+);
+const MenuPreviewPage = lazy(() =>
+  import('@/pages/menu-preview/MenuPreviewPage').then((m) => ({
+    default: m.MenuPreviewPage,
+  })),
+);
+const MessagesPage = lazy(() =>
+  import('@/pages/messages/MessagesPage').then((m) => ({ default: m.MessagesPage })),
+);
 const NotificationsPage = lazy(() =>
   import('@/pages/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })),
 );
@@ -46,6 +57,22 @@ const PrivacyPage = lazy(() =>
 );
 const TermsPage = lazy(() =>
   import('@/pages/legal/TermsPage').then((m) => ({ default: m.TermsPage })),
+);
+const PublicMenuPage = lazy(() =>
+  import('@/pages/public-menu/PublicMenuPage').then((m) => ({ default: m.PublicMenuPage })),
+);
+const PublicCartPage = lazy(() =>
+  import('@/pages/public-menu/PublicCartPage').then((m) => ({ default: m.PublicCartPage })),
+);
+const PublicCheckoutPage = lazy(() =>
+  import('@/pages/public-menu/PublicCheckoutPage').then((m) => ({
+    default: m.PublicCheckoutPage,
+  })),
+);
+const PublicOrderSuccessPage = lazy(() =>
+  import('@/pages/public-menu/PublicOrderSuccessPage').then((m) => ({
+    default: m.PublicOrderSuccessPage,
+  })),
 );
 
 function PageFallback() {
@@ -62,6 +89,11 @@ export function AppRouter() {
       <Routes>
         <Route path={ROUTES.privacy} element={<PrivacyPage />} />
         <Route path={ROUTES.terms} element={<TermsPage />} />
+
+        <Route path="/r/:slug" element={<PublicMenuPage />} />
+        <Route path="/r/:slug/carrinho" element={<PublicCartPage />} />
+        <Route path="/r/:slug/checkout" element={<PublicCheckoutPage />} />
+        <Route path="/r/:slug/pedido/:orderId" element={<PublicOrderSuccessPage />} />
 
         <Route element={<RedirectIfAuthenticated />}>
           <Route element={<AuthLayout />}>
@@ -87,6 +119,9 @@ export function AppRouter() {
               <Route path={ROUTES.orders} element={<OrdersPage />} />
               <Route path={ROUTES.wallet} element={<WalletPage />} />
               <Route path={ROUTES.promotions} element={<PromotionsPage />} />
+              <Route path={ROUTES.coupons} element={<CouponsPage />} />
+              <Route path={ROUTES.menuPreview} element={<MenuPreviewPage />} />
+              <Route path={ROUTES.messages} element={<MessagesPage />} />
               <Route path={ROUTES.notifications} element={<NotificationsPage />} />
               <Route path={ROUTES.settings} element={<SettingsPage />} />
             </Route>

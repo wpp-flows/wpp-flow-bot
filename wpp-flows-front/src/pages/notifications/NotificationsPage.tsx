@@ -21,7 +21,7 @@ import {
   TYPE_ICON_TONE,
   TYPE_LABEL,
   formatRelative,
-} from './notification-helpers';
+} from '../../helpers/notification-helpers';
 
 export function NotificationsPage() {
   const qc = useQueryClient();

@@ -2,10 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Design Tokens ---------- */
 @layer base {
   :root {
-    /* Surfaces */
     --background: 0 0% 100%;
     --foreground: 224 12% 9%;
 
@@ -21,7 +19,6 @@
     --accent: 220 14% 96%;
     --accent-foreground: 224 12% 9%;
 
-    /* Brand — WhatsApp green-tinted, but cooler/quieter for SaaS feel */
     --primary: 152 60% 36%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 152 56% 94%;
@@ -46,12 +43,10 @@
     --info-foreground: 0 0% 100%;
     --info-soft: 212 96% 96%;
 
-    /* Lines & focus */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 152 60% 36%;
 
-    /* Sidebar */
     --sidebar: 0 0% 100%;
     --sidebar-foreground: 224 12% 9%;
     --sidebar-accent: 220 14% 96%;
@@ -121,7 +116,6 @@
   }
 }
 
-/* ---------- Base styles ---------- */
 @layer base {
   * {
     @apply border-border;
@@ -145,7 +139,6 @@
     letter-spacing: -0.022em;
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -165,18 +158,15 @@
     border: 2px solid transparent;
   }
 
-  /* Selection */
   ::selection {
     background: hsl(var(--primary) / 0.2);
   }
 
-  /* Focus outline reset; we render rings via tailwind ring-* */
   :focus-visible {
     outline: none;
   }
 }
 
-/* ---------- Component utilities ---------- */
 @layer components {
   .glass-panel {
     @apply bg-background/70 backdrop-blur-xl border border-border;
@@ -219,7 +209,6 @@
   }
 }
 
-/* ---------- Utilities ---------- */
 @layer utilities {
   .text-balance {
     text-wrap: balance;

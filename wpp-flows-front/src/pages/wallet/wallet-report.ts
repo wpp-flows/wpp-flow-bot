@@ -1,5 +1,5 @@
 import type { Wallet, WalletTransaction } from '@/types';
-import { formatBRL, formatDateTime, TX_KIND_LABEL, TX_STATUS_LABEL } from './wallet-helpers';
+import { formatBRL, formatDateTime, TX_KIND_LABEL, TX_STATUS_LABEL } from '../../helpers/wallet-helpers';
 
 interface ReportInput {
   organizationName: string;

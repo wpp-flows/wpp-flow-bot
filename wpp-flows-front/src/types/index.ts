@@ -10,11 +10,13 @@ export type {
 export type { BotInstance, BotStatus, CreateBotPayload, UpdateBotPayload } from './bot';
 export type {
   MenuItem,
+  MenuItemAdditional,
   MenuCategory,
   CreateCategoryPayload,
   UpdateCategoryPayload,
   CreateItemPayload,
   UpdateItemPayload,
+  AdditionalPayload,
 } from './menu';
 export type {
   Flow,
@@ -73,3 +75,4 @@ export type {
   NotificationRecentResponse,
   NotificationPage,
 } from './notification';
+export type { Coupon, CouponDiscountType, CouponInput } from './coupon';

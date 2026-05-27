@@ -69,6 +69,16 @@ export const authService = {
     payoutPixKey?: string | null;
     payoutPixKeyType?: Organization['payoutPixKeyType'];
     notificationPreferences?: NotificationPreferences;
+    paymentTimeoutMinutes?: number;
+    paymentCancelMessage?: string | null;
+    paymentTimeoutMessage?: string | null;
+    paymentReceivedMessage?: string | null;
+    deliveryFee?: number;
+    workingDaysOfWeek?: number[];
+    workingStartTime?: string | null;
+    workingEndTime?: string | null;
+    outOfHoursMessage?: string | null;
+    botCooldownMinutes?: number;
   }): Promise<Organization> {
     return apiCall<Organization>({
       endpoint: '/api/organization',

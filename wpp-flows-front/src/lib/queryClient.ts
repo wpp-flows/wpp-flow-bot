@@ -54,6 +54,15 @@ export const queryKeys = {
   promotions: {
     all: ['promotions'] as const,
   },
+  coupons: {
+    all: ['coupons'] as const,
+  },
+  publicMenu: {
+    detail: (slug: string) => ['public-menu', slug] as const,
+  },
+  templateVariables: {
+    all: ['template-variables'] as const,
+  },
   notifications: {
     recent: ['notifications', 'recent'] as const,
     list: ['notifications', 'list'] as const,

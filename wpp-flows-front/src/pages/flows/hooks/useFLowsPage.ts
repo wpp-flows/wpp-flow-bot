@@ -4,7 +4,7 @@ import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { Flow, FlowStep, FlowStepInput } from '@/types';
 
-interface UseFLowsPageParams {
+interface UseFlowsPageParams {
   activeFlowId?: string;
   steps: FlowStep[];
   flowCount: number;
@@ -20,13 +20,13 @@ const stepsAsInput = (list: FlowStep[]): FlowStepInput[] =>
     metadata: s.metadata ?? null,
   }));
 
-export function useFLowsPage({
+export function useFlowsPage({
   activeFlowId,
   steps,
   flowCount,
   setActiveFlowId,
   setConfirmDeleteOpen,
-}: Readonly<UseFLowsPageParams>) {
+}: Readonly<UseFlowsPageParams>) {
   const qc = useQueryClient();
 
   const save = useMutation({

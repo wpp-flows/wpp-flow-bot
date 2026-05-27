@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, MoreVertical, Power, Trash2, RefreshCw, Phone, Hash } from 'lucide-react';
+import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -11,13 +11,11 @@ import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { formatRelativeTime, cn } from '@/lib/utils';
 import type { BotInstance } from '@/types';
-import { BotWorkingHoursModal } from './BotWorkingHoursModal';
 
 export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [workingHoursOpen, setWorkingHoursOpen] = useState(false);
 
   const refresh = () => invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
 
@@ -121,14 +119,6 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                   </button>
                   <button
                     type="button"
-                    onMouseDown={() => setWorkingHoursOpen(true)}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <Clock className="h-3.5 w-3.5" />
-                    Horário de atendimento
-                  </button>
-                  <button
-                    type="button"
                     onMouseDown={() => setConfirmDelete(true)}
                     className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive-soft"
                   >
@@ -200,12 +190,6 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
         </CardContent>
       </Card>
 
-      <BotWorkingHoursModal
-        bot={bot}
-        open={workingHoursOpen}
-        onClose={() => setWorkingHoursOpen(false)}
-      />
-
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
@@ -224,7 +208,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Esta acao nao pode ser desfeita. A instancia da Evolution API tambem sera encerrada.
+          Esta ação não pode ser desfeita. A instância tambem será encerrada.
         </p>
       </Modal>
     </>

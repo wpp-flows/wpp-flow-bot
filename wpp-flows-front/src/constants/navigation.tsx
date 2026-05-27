@@ -4,9 +4,12 @@ import {
   UtensilsCrossed,
   Workflow,
   MessagesSquare,
+  MessageSquareText,
   Receipt,
   Wallet,
   TicketPercent,
+  BadgePercent,
+  Smartphone,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -39,7 +42,10 @@ export const NAV_GROUPS: NavGroup[] = [
     title: 'Configuração',
     items: [
       { label: 'Menu', to: ROUTES.menu, icon: UtensilsCrossed },
+      { label: 'Visualizar cardápio', to: ROUTES.menuPreview, icon: Smartphone },
       { label: 'Promoções', to: ROUTES.promotions, icon: TicketPercent },
+      { label: 'Cupons', to: ROUTES.coupons, icon: BadgePercent },
+      { label: 'Mensagens', to: ROUTES.messages, icon: MessageSquareText },
       { label: 'Flow Builder', to: ROUTES.flows, icon: Workflow },
       { label: 'Configurações', to: ROUTES.settings, icon: Settings },
     ],

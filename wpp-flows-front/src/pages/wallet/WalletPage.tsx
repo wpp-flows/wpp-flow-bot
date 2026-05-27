@@ -9,7 +9,7 @@ import { walletService } from '@/services/walletService';
 import { queryKeys } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { TransactionRow } from './components/TransactionRow';
-import { formatBRL } from './wallet-helpers';
+import { formatBRL } from '../../helpers/wallet-helpers';
 import { openWalletReport } from './wallet-report';
 
 export function WalletPage() {

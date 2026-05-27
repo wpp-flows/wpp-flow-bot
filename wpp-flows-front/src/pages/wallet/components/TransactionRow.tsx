@@ -6,7 +6,7 @@ import {
   TX_STATUS_TONE,
   formatBRL,
   formatDateTime,
-} from '../wallet-helpers';
+} from '../../../helpers/wallet-helpers';
 
 interface Props {
   tx: WalletTransaction;

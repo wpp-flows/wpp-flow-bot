@@ -12,6 +12,7 @@ export { Badge } from './Badge';
 export type { BadgeProps } from './Badge';
 export { Avatar } from './Avatar';
 export { Modal } from './Modal';
+export { BottomSheet } from './BottomSheet';
 export { Skeleton } from './Skeleton';
 export { EmptyState } from './EmptyState';
 export { Switch } from './Switch';

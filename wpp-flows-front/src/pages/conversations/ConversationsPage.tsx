@@ -49,7 +49,7 @@ export function ConversationsPage() {
     queryFn: () => chatService.list(filters),
     staleTime: 0.5 * 1000 * 60,
     gcTime: 1 * 1000 * 60,
-    refetchInterval: 1 * 1000 * 60,
+    refetchInterval: 1 * 1000 * 30,
   });
 
   const messagesForSelection = useQuery({
@@ -162,7 +162,7 @@ export function ConversationsPage() {
 
       <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <Info className="h-3.5 w-3.5" />
-        As conversas são atualizadas automaticamente a cada minuto. Clique em
+        As conversas são atualizadas automaticamente a cada 30 segundos. Clique em
         Atualizar para ver mudanças na hora.
       </div>
 

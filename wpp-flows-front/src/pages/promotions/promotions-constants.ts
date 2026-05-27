@@ -23,6 +23,7 @@ export interface PromotionFormState {
   promotionalPrice: string;
   teaserOrderOffset: string;
   teaserMessage: string;
+  qualifyingMessage: string;
   bundleComponents: BundleFormComponent[];
   bundlePrice: string;
   bundleQuestions: BundleFormQuestion[];
@@ -41,6 +42,7 @@ export const emptyPromotionForm: PromotionFormState = {
   promotionalPrice: '',
   teaserOrderOffset: '',
   teaserMessage: '',
+  qualifyingMessage: '',
   bundleComponents: [],
   bundlePrice: '',
   bundleQuestions: [],

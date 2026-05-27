@@ -8,7 +8,7 @@ import {
   formatBRL,
   formatDateTime,
   orderNumber,
-} from '../order-helpers';
+} from '../../../helpers/order-helpers';
 
 export function OrderRowSummary({ order }: { order: Order }) {
   const itemCount = order.items.reduce((sum, it) => sum + it.qty, 0);

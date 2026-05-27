@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bot as BotIcon, Plus, Search } from 'lucide-react';
+import { Bot as BotIcon, Clock, Plus, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -8,16 +8,20 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs } from '@/components/ui/Tabs';
 import { botService } from '@/services/botService';
+import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryClient';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { BotCard } from './components/BotCard';
 import { CreateBotModal } from './components/CreateBotModal';
+import { OrgWorkingHoursModal } from './components/OrgWorkingHoursModal';
 import type { BotStatus } from '@/types';
 
 type StatusFilter = 'all' | BotStatus;
 
 export function BotsPage() {
+  const { organization } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
+  const [workingHoursOpen, setWorkingHoursOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const debouncedSearch = useDebouncedValue(search, 200);
@@ -42,11 +46,20 @@ export function BotsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Bots"
-        description="Cada bot e uma instancia do WhatsApp com Evolution API. Conecte, monitore e gerencie aqui."
+        description="Cada bot é uma instancia do WhatsApp. Conecte, monitore e gerencie aqui."
         actions={
-          <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
-            Novo bot
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              leftIcon={<Clock />}
+              onClick={() => setWorkingHoursOpen(true)}
+            >
+              Horário de atendimento
+            </Button>
+            <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
+              Novo bot
+            </Button>
+          </>
         }
       />
 
@@ -103,6 +116,11 @@ export function BotsPage() {
       )}
 
       <CreateBotModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <OrgWorkingHoursModal
+        organization={organization}
+        open={workingHoursOpen}
+        onClose={() => setWorkingHoursOpen(false)}
+      />
     </div>
   );
 }

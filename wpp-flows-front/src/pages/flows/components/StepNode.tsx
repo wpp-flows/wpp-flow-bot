@@ -1,21 +1,24 @@
 import { useRef } from 'react';
-import { GripVertical, Trash2, ChevronDown, ChevronRight, Plus, X, Tag, ArrowUp, ArrowDown } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
-import { Select } from '@/components/ui/Select';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+  Tag,
+  Trash2,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
 import { IconButton } from '@/components/ui/IconButton';
-import { Badge, type BadgeProps } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import type { FlowStep, FlowStepOption, FlowStepType } from '@/types';
-import { cn, generateId } from '@/lib/utils';
+import { Textarea } from '@/components/ui/Textarea';
+import { cn } from '@/lib/utils';
+import type { FlowStep } from '@/types';
 import { FLOW_VARIABLES, formatVariable } from '../flow-variables';
 
 interface StepNodeProps {
   step: FlowStep;
   index: number;
   total: number;
-  menuCategoryOptions?: FlowStepOption[];
-  menuCategoriesLoading?: boolean;
   expanded: boolean;
   onToggle: () => void;
   onChange: (next: FlowStep) => void;
@@ -27,85 +30,10 @@ interface StepNodeProps {
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }
 
-const TYPE_META: Record<FlowStepType, { label: string; tone: BadgeProps['tone']; description: string }> = {
-  MESSAGE: {
-    label: 'Mensagem',
-    tone: 'info',
-    description:
-      'Envia uma mensagem de texto. Se houver outra mensagem logo após (Mensagem ou Pagamento), o bot envia em sequência sem precisar de resposta do cliente.',
-  },
-  MENU: {
-    label: 'Menu',
-    tone: 'primary',
-    description:
-      'Enviado como lista interativa do WhatsApp. O bot mostra as categorias do menu; ao escolher uma, exibe os itens dela. Voltar entre categoria e itens é automático.',
-  },
-  CONFIRMATION: {
-    label: 'Confirmação',
-    tone: 'success',
-    description:
-      'Enviado como botões interativos: Confirmar, Adicionar mais e Voltar. O carrinho do cliente é resumido logo acima dos botões.',
-  },
-  PAYMENT: {
-    label: 'Pagamento',
-    tone: 'destructive',
-    description: 'Envia instruções de pagamento ou um link configurado em metadata.paymentLink.',
-  },
-  INPUT: {
-    label: 'Entrada do cliente',
-    tone: 'warning',
-    description:
-      'Envia a mensagem como pergunta e captura a próxima resposta digitada do cliente no campo escolhido (ex: observação, endereço). Disponível em mensagens seguintes via {{input.<campo>}}.',
-  },
-};
-
-const getOptions = (step: FlowStep): FlowStepOption[] => {
-  const opts = (step.metadata as { options?: unknown } | null)?.options;
-  return Array.isArray(opts) ? (opts as FlowStepOption[]) : [];
-};
-
-const setOptions = (step: FlowStep, options: FlowStepOption[]): FlowStep => ({
-  ...step,
-  metadata: { ...(step.metadata ?? {}), options },
-});
-
-const hasOptions = (step: FlowStep): boolean => getOptions(step).length > 0;
-
-const getFieldKey = (step: FlowStep): string => {
-  const key = (step.metadata as { fieldKey?: unknown } | null)?.fieldKey;
-  return typeof key === 'string' ? key : '';
-};
-
-const setFieldKey = (step: FlowStep, fieldKey: string): FlowStep => ({
-  ...step,
-  metadata: { ...(step.metadata ?? {}), fieldKey },
-});
-
-const COMMON_FIELD_KEYS = ['observation', 'address', 'note'] as const;
-
-const getMetaString = (step: FlowStep, key: string): string => {
-  const v = (step.metadata as Record<string, unknown> | null)?.[key];
-  return typeof v === 'string' ? v : '';
-};
-
-const getMetaNumber = (step: FlowStep, key: string): string => {
-  const v = (step.metadata as Record<string, unknown> | null)?.[key];
-  if (typeof v === 'number' && Number.isFinite(v)) return String(v);
-  if (typeof v === 'string') return v;
-  return '';
-};
-
-const setMetaField = (step: FlowStep, key: string, value: unknown): FlowStep => ({
-  ...step,
-  metadata: { ...(step.metadata ?? {}), [key]: value },
-});
-
 export function StepNode({
   step,
   index,
   total,
-  menuCategoryOptions = [],
-  menuCategoriesLoading = false,
   expanded,
   onToggle,
   onChange,
@@ -116,16 +44,8 @@ export function StepNode({
   isOver,
   dragHandleProps,
 }: Readonly<StepNodeProps>) {
-  const meta = TYPE_META[step.type];
-  const supportsOptions = step.type === 'MENU';
-  const isInput = step.type === 'INPUT';
-  const isPayment = step.type === 'PAYMENT';
-  const options = getOptions(step);
-  const usesMenuCategories = supportsOptions && menuCategoryOptions.length > 0;
-  const visibleOptions = usesMenuCategories ? menuCategoryOptions : options;
-  const headerLabel = `Passo ${String(index + 1).padStart(2, '0')}`;
-  const fieldKey = getFieldKey(step);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const headerLabel = `Passo ${String(index + 1).padStart(2, '0')}`;
 
   const insertVariable = (key: string) => {
     const token = formatVariable(key);
@@ -138,32 +58,13 @@ export function StepNode({
     const end = el.selectionEnd ?? start;
     const before = step.content.slice(0, start);
     const after = step.content.slice(end);
-    const nextContent = `${before}${token}${after}`;
-    onChange({ ...step, content: nextContent });
-    // Restore focus + caret after React's controlled re-render.
+    onChange({ ...step, content: `${before}${token}${after}` });
     requestAnimationFrame(() => {
       if (!textareaRef.current) return;
       const caret = start + token.length;
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(caret, caret);
     });
-  };
-
-  const updateOption = (id: string, patch: Partial<FlowStepOption>) => {
-    onChange(setOptions(step, options.map((o) => (o.id === id ? { ...o, ...patch } : o))));
-  };
-
-  const addOption = () => {
-    const opt: FlowStepOption = {
-      id: generateId('opt'),
-      label: `Opção ${options.length + 1}`,
-      value: `option_${options.length + 1}`,
-    };
-    onChange(setOptions(step, [...options, opt]));
-  };
-
-  const removeOption = (id: string) => {
-    onChange(setOptions(step, options.filter((o) => o.id !== id)));
   };
 
   return (
@@ -212,8 +113,8 @@ export function StepNode({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold tracking-tight">{headerLabel}</p>
-            <Badge size="sm" tone={meta.tone}>
-              {meta.label}
+            <Badge size="sm" tone="info">
+              Mensagem
             </Badge>
           </div>
           {!expanded ? (
@@ -237,75 +138,22 @@ export function StepNode({
 
       {expanded ? (
         <div className="space-y-3 border-t border-border px-4 py-4">
-          <label className="block space-y-1.5">
-            <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tipo do passo
-            </span>
-            <Select
-              value={step.type}
-              onChange={(e) => {
-                const nextType = e.target.value as FlowStepType;
-                if (
-                  nextType === 'MENU' &&
-                  menuCategoryOptions.length > 0 &&
-                  (step.type !== 'MENU' || !hasOptions(step))
-                ) {
-                  onChange(setOptions({ ...step, type: nextType }, menuCategoryOptions));
-                  return;
-                }
-                if (nextType === 'INPUT' && !getFieldKey(step)) {
-                  onChange(setFieldKey({ ...step, type: nextType }, 'observation'));
-                  return;
-                }
-                onChange({ ...step, type: nextType });
-              }}
-            >
-              <option value="MESSAGE">Mensagem</option>
-              <option value="MENU">Menu</option>
-              <option value="CONFIRMATION">Confirmação</option>
-              <option value="PAYMENT">Pagamento</option>
-              <option value="INPUT">Entrada do cliente</option>
-            </Select>
-          </label>
-
-          <p className="text-2xs text-muted-foreground">{meta.description}</p>
-
-          {isInput ? (
-            <label className="block space-y-1.5">
-              <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Campo a salvar
-              </span>
-              <Input
-                value={fieldKey}
-                placeholder="observation"
-                onChange={(e) => onChange(setFieldKey(step, e.target.value))}
-                list={`field-key-suggestions-${step.id}`}
-              />
-              <datalist id={`field-key-suggestions-${step.id}`}>
-                {COMMON_FIELD_KEYS.map((k) => (
-                  <option key={k} value={k} />
-                ))}
-              </datalist>
-              <span className="text-2xs text-muted-foreground">
-                Identificador usado em <code className="rounded bg-muted px-1 py-0.5 font-mono">{`{{input.${fieldKey || 'campo'}}}`}</code> nos passos seguintes.
-              </span>
-            </label>
-          ) : null}
+          <p className="text-2xs text-muted-foreground">
+            Envia uma mensagem de texto. Quando há mensagens em sequência, o bot envia
+            uma após a outra na mesma resposta — perfeito para uma saudação seguida do
+            link do cardápio.
+          </p>
 
           <label className="block space-y-1.5">
             <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {isInput ? 'Pergunta para o cliente' : 'Conteúdo da mensagem'}
+              Conteúdo da mensagem
             </span>
             <Textarea
               ref={textareaRef}
               rows={4}
               value={step.content}
               onChange={(e) => onChange({ ...step, content: e.target.value })}
-              placeholder={
-                isInput
-                  ? 'Ex: Alguma observação no seu pedido?'
-                  : 'Ex: Olá {{customer_name}}, segue o cardápio!'
-              }
+              placeholder="Ex: Olá {{customer_name}}! Faça seu pedido em {{menu_url}}"
             />
           </label>
 
@@ -331,132 +179,6 @@ export function StepNode({
               Clique para inserir no cursor. Variáveis sem valor no momento ficam vazias.
             </p>
           </div>
-
-          {isPayment ? (
-            <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/20 p-3">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Configurações do pagamento
-              </p>
-
-              <label className="block space-y-1.5">
-                <span className="text-2xs font-medium text-muted-foreground">
-                  Mensagem se o cliente cancelar
-                </span>
-                <Textarea
-                  rows={2}
-                  value={getMetaString(step, 'cancelMessage')}
-                  onChange={(e) =>
-                    onChange(setMetaField(step, 'cancelMessage', e.target.value))
-                  }
-                  placeholder="Ex: Que pena, quem sabe na próxima!"
-                />
-              </label>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
-                <label className="block space-y-1.5">
-                  <span className="text-2xs font-medium text-muted-foreground">
-                    Mensagem se o pagamento expirar
-                  </span>
-                  <Textarea
-                    rows={2}
-                    value={getMetaString(step, 'timeoutMessage')}
-                    onChange={(e) =>
-                      onChange(setMetaField(step, 'timeoutMessage', e.target.value))
-                    }
-                    placeholder="Ex: Seu pedido demorou demais para ser pago e foi cancelado."
-                  />
-                </label>
-                <label className="block space-y-1.5">
-                  <span className="text-2xs font-medium text-muted-foreground">
-                    Tempo limite (min)
-                  </span>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={getMetaNumber(step, 'timeoutMinutes')}
-                    placeholder="15"
-                    onChange={(e) => {
-                      const parsed = Number.parseInt(e.target.value, 10);
-                      onChange(
-                        setMetaField(
-                          step,
-                          'timeoutMinutes',
-                          Number.isFinite(parsed) && parsed > 0 ? parsed : null,
-                        ),
-                      );
-                    }}
-                  />
-                </label>
-              </div>
-
-              <p className="text-2xs text-muted-foreground">
-                Se o pagamento não chegar no tempo limite o pedido é cancelado
-                automaticamente. O cliente também pode responder{' '}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono">cancelar</code>{' '}
-                a qualquer momento para encerrar o pedido.
-              </p>
-            </div>
-          ) : null}
-
-          {supportsOptions ? (
-            <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/20 p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {usesMenuCategories ? 'Categorias do menu' : 'Opções (salvas em metadata.options)'}
-                </p>
-                {usesMenuCategories ? null : (
-                  <Button size="sm" variant="ghost" leftIcon={<Plus />} onClick={addOption}>
-                    Adicionar opção
-                  </Button>
-                )}
-              </div>
-              {usesMenuCategories ? (
-                <p className="text-xs text-muted-foreground">
-                  As opções são sincronizadas com o menu e as mesmas são exibidas na lista interativa enviada ao cliente. Os itens de cada categoria são adicionados automaticamente em uma segunda lista quando o clienteselect a categoria — não é preciso configurar nada aqui.
-                </p>
-              ) : null}
-              {menuCategoriesLoading && !usesMenuCategories ? (
-                <p className="text-xs text-muted-foreground">Carregando categorias do menu...</p>
-              ) : null}
-              {visibleOptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhuma opção ainda. Adicione as escolhas que os usuários podem responder.</p>
-              ) : (
-                <div className="space-y-2">
-                  {visibleOptions.map((opt) => (
-                    <div
-                      key={opt.id}
-                      className={cn(
-                        'grid grid-cols-1 gap-2',
-                        usesMenuCategories ? 'sm:grid-cols-2' : 'sm:grid-cols-[1fr_1fr_auto]',
-                      )}
-                    >
-                      <Input
-                        placeholder="Rótulo (ex: Pizzas)"
-                        value={opt.label}
-                        disabled={usesMenuCategories}
-                        onChange={(e) => updateOption(opt.id, { label: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Valor (ex: cat_pizzas)"
-                        value={opt.value}
-                        disabled={usesMenuCategories}
-                        onChange={(e) => updateOption(opt.id, { value: e.target.value })}
-                      />
-                      {usesMenuCategories ? null : (
-                        <IconButton
-                          variant="ghost"
-                          onClick={() => removeOption(opt.id)}
-                          aria-label="Remover opção"
-                        >
-                          <X />
-                        </IconButton>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       ) : null}
     </div>

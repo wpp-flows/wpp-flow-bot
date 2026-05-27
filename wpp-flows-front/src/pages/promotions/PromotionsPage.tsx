@@ -88,6 +88,7 @@ export function PromotionsPage() {
       promotionalPrice: promo.promotionalPrice ?? '',
       teaserOrderOffset: promo.teaserOrderOffset?.toString() ?? '',
       teaserMessage: promo.teaserMessage ?? '',
+      qualifyingMessage: promo.qualifyingMessage ?? '',
       bundleComponents: promo.bundle?.components ?? [],
       bundlePrice: promo.bundle?.price ?? '',
       bundleQuestions: promo.bundle?.questions ?? [],
@@ -257,6 +258,7 @@ function buildPayload(form: PromotionFormState): PromotionInput {
     promotionalPrice: null,
     teaserOrderOffset: null,
     teaserMessage: null,
+    qualifyingMessage: null,
     bundle: null,
   };
   switch (form.kind) {
@@ -278,6 +280,7 @@ function buildNthOrderPayload(form: PromotionFormState): Partial<PromotionInput>
       ? Number.parseInt(form.teaserOrderOffset, 10)
       : null,
     teaserMessage: form.teaserMessage.trim() || null,
+    qualifyingMessage: form.qualifyingMessage.trim() || null,
   };
 }
 

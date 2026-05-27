@@ -36,6 +36,7 @@ export interface Promotion {
   promotionalPrice: string | null;
   teaserOrderOffset: number | null;
   teaserMessage: string | null;
+  qualifyingMessage: string | null;
   bundle: BundleConfig | null;
   createdAt: string;
   updatedAt: string;
@@ -54,5 +55,6 @@ export interface PromotionInput {
   promotionalPrice?: number | null;
   teaserOrderOffset?: number | null;
   teaserMessage?: string | null;
+  qualifyingMessage?: string | null;
   bundle?: BundleConfig | null;
 }

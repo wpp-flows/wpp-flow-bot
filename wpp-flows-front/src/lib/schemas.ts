@@ -47,6 +47,16 @@ export const categorySchema = z.object({
 });
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 
+export const additionalSchema = z.object({
+  id: z.string().min(1).max(64),
+  name: z.string().min(1, 'Nome obrigatório').max(120),
+  price: z
+    .union([z.string(), z.number()])
+    .transform((v) => (typeof v === 'string' ? Number(v) : v))
+    .pipe(z.number().min(0, 'Preço deve ser positivo').max(100_000)),
+});
+export type AdditionalFormValues = z.infer<typeof additionalSchema>;
+
 export const menuItemSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   name: z.string().min(1, 'Name is required').max(60),
@@ -64,12 +74,13 @@ export const menuItemSchema = z.object({
     .array(z.number().int().min(0).max(6))
     .optional()
     .default([]),
+  additionals: z.array(additionalSchema).max(50).optional().default([]),
 });
 export type MenuItemFormValues = z.infer<typeof menuItemSchema>;
 
 export const flowStepSchema = z.object({
   id: z.string().optional(),
-  type: z.enum(['MESSAGE', 'MENU', 'CONFIRMATION', 'PAYMENT', 'INPUT']),
+  type: z.enum(['MESSAGE']),
   content: z.string().min(1).max(800),
   order: z.number().int().nonnegative().optional(),
   metadata: z.record(z.string(), z.any()).nullable().optional(),

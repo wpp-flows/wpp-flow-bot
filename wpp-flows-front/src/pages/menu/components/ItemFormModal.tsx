@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useRef } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, ImageOff, ImagePlus, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +12,7 @@ import { FormField } from '@/components/ui/FormField';
 import { Switch } from '@/components/ui/Switch';
 import { menuItemSchema, type MenuItemFormValues } from '@/lib/schemas';
 import { menuService } from '@/services/menuService';
+import { uploadService } from '@/services/uploadService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { MenuCategory, MenuItem } from '@/types';
@@ -36,6 +37,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
     reset,
     setValue,
     watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
@@ -47,11 +49,26 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
       imageUrl: '',
       available: true,
       availableDaysOfWeek: [],
+      additionals: [],
     },
   });
 
   const available = watch('available');
   const availableDaysOfWeek = watch('availableDaysOfWeek') ?? [];
+  const imageUrl = watch('imageUrl');
+
+  const additionals = useFieldArray({ control, name: 'additionals' });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadImage = useMutation({
+    mutationFn: (file: File) => uploadService.menuItemImage(file),
+    onSuccess: (res) => {
+      setValue('imageUrl', res.url, { shouldDirty: true });
+      toast.success('Imagem enviada');
+    },
+    onError: (err) =>
+      toast.error('Falha no upload', err instanceof Error ? err.message : undefined),
+  });
 
   useEffect(() => {
     if (open) {
@@ -63,6 +80,12 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
         availableDaysOfWeek: item?.availableDaysOfWeek ?? [],
+        additionals:
+          item?.additionals.map((a) => ({
+            id: a.id,
+            name: a.name,
+            price: Number(a.price),
+          })) ?? [],
       });
     }
   }, [open, item, defaultCategoryId, categories, reset]);
@@ -77,6 +100,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
+        additionals: v.additionals ?? [],
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
@@ -93,6 +117,7 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         description: v.description ?? '',
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
+        additionals: v.additionals ?? [],
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
@@ -194,18 +219,61 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
           />
         </FormField>
         <FormField
-          label="URL da imagem"
+          label="Imagem"
           htmlFor="itm-img"
           error={errors.imageUrl?.message}
-          hint="Opcional. Use uma imagem 1:1 quando possivel."
+          hint="Opcional. PNG, JPG, WEBP ou GIF — até 5 MB."
           className="sm:col-span-1"
         >
-          <Input
+          <input
+            ref={fileInputRef}
             id="itm-img"
-            placeholder="https://..."
-            invalid={!!errors.imageUrl}
-            {...register('imageUrl')}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadImage.mutate(file);
+              e.target.value = '';
+            }}
           />
+          <div className="flex items-center gap-3">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Pré-visualização"
+                className="h-16 w-16 shrink-0 rounded-md border border-border object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-muted-foreground">
+                <ImageOff className="h-5 w-5" />
+              </div>
+            )}
+            <div className="flex flex-1 flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                leftIcon={<ImagePlus />}
+                loading={uploadImage.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {imageUrl ? 'Trocar imagem' : 'Enviar imagem'}
+              </Button>
+              {imageUrl ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setValue('imageUrl', '', { shouldDirty: true })
+                  }
+                >
+                  Remover
+                </Button>
+              ) : null}
+            </div>
+          </div>
         </FormField>
         <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
           <div>
@@ -249,6 +317,74 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
               );
             })}
           </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Adicionais</p>
+              <p className="text-2xs text-muted-foreground">
+                Extras que o cliente pode marcar ao pedir este item (ex: borda
+                recheada, queijo extra). O preço soma ao total do pedido.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              leftIcon={<Plus />}
+              onClick={() =>
+                additionals.append({
+                  id: crypto.randomUUID(),
+                  name: '',
+                  price: 0,
+                })
+              }
+            >
+              Adicionar
+            </Button>
+          </div>
+
+          {additionals.fields.length === 0 ? (
+            <p className="mt-3 text-2xs italic text-muted-foreground">
+              Nenhum adicional configurado.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {additionals.fields.map((field, idx) => (
+                <li
+                  key={field.id}
+                  className="grid grid-cols-[1fr_auto] gap-2 rounded-md border border-border bg-card p-2 sm:grid-cols-[1fr_140px_auto]"
+                >
+                  <Input
+                    placeholder="Nome (ex: Borda recheada)"
+                    invalid={!!errors.additionals?.[idx]?.name}
+                    className="col-span-2 sm:col-span-1"
+                    {...register(`additionals.${idx}.name`)}
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    leftIcon={<DollarSign />}
+                    invalid={!!errors.additionals?.[idx]?.price}
+                    {...register(`additionals.${idx}.price`)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => additionals.remove(idx)}
+                    aria-label="Remover adicional"
+                    className="self-center text-destructive"
+                  >
+                    <Trash2 />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </form>
     </Modal>

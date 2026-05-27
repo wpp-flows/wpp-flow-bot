@@ -27,6 +27,16 @@ export interface Organization {
   payoutPixKey: string | null;
   payoutPixKeyType: PayoutPixKeyType | null;
   notificationPreferences: NotificationPreferences;
+  paymentTimeoutMinutes: number;
+  paymentCancelMessage: string | null;
+  paymentTimeoutMessage: string | null;
+  paymentReceivedMessage: string | null;
+  deliveryFee: string;
+  workingDaysOfWeek: number[];
+  workingStartTime: string | null;
+  workingEndTime: string | null;
+  outOfHoursMessage: string | null;
+  botCooldownMinutes: number;
   createdAt: string;
   updatedAt: string;
 }

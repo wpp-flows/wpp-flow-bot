@@ -1,4 +1,4 @@
-export type FlowStepType = 'MESSAGE' | 'MENU' | 'CONFIRMATION' | 'PAYMENT' | 'INPUT';
+export type FlowStepType = 'MESSAGE';
 
 export interface FlowStepOption {
   id: string;

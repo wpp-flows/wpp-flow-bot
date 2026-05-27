@@ -14,7 +14,7 @@ import type { OrderStatus } from '@/types';
 import { FilterChip } from './components/FilterChip';
 import { OrderDetail } from './components/OrderDetail';
 import { OrderRowSummary } from './components/OrderRowSummary';
-import { ORDER_STATUSES, STATUS_LABEL, orderNumber } from './order-helpers';
+import { ORDER_STATUSES, STATUS_LABEL, orderNumber } from '../../helpers/order-helpers';
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -23,23 +23,18 @@ export function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  // Mobile-only modal that surfaces the order detail when the user taps a row
-  // below xl. On xl+ the inline detail panel is visible, so the modal stays closed.
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const openOrder = (id: string) => {
     setSelectedId(id);
     if (
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(min-width: 1280px)').matches
+      typeof globalThis.window !== 'undefined' &&
+      !globalThis.window.matchMedia('(min-width: 1280px)').matches
     ) {
       setMobileDetailOpen(true);
     }
   };
 
-  // Always fetch every order so the filter chip counts (and the "Todos" chip)
-  // stay accurate regardless of which status the user is currently viewing.
-  // Status + search filtering happens client-side below.
   const ordersQ = useQuery({
     queryKey: queryKeys.orders.all,
     queryFn: () => orderService.list({}),
@@ -158,7 +153,6 @@ export function OrdersPage() {
         </div>
       )}
 
-      {/* Mobile/tablet (< xl) detail modal — opens when a row is tapped. */}
       <Modal
         open={mobileDetailOpen && !!selected}
         onClose={() => setMobileDetailOpen(false)}

@@ -1,52 +1,45 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FormField } from '@/components/ui/FormField';
-import { Textarea } from '@/components/ui/Textarea';
-import { botService } from '@/services/botService';
-import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
+import { authService } from '@/services/authService';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from '@/stores/uiStore';
 import { cn } from '@/lib/utils';
-import type { BotInstance } from '@/types';
+import type { Organization } from '@/types';
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
 
 interface Props {
-  bot: BotInstance | null;
+  organization: Organization | null;
   open: boolean;
   onClose: () => void;
 }
 
-export function BotWorkingHoursModal({ bot, open, onClose }: Readonly<Props>) {
-  const qc = useQueryClient();
+export function OrgWorkingHoursModal({ organization, open, onClose }: Readonly<Props>) {
+  const refreshOrganization = useAuthStore((s) => s.refreshOrganization);
   const [days, setDays] = useState<number[]>([]);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!open || !bot) return;
-    setDays(bot.workingDaysOfWeek);
-    setStartTime(bot.workingStartTime ?? '');
-    setEndTime(bot.workingEndTime ?? '');
-    setMessage(bot.outOfHoursMessage ?? '');
-  }, [bot, open]);
+    if (!open || !organization) return;
+    setDays(organization.workingDaysOfWeek);
+    setStartTime(organization.workingStartTime ?? '');
+    setEndTime(organization.workingEndTime ?? '');
+  }, [organization, open]);
 
   const save = useMutation({
-    mutationFn: () => {
-      if (!bot) throw new Error('no bot');
-      return botService.update({
-        id: bot.id,
+    mutationFn: () =>
+      authService.updateOrganization({
         workingDaysOfWeek: days,
         workingStartTime: startTime.trim() || null,
         workingEndTime: endTime.trim() || null,
-        outOfHoursMessage: message.trim() || null,
-      });
-    },
-    onSuccess: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
+      }),
+    onSuccess: async () => {
+      await refreshOrganization();
       toast.success('Horários atualizados');
       onClose();
     },
@@ -64,7 +57,7 @@ export function BotWorkingHoursModal({ bot, open, onClose }: Readonly<Props>) {
       open={open}
       onClose={onClose}
       title="Horário de atendimento"
-      description="Defina quando o bot responde mensagens. Fora desse período, o cliente recebe a mensagem configurada abaixo."
+      description="Vale para todos os bots e para o cardápio digital. Fora desse período, clientes recebem a mensagem configurada abaixo e o cardápio bloqueia novos pedidos."
       size="md"
       footer={
         <>
@@ -105,17 +98,17 @@ export function BotWorkingHoursModal({ bot, open, onClose }: Readonly<Props>) {
         </FormField>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField label="Abre às" htmlFor="bot-start">
+          <FormField label="Abre às" htmlFor="org-start">
             <Input
-              id="bot-start"
+              id="org-start"
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
             />
           </FormField>
-          <FormField label="Fecha às" htmlFor="bot-end">
+          <FormField label="Fecha às" htmlFor="org-end">
             <Input
-              id="bot-end"
+              id="org-end"
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
@@ -128,19 +121,10 @@ export function BotWorkingHoursModal({ bot, open, onClose }: Readonly<Props>) {
           como noite-adentro.
         </p>
 
-        <FormField
-          label="Mensagem fora do horário (opcional)"
-          htmlFor="bot-ooh-msg"
-          hint="Se vazio, o bot monta uma mensagem padrão com os dias e horários."
-        >
-          <Textarea
-            id="bot-ooh-msg"
-            rows={3}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ex: Não estamos no momento, atendemos de segunda a sexta das 08:00 às 17:00."
-          />
-        </FormField>
+        <p className="-mt-2 text-2xs text-muted-foreground">
+          A mensagem enviada fora do horário é configurada em{' '}
+          <strong>Mensagens → Fora do horário de atendimento</strong>.
+        </p>
       </div>
     </Modal>
   );

@@ -14,7 +14,7 @@ import {
   formatDateTime,
   nextStatusOptions,
   orderNumber,
-} from '../order-helpers';
+} from '../../../helpers/order-helpers';
 
 interface Props {
   order: Order;
