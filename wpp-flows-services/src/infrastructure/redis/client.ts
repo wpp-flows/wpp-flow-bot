@@ -8,14 +8,14 @@ export function getRedisClient(): RedisClient {
 
     console.log("aaaaa: ", env.REDIS_URL);
     client = new Redis({
-        host: "10.0.1.5",
+        host: "redis",
         port: 6379,
-        // username: "default",
+        username: "default",
         password: "123",
-        family: 4,
-        maxRetriesPerRequest: 3,
-        retryStrategy: (attempts) => Math.min(attempts * 100, 5000),
+        enableAutoPipelining: false,
+        lazyConnect: true,
     });
+
     client.on("error", (err) => {
         console.error("Redis error:", err.message);
     });
