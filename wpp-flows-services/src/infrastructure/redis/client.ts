@@ -7,7 +7,11 @@ export function getRedisClient(): RedisClient {
     if (client) return client;
 
     console.log("aaaaa: ", env.REDIS_URL);
-    client = new Redis(env.REDIS_URL, {
+    client = new Redis({
+        host: "redis",
+        port: 6379,
+        username: "default",
+        password: "123",
         maxRetriesPerRequest: 3,
         retryStrategy: (attempts) => Math.min(attempts * 100, 5000),
     });
