@@ -4,7 +4,6 @@ import type {
     ConversationRepository,
     MessageRepository,
 } from "@/modules/chat/repositories/chat-repo";
-import { initialState } from "@/modules/webhook/usecases/flow/flow-cart";
 import { jidToSendTarget } from "@/modules/webhook/usecases/strategies/shared";
 import type { Order, OrderStatus } from "../repositories/order-repo";
 
@@ -60,7 +59,7 @@ export class NotifyCustomerOrderStatusChangeUseCase {
         if (newStatus === "CANCELED") {
             await this.conversationRepo.update(conversation.id, {
                 currentStepId: null,
-                flowState: initialState(),
+                flowState: null,
             });
         }
     }

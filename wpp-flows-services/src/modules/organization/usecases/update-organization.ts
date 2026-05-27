@@ -16,6 +16,16 @@ export interface UpdateOrganizationInput {
     payoutPixKey?: string | null;
     payoutPixKeyType?: PayoutPixKeyType | null;
     notificationPreferences?: NotificationPreferences;
+    paymentTimeoutMinutes?: number;
+    paymentCancelMessage?: string | null;
+    paymentTimeoutMessage?: string | null;
+    paymentReceivedMessage?: string | null;
+    deliveryFee?: number;
+    workingDaysOfWeek?: number[];
+    workingStartTime?: string | null;
+    workingEndTime?: string | null;
+    outOfHoursMessage?: string | null;
+    botCooldownMinutes?: number;
 }
 
 export class UpdateOrganizationUseCase {
@@ -39,6 +49,16 @@ export class UpdateOrganizationUseCase {
             payoutPixKey: input.payoutPixKey,
             payoutPixKeyType: input.payoutPixKeyType,
             notificationPreferences: input.notificationPreferences,
+            paymentTimeoutMinutes: input.paymentTimeoutMinutes,
+            paymentCancelMessage: input.paymentCancelMessage,
+            paymentTimeoutMessage: input.paymentTimeoutMessage,
+            paymentReceivedMessage: input.paymentReceivedMessage,
+            deliveryFee: input.deliveryFee,
+            workingDaysOfWeek: input.workingDaysOfWeek,
+            workingStartTime: input.workingStartTime,
+            workingEndTime: input.workingEndTime,
+            outOfHoursMessage: input.outOfHoursMessage,
+            botCooldownMinutes: input.botCooldownMinutes,
         });
     }
 }

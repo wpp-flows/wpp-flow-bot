@@ -39,6 +39,7 @@ const baseSchema = z.object({
     promotionalPrice: z.coerce.number().nonnegative().nullable().optional(),
     teaserOrderOffset: z.number().int().positive().nullable().optional(),
     teaserMessage: z.string().max(800).nullable().optional(),
+    qualifyingMessage: z.string().max(800).nullable().optional(),
     bundle: bundleConfigSchema.nullable().optional(),
 });
 

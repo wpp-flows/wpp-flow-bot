@@ -35,6 +35,7 @@ const toPromotion = (row: any): Promotion => ({
     promotionalPrice: row.promotionalPrice == null ? null : String(row.promotionalPrice),
     teaserOrderOffset: row.teaserOrderOffset,
     teaserMessage: row.teaserMessage,
+    qualifyingMessage: row.qualifyingMessage ?? null,
     bundle: toBundle(row.bundle),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -86,6 +87,7 @@ export class PrismaPromotionRepository implements PromotionRepository {
                 promotionalPrice: data.promotionalPrice ?? null,
                 teaserOrderOffset: data.teaserOrderOffset ?? null,
                 teaserMessage: data.teaserMessage ?? null,
+                qualifyingMessage: data.qualifyingMessage ?? null,
                 bundle: data.bundle
                     ? (data.bundle as unknown as Prisma.InputJsonValue)
                     : Prisma.DbNull,

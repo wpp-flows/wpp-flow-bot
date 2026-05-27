@@ -20,6 +20,18 @@ const toOrganization = (row: any): Organization => ({
         ...DEFAULT_NOTIFICATION_PREFERENCES,
         ...((row.notificationPreferences as Partial<NotificationPreferences>) ?? {}),
     },
+    paymentTimeoutMinutes:
+        typeof row.paymentTimeoutMinutes === "number" ? row.paymentTimeoutMinutes : 15,
+    paymentCancelMessage: row.paymentCancelMessage ?? null,
+    paymentTimeoutMessage: row.paymentTimeoutMessage ?? null,
+    paymentReceivedMessage: row.paymentReceivedMessage ?? null,
+    deliveryFee: row.deliveryFee != null ? String(row.deliveryFee) : "0",
+    workingDaysOfWeek: (row.workingDaysOfWeek ?? []) as number[],
+    workingStartTime: row.workingStartTime ?? null,
+    workingEndTime: row.workingEndTime ?? null,
+    outOfHoursMessage: row.outOfHoursMessage ?? null,
+    botCooldownMinutes:
+        typeof row.botCooldownMinutes === "number" ? row.botCooldownMinutes : 60,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });

@@ -1,5 +1,6 @@
 import { prisma } from "@/infrastructure/database/client";
 import type {
+    DeliveryMode,
     Order,
     OrderFilters,
     OrderItem,
@@ -21,6 +22,11 @@ const toOrder = (row: any): Order => ({
     status: row.status as OrderStatus,
     observation: row.observation,
     address: row.address,
+    deliveryMode: (row.deliveryMode ?? "DELIVERY") as DeliveryMode,
+    deliveryFee: row.deliveryFee != null ? String(row.deliveryFee) : "0",
+    couponCode: row.couponCode ?? null,
+    couponDiscount:
+        row.couponDiscount == null ? null : String(row.couponDiscount),
     paymentStatus: row.paymentStatus as PaymentStatus,
     paymentProvider: row.paymentProvider,
     paymentProviderRef: row.paymentProviderRef,
@@ -65,6 +71,16 @@ export class PrismaOrderRepository implements OrderRepository {
         return row ? toOrder(row) : null;
     }
 
+    async findByOrgAndSequence(
+        organizationId: string,
+        sequence: number,
+    ): Promise<Order | null> {
+        const row = await prisma.order.findFirst({
+            where: { organizationId, sequence },
+        });
+        return row ? toOrder(row) : null;
+    }
+
     async findByProviderRef(
         provider: string,
         providerRef: string,
@@ -85,6 +101,10 @@ export class PrismaOrderRepository implements OrderRepository {
         total: number | string;
         observation?: string | null;
         address?: string | null;
+        deliveryMode?: DeliveryMode;
+        deliveryFee?: number | string;
+        couponCode?: string | null;
+        couponDiscount?: number | string | null;
         paymentStatus?: PaymentStatus;
         paymentProvider?: string | null;
         paymentProviderRef?: string | null;
@@ -111,6 +131,10 @@ export class PrismaOrderRepository implements OrderRepository {
                     total: data.total,
                     observation: data.observation ?? null,
                     address: data.address ?? null,
+                    deliveryMode: data.deliveryMode ?? "DELIVERY",
+                    deliveryFee: data.deliveryFee ?? 0,
+                    couponCode: data.couponCode ?? null,
+                    couponDiscount: data.couponDiscount ?? null,
                     paymentStatus: data.paymentStatus ?? "PENDING",
                     paymentProvider: data.paymentProvider ?? null,
                     paymentProviderRef: data.paymentProviderRef ?? null,

@@ -8,8 +8,7 @@ import { getRedisClient } from "@/infrastructure/redis/client";
  *   - ZSET `wpp-flows:payment-timeouts` — members are orderIds, score is the
  *     epoch-ms when the timeout should fire.
  *   - HASH `wpp-flows:payment-timeouts:meta` — orderId → JSON payload with
- *     the context the handler needs (botId, conversationId, stepId,
- *     organizationId, orderId).
+ *     the minimum context the handler needs (organizationId, orderId).
  *
  * On `schedule()` both entries are upserted (re-scheduling the same orderId
  * replaces the prior entry — same idempotency contract as the old in-memory
@@ -25,9 +24,6 @@ import { getRedisClient } from "@/infrastructure/redis/client";
  */
 export interface PaymentTimeoutPayload {
     organizationId: string;
-    botId: string;
-    conversationId: string;
-    stepId: string;
     orderId: string;
 }
 

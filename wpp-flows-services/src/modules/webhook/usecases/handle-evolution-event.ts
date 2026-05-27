@@ -10,6 +10,7 @@ import {
     normalizeEventName,
     type WebhookEventStrategy,
 } from "./strategies";
+import type { PostPaymentHandler } from "./post-payment/post-payment-handler";
 
 export interface EvolutionWebhookEvent {
     event: string;
@@ -27,6 +28,7 @@ export class HandleEvolutionEventUseCase {
         private readonly customerRepo: CustomerRepository,
         private readonly flowRunner: FlowRunner,
         private readonly notificationEmitter: NotificationEmitter,
+        private readonly postPaymentHandler: PostPaymentHandler,
         private readonly strategies: WebhookEventStrategy[]
     ) {
         this.registry = new Map(this.strategies.map((s) => [s.eventName, s]));
@@ -53,6 +55,7 @@ export class HandleEvolutionEventUseCase {
                 customerRepo: this.customerRepo,
                 flowRunner: this.flowRunner,
                 notificationEmitter: this.notificationEmitter,
+                postPaymentHandler: this.postPaymentHandler,
             },
             event.data
         );

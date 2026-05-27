@@ -3,7 +3,25 @@ import type {
     CategoryRepository,
     ItemRepository,
     MenuItem,
+    MenuItemAdditional,
 } from "../repositories/menu-repo";
+
+interface AdditionalInput {
+    id: string;
+    name: string;
+    price: number;
+}
+
+function normalizeAdditionals(
+    additionals: AdditionalInput[] | undefined,
+): MenuItemAdditional[] | undefined {
+    if (additionals === undefined) return undefined;
+    return additionals.map((a) => ({
+        id: a.id,
+        name: a.name.trim(),
+        price: a.price.toFixed(2),
+    }));
+}
 
 export class ListItemsUseCase {
     constructor(private readonly repo: ItemRepository) {}
@@ -27,6 +45,7 @@ export class CreateItemUseCase {
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const category = await this.categoryRepo.findByIdInOrg(
             input.organizationId,
@@ -35,7 +54,11 @@ export class CreateItemUseCase {
         if (!category) throw new NotFoundError("Category");
 
         const position = await this.itemRepo.countByCategory(input.categoryId);
-        return this.itemRepo.create({ ...input, position });
+        return this.itemRepo.create({
+            ...input,
+            position,
+            additionals: normalizeAdditionals(input.additionals),
+        });
     }
 }
 
@@ -55,6 +78,7 @@ export class UpdateItemUseCase {
         imageUrl?: string | null;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const existing = await this.itemRepo.findByIdInOrg(
             input.organizationId,
@@ -78,6 +102,7 @@ export class UpdateItemUseCase {
             imageUrl: input.imageUrl,
             available: input.available,
             availableDaysOfWeek: input.availableDaysOfWeek,
+            additionals: normalizeAdditionals(input.additionals),
         });
     }
 }

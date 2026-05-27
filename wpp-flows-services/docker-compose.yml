@@ -90,6 +90,9 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       # isso aqui nao vai rodar em dev de qlqr forma, só deixei pra nao quebrar build
       PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET}
     ports:
       - "8080:8080"
 

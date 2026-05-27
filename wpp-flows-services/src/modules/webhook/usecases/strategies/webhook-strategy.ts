@@ -6,6 +6,7 @@ import type {
 import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { FlowRunner } from "../flow-runner";
+import type { PostPaymentHandler } from "../post-payment/post-payment-handler";
 
 export interface WebhookContext {
     bot: Bot;
@@ -15,6 +16,7 @@ export interface WebhookContext {
     customerRepo: CustomerRepository;
     flowRunner: FlowRunner;
     notificationEmitter: NotificationEmitter;
+    postPaymentHandler: PostPaymentHandler;
 }
 
 export interface WebhookEventStrategy {

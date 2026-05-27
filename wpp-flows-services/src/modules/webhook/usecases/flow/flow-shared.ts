@@ -1,20 +1,9 @@
 import type { EvolutionSendTextResponse } from "@/infrastructure/evolution/client";
-import type { FlowState } from "@/modules/chat/repositories/chat-repo";
-
-/** Button / row selection ids the runner uses to route customer interactions. */
-export const BACK_ID = "back";
-export const CONFIRM_ID = "confirm";
-export const ADD_MORE_ID = "add_more";
-export const CANCEL_ID = "cancel";
-export const CATEGORY_PREFIX = "cat:";
-export const ITEM_PREFIX = "item:";
-export const BUNDLE_PREFIX = "bundle:";
-
-export const BUNDLE_CATEGORY_ID = "promotions";
 
 /**
- * Safety cap on auto-chained step deliveries per inbound message. Prevents an
- * accidental loop of non-interactive steps from spamming the customer.
+ * Safety cap on auto-chained step deliveries per inbound message. With the
+ * MESSAGE-only flow this caps the welcome-burst the bot can produce in one
+ * shot — protects against an accidental loop of consecutive MESSAGE steps.
  */
 export const MAX_AUTO_CHAIN = 10;
 
@@ -28,13 +17,6 @@ export const TYPING_DELAY_MS = 1500;
 export interface SendResult {
     evolutionResp: EvolutionSendTextResponse;
     preview: string;
-    optionMap: Record<string, string>;
-    /**
-     * Optional state patch that the runner merges into the persisted `flowState`.
-     * Used by the payment sender to flip `awaitingPaymentForOrderId` after the
-     * link is sent.
-     */
-    statePatch?: Partial<FlowState>;
 }
 
 /**

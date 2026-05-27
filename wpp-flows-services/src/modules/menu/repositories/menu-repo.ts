@@ -8,6 +8,12 @@ export interface MenuCategory {
     updatedAt: Date;
 }
 
+export interface MenuItemAdditional {
+    id: string;
+    name: string;
+    price: string;
+}
+
 export interface MenuItem {
     id: string;
     organizationId: string;
@@ -23,6 +29,7 @@ export interface MenuItem {
      */
     availableDaysOfWeek: number[];
     position: number;
+    additionals: MenuItemAdditional[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -59,6 +66,7 @@ export interface ItemRepository {
         available?: boolean;
         availableDaysOfWeek?: number[];
         position: number;
+        additionals?: MenuItemAdditional[];
     }): Promise<MenuItem>;
     update(
         id: string,
@@ -71,6 +79,7 @@ export interface ItemRepository {
             available?: boolean;
             availableDaysOfWeek?: number[];
             position?: number;
+            additionals?: MenuItemAdditional[];
         }
     ): Promise<MenuItem>;
     delete(id: string): Promise<void>;

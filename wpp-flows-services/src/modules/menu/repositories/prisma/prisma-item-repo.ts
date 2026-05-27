@@ -1,10 +1,29 @@
 import { prisma } from "@/infrastructure/database/client";
-import type { ItemRepository, MenuItem } from "../menu-repo";
+import type {
+    ItemRepository,
+    MenuItem,
+    MenuItemAdditional,
+} from "../menu-repo";
+
+function toAdditionals(raw: unknown): MenuItemAdditional[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .filter((a): a is { id: unknown; name: unknown; price: unknown } =>
+            !!a && typeof a === "object",
+        )
+        .map((a) => ({
+            id: String((a as { id?: unknown }).id ?? ""),
+            name: String((a as { name?: unknown }).name ?? ""),
+            price: String((a as { price?: unknown }).price ?? "0"),
+        }))
+        .filter((a) => a.id && a.name);
+}
 
 const toModel = (row: any): MenuItem => ({
     ...row,
     price: row.price.toString(),
     availableDaysOfWeek: (row.availableDaysOfWeek as number[] | null) ?? [],
+    additionals: toAdditionals(row.additionals),
 });
 
 export class PrismaItemRepository implements ItemRepository {
@@ -44,11 +63,14 @@ export class PrismaItemRepository implements ItemRepository {
         available?: boolean;
         availableDaysOfWeek?: number[];
         position: number;
+        additionals?: MenuItemAdditional[];
     }): Promise<MenuItem> {
+        const { additionals, ...rest } = data;
         const row = await prisma.menuItem.create({
             data: {
-                ...data,
-                price: data.price.toString(),
+                ...rest,
+                price: rest.price.toString(),
+                additionals: (additionals ?? []) as any,
             },
         });
         return toModel(row);
@@ -65,13 +87,18 @@ export class PrismaItemRepository implements ItemRepository {
             available?: boolean;
             availableDaysOfWeek?: number[];
             position?: number;
+            additionals?: MenuItemAdditional[];
         }
     ): Promise<MenuItem> {
+        const { additionals, ...rest } = data;
         const row = await prisma.menuItem.update({
             where: { id },
             data: {
-                ...data,
-                price: data.price === undefined ? undefined : data.price.toString(),
+                ...rest,
+                price: rest.price === undefined ? undefined : rest.price.toString(),
+                ...(additionals !== undefined
+                    ? { additionals: additionals as any }
+                    : {}),
             },
         });
         return toModel(row);

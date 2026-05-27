@@ -1,5 +1,6 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import type {
+    DeliveryMode,
     Order,
     OrderFilters,
     OrderItem,
@@ -80,10 +81,12 @@ export class CreateOrderFromCartUseCase {
         items: OrderItem[];
         observation?: string | null;
         address?: string | null;
-        /** Pre-computed discount in BRL (applied additively, capped at subtotal). */
         discount?: number | null;
-        /** Promotion ids that produced the discount, for audit. */
         appliedPromotionIds?: string[] | null;
+        deliveryMode?: DeliveryMode;
+        deliveryFee?: number | null;
+        couponCode?: string | null;
+        couponDiscount?: number | null;
     }): Promise<Order> {
         if (input.items.length === 0) {
             throw new ValidationError("Pedido vazio — adicione itens antes de confirmar.");
@@ -93,7 +96,8 @@ export class CreateOrderFromCartUseCase {
             0,
         );
         const discount = Math.max(0, Math.min(input.discount ?? 0, subtotal));
-        const total = subtotal - discount;
+        const deliveryFee = Math.max(0, input.deliveryFee ?? 0);
+        const total = subtotal - discount + deliveryFee;
         const order = await this.orderRepo.create({
             organizationId: input.organizationId,
             customerId: input.customerId,
@@ -104,6 +108,13 @@ export class CreateOrderFromCartUseCase {
             total: total.toFixed(2),
             observation: input.observation ?? null,
             address: input.address ?? null,
+            deliveryMode: input.deliveryMode ?? "DELIVERY",
+            deliveryFee: deliveryFee.toFixed(2),
+            couponCode: input.couponCode ?? null,
+            couponDiscount:
+                input.couponDiscount && input.couponDiscount > 0
+                    ? input.couponDiscount.toFixed(2)
+                    : null,
             appliedPromotionIds: input.appliedPromotionIds ?? null,
         });
         await this.customerRepo.incrementOrderCount(input.customerId);

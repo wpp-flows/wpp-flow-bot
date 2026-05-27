@@ -2,43 +2,27 @@ import { botRepo } from "@/modules/bot/usecases/factories";
 import { conversationRepo, messageRepo } from "@/modules/chat/usecases/factories";
 import { customerRepo } from "@/modules/customer/usecases/factories";
 import { flowRepo } from "@/modules/flow/usecases/factories";
-import { categoryRepo, itemRepo } from "@/modules/menu/usecases/factories";
 import { orderRepo } from "@/modules/order/usecases/factories";
-import { CreateOrderFromCartUseCase } from "@/modules/order/usecases/order-usecases";
 import { notificationEmitter } from "@/modules/notification/usecases/factories";
-import { createPaymentLink } from "@/modules/payment/usecases/factories";
-import { promotionRepo } from "@/modules/promotion/usecases/factories";
+import { organizationRepo } from "@/modules/organization/usecases/factories";
 import { FlowRunner } from "../flow-runner";
 import { FlowStateMachine } from "../flow/flow-state-machine";
 import { FlowStepSender } from "../flow/flow-step-sender";
 import { paymentTimeoutScheduler } from "../flow/scheduler/payment-timeout-scheduler";
 import { defaultStepStrategies } from "../flow/strategies";
 import { HandleEvolutionEventUseCase } from "../handle-evolution-event";
+import { PostPaymentHandler } from "../post-payment/post-payment-handler";
 import { defaultWebhookStrategies } from "../strategies";
 
-const createOrderFromCart = new CreateOrderFromCartUseCase(orderRepo, customerRepo);
-
-const flowStateMachine = new FlowStateMachine(itemRepo, promotionRepo);
-const flowStepSender = new FlowStepSender(
-    defaultStepStrategies({
-        categoryRepo,
-        itemRepo,
-        orderRepo,
-        promotionRepo,
-        createPaymentLink,
-    }),
-);
+const flowStateMachine = new FlowStateMachine();
+const flowStepSender = new FlowStepSender(defaultStepStrategies());
 
 export const flowRunner = new FlowRunner(
     flowRepo,
     conversationRepo,
     messageRepo,
     customerRepo,
-    botRepo,
-    orderRepo,
-    createOrderFromCart,
-    promotionRepo,
-    notificationEmitter,
+    organizationRepo,
     flowStateMachine,
     flowStepSender,
 );
@@ -46,6 +30,14 @@ export const flowRunner = new FlowRunner(
 paymentTimeoutScheduler.start();
 
 const webhookStrategies = defaultWebhookStrategies();
+
+const postPaymentHandler = new PostPaymentHandler(
+    organizationRepo,
+    orderRepo,
+    customerRepo,
+    conversationRepo,
+    messageRepo,
+);
 
 export const makeHandleEvolutionEvent = () =>
     new HandleEvolutionEventUseCase(
@@ -55,5 +47,6 @@ export const makeHandleEvolutionEvent = () =>
         customerRepo,
         flowRunner,
         notificationEmitter,
+        postPaymentHandler,
         webhookStrategies,
     );

@@ -12,10 +12,6 @@ const toBot = (row: any): Bot => ({
     webhookUrl: row.webhookUrl,
     flowId: row.flowId,
     lastConnectedAt: row.lastConnectedAt,
-    workingDaysOfWeek: (row.workingDaysOfWeek as number[] | null) ?? [],
-    workingStartTime: row.workingStartTime ?? null,
-    workingEndTime: row.workingEndTime ?? null,
-    outOfHoursMessage: row.outOfHoursMessage ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
@@ -70,10 +66,6 @@ export class PrismaBotRepository implements BotRepository {
             status: BotStatus;
             qrCode: string | null;
             lastConnectedAt: Date | null;
-            workingDaysOfWeek: number[];
-            workingStartTime: string | null;
-            workingEndTime: string | null;
-            outOfHoursMessage: string | null;
         }>
     ): Promise<Bot> {
         const row = await prisma.bot.update({ where: { id }, data });

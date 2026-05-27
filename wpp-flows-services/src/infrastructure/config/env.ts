@@ -18,6 +18,9 @@ const schema = z.object({
     PUBLIC_API_URL: z.string().optional(),
     COOKIE_DOMAIN: z.string().optional(),
     REDIS_URL: z.string().default("redis://redis:6379"),
+    SUPABASE_URL: z.string().optional(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+    SUPABASE_STORAGE_BUCKET: z.string().default("mesa-uploads"),
 })
 
 const parsed = schema.safeParse(process.env)

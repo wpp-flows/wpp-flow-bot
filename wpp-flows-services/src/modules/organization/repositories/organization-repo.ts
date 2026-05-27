@@ -23,6 +23,19 @@ export interface Organization {
     payoutPixKey: string | null;
     payoutPixKeyType: PayoutPixKeyType | null;
     notificationPreferences: NotificationPreferences;
+    paymentTimeoutMinutes: number;
+    paymentCancelMessage: string | null;
+    paymentTimeoutMessage: string | null;
+    paymentReceivedMessage: string | null;
+    /** Flat delivery fee in BRL (decimal as string for currency safety). 0 = free. */
+    deliveryFee: string;
+    /** 0..6 (Sunday..Saturday). Empty = open every day. */
+    workingDaysOfWeek: number[];
+    /** "HH:MM" 24h. null = no time-of-day restriction. */
+    workingStartTime: string | null;
+    workingEndTime: string | null;
+    outOfHoursMessage: string | null;
+    botCooldownMinutes: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -43,6 +56,16 @@ export interface OrganizationRepository {
             payoutPixKey: string | null;
             payoutPixKeyType: PayoutPixKeyType | null;
             notificationPreferences: NotificationPreferences;
+            paymentTimeoutMinutes: number;
+            paymentCancelMessage: string | null;
+            paymentTimeoutMessage: string | null;
+            paymentReceivedMessage: string | null;
+            deliveryFee: number | string;
+            workingDaysOfWeek: number[];
+            workingStartTime: string | null;
+            workingEndTime: string | null;
+            outOfHoursMessage: string | null;
+            botCooldownMinutes: number;
         }>,
     ): Promise<Organization>;
 }

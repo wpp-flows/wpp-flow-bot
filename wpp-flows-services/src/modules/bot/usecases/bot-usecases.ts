@@ -72,10 +72,6 @@ export class UpdateBotUseCase {
         phoneNumber?: string | null;
         webhookUrl?: string | null;
         flowId?: string | null;
-        workingDaysOfWeek?: number[];
-        workingStartTime?: string | null;
-        workingEndTime?: string | null;
-        outOfHoursMessage?: string | null;
     }): Promise<Bot> {
         const bot = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!bot) throw new NotFoundError("Bot");
@@ -84,10 +80,6 @@ export class UpdateBotUseCase {
             phoneNumber: input.phoneNumber,
             webhookUrl: input.webhookUrl,
             flowId: input.flowId,
-            workingDaysOfWeek: input.workingDaysOfWeek,
-            workingStartTime: input.workingStartTime,
-            workingEndTime: input.workingEndTime,
-            outOfHoursMessage: input.outOfHoursMessage,
         });
     }
 }

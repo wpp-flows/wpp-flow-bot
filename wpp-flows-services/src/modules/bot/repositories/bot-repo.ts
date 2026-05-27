@@ -11,11 +11,6 @@ export interface Bot {
     webhookUrl: string | null;
     flowId: string | null;
     lastConnectedAt: Date | null;
-    workingDaysOfWeek: number[];
-    /** "HH:MM" 24h. Null = no time-of-day restriction. */
-    workingStartTime: string | null;
-    workingEndTime: string | null;
-    outOfHoursMessage: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -43,10 +38,6 @@ export interface BotRepository {
             status: BotStatus;
             qrCode: string | null;
             lastConnectedAt: Date | null;
-            workingDaysOfWeek: number[];
-            workingStartTime: string | null;
-            workingEndTime: string | null;
-            outOfHoursMessage: string | null;
         }>
     ): Promise<Bot>;
     delete(id: string): Promise<void>;

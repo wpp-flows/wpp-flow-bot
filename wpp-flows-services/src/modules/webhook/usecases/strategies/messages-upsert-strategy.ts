@@ -3,7 +3,6 @@ import type {
     ConversationRepository,
 } from "@/modules/chat/repositories/chat-repo";
 import {
-    extractSelectionId,
     extractText,
     isPersonalJid,
     parseMessages,
@@ -91,12 +90,21 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
         });
 
         if (msg.key.fromMe) return;
-        const selectionId = extractSelectionId(msg);
+
+        // Post-payment deep-link: the customer just tapped the wa.me link the
+        // public checkout seeded, carrying a "Pedido #XXXX confirmado" draft.
+        // We ack the paid order and skip the flow runner — there's nothing to
+        // drive (no PAYMENT step anymore; the order is already in).
+        const handled = await ctx.postPaymentHandler.tryHandle({
+            bot: ctx.bot,
+            conversation: updated,
+            text,
+        });
+        if (handled) return;
+
         await ctx.flowRunner.handleInbound({
             bot: ctx.bot,
             conversation: updated,
-            selectionId,
-            text,
         });
     }
 

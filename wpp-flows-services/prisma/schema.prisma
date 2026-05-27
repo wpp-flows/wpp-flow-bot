@@ -93,6 +93,38 @@ model Organization {
   payoutPixKeyType       String?
   /// Per-org notification toggles (new orders, bot disconnects, idle convs).
   notificationPreferences Json?
+  /// Minutes before an unpaid order auto-cancels (default 15). Replaces the
+  /// per-step PAYMENT metadata since payment lives on the web checkout now.
+  paymentTimeoutMinutes  Int     @default(15)
+  /// Message sent on WhatsApp when the customer cancels their pending order
+  /// from the web checkout. Null = fall back to a friendly default.
+  paymentCancelMessage   String?
+  /// Message sent on WhatsApp when the order auto-cancels after the timeout
+  /// window. Null = fall back to a friendly default.
+  paymentTimeoutMessage  String?
+  /// Message sent on WhatsApp when the customer hits the post-checkout
+  /// success page and taps the deep-link (matched by "Pedido #XXXX confirmado").
+  /// Null = fall back to a friendly default.
+  paymentReceivedMessage String?
+  /// Flat delivery fee added to web-checkout orders when the customer chooses
+  /// delivery (vs. pickup). 0 = free delivery. Stored as Decimal for currency safety.
+  deliveryFee            Decimal @default(0) @db.Decimal(10, 2)
+  /// Operating hours shared across the restaurant. The WhatsApp flow runner and
+  /// public menu site both honor these — having them at the org level means a
+  /// multi-bot setup doesn't disagree about whether the restaurant is open.
+  /// 0..6 (Sunday..Saturday). Empty = open every day. Null start/end = no
+  /// time-of-day restriction.
+  workingDaysOfWeek      Int[]     @default([])
+  workingStartTime       String?
+  workingEndTime         String?
+  /// Sent on WhatsApp when an inbound message arrives outside working hours.
+  /// Accepts {{days_of_work}}, {{from}}, {{to}} variables.
+  outOfHoursMessage      String?
+  /// Cooldown (minutes) between consecutive bot replies on the same conversation.
+  /// While the cooldown is active, inbound customer messages are accepted (logged
+  /// + visible in the dashboard) but the flow runner doesn't reply — operators
+  /// can step in via the dashboard. 0 = no cooldown.
+  botCooldownMinutes     Int     @default(60)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -106,6 +138,7 @@ model Organization {
   wallet        Wallet?
   promotions    Promotion[]
   notifications Notification[]
+  coupons       Coupon[]
 
   @@map("organization")
 }
@@ -130,10 +163,6 @@ model Bot {
   flowId               String?
   flow                 Flow?     @relation(fields: [flowId], references: [id], onDelete: SetNull)
   lastConnectedAt      DateTime?
-  workingDaysOfWeek    Int[]     @default([])
-  workingStartTime     String?
-  workingEndTime       String?
-  outOfHoursMessage    String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -174,6 +203,12 @@ model MenuItem {
   /// the bot only lists this item on the matching weekdays.
   availableDaysOfWeek Int[] @default([])
   position       Int      @default(0)
+  /// Optional adicionais the customer can tick when ordering this item on the
+  /// public menu (e.g. "Borda recheada", "Queijo extra"). Shape:
+  ///   [{ id: string, name: string, price: string }]
+  /// Stored as JSON because the list is small and item-scoped — querying
+  /// inside it isn't needed.
+  additionals    Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -205,10 +240,6 @@ model Flow {
 
 enum FlowStepType {
   MESSAGE
-  MENU
-  CONFIRMATION
-  PAYMENT
-  INPUT
 }
 
 model FlowStep {
@@ -251,6 +282,11 @@ model Conversation {
   botActive       Boolean  @default(true)
   currentStepId   String?
   flowState       Json?
+  /// Timestamp of the bot's most recent outbound message on this conversation.
+  /// Combined with `Organization.botCooldownMinutes`, the flow runner skips
+  /// re-firing the flow while the customer is in active back-and-forth so
+  /// operators can take over without the bot spamming over them.
+  lastBotReplyAt  DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -299,6 +335,11 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum DeliveryMode {
+  PICKUP
+  DELIVERY
+}
+
 model Order {
   id              String        @id @default(uuid())
   organizationId  String
@@ -317,6 +358,14 @@ model Order {
   status          OrderStatus   @default(RECEIVED)
   observation     String?
   address         String?
+  /// PICKUP = customer picks the order up at the restaurant; DELIVERY = restaurant delivers
+  /// and `deliveryFee` (snapshot of the org's fee at order time) is added to the total.
+  deliveryMode    DeliveryMode  @default(DELIVERY)
+  deliveryFee     Decimal       @default(0) @db.Decimal(10, 2)
+  /// Code of the coupon applied at checkout (if any). The discount it produced
+  /// is rolled into `discount` along with any other applied promotions.
+  couponCode      String?
+  couponDiscount  Decimal?      @db.Decimal(10, 2)
   paymentStatus   PaymentStatus @default(PENDING)
   paymentProvider String?
   paymentProviderRef String?
@@ -335,6 +384,36 @@ model Order {
   @@index([conversationId])
   @@index([organizationId, status])
   @@map("order")
+}
+
+enum CouponDiscountType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id             String              @id @default(uuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Case-insensitive code the customer types at checkout. We normalize to
+  /// uppercase before saving and compare case-insensitively at validation.
+  code           String
+  discountType   CouponDiscountType
+  /// For PERCENT: 0-100. For FIXED: BRL amount.
+  discountValue  Decimal             @db.Decimal(10, 2)
+  isActive       Boolean             @default(true)
+  /// Inclusive validity window. Both null = always valid.
+  validFrom      DateTime?
+  validUntil     DateTime?
+  /// Free-text label shown to the org owner (optional).
+  description    String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@map("coupon")
 }
 
 model Wallet {
@@ -424,6 +503,10 @@ model Promotion {
   /// (e.g. shown on the 3rd order announcing the 5th-order bonus).
   teaserOrderOffset Int?
   teaserMessage     String?
+  /// NTH_ORDER_DISCOUNT: customer-facing banner on the public checkout when
+  /// the customer hits the qualifying order ("🎉 5º pedido — 10% off aplicado!").
+  /// Null = auto-built default.
+  qualifyingMessage String?
   /// BUNDLE: full combo configuration. Shape:
   ///   { components: [{ id, label, itemIds, count, free }],
   ///     price: "59.90",

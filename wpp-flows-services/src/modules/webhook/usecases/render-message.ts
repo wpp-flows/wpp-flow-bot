@@ -1,7 +1,7 @@
+import { env } from "@/infrastructure/config/env";
 import type { Bot } from "@/modules/bot/repositories/bot-repo";
 import type {
     Conversation,
-    FlowCartItem,
     FlowState,
 } from "@/modules/chat/repositories/chat-repo";
 import type { Customer } from "@/modules/customer/repositories/customer-repo";
@@ -11,6 +11,11 @@ export interface RenderContext {
     bot: Bot;
     state: FlowState;
     customer: Customer | null;
+    /** Optional org context — needed to render `{{menu_url}}` and `{{restaurant_name}}`. */
+    organization?: {
+        slug: string;
+        name: string;
+    } | null;
 }
 
 export interface VariableDescriptor {
@@ -25,6 +30,9 @@ export interface VariableDescriptor {
 /**
  * Canonical list of variables the flow editor surfaces to users and the
  * runner can interpolate. Keep in sync with the keys handled in {@link valueOf}.
+ *
+ * After the digital-menu pivot, MESSAGE is the only step type — these are the
+ * variables that make sense in greeting / hand-off messages.
  */
 export const AVAILABLE_VARIABLES: VariableDescriptor[] = [
     {
@@ -43,29 +51,20 @@ export const AVAILABLE_VARIABLES: VariableDescriptor[] = [
         description: "Nome configurado para o bot que está atendendo.",
     },
     {
-        key: "order_total",
-        label: "Total do pedido",
-        description: "Soma dos itens no carrinho (R$ X,XX). Vazio se ainda não há itens.",
-    },
-    {
-        key: "order_items",
-        label: "Itens do pedido",
-        description: "Lista resumida dos itens do carrinho, uma linha cada.",
-    },
-    {
         key: "order_count",
-        label: "Nº de pedidos",
-        description: "Quantidade de pedidos do cliente. Disponível após integração com pedidos.",
+        label: "Nº de pedidos do cliente",
+        description: "Quantidade de pedidos já feitos por este cliente.",
     },
     {
-        key: "input.observation",
-        label: "Observação",
-        description: "Texto digitado pelo cliente em um passo de observação.",
+        key: "menu_url",
+        label: "Link do cardápio",
+        description:
+            "URL pública do cardápio digital do restaurante (sem query params).",
     },
     {
-        key: "input.address",
-        label: "Endereço",
-        description: "Endereço digitado pelo cliente em um passo de endereço.",
+        key: "restaurant_name",
+        label: "Nome do restaurante",
+        description: "Nome da organização configurado nas configurações.",
     },
 ];
 
@@ -73,8 +72,8 @@ const VARIABLE_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
 
 /**
  * Replaces `{{variable}}` placeholders in the given template. Unknown variables
- * are removed from the output so partially-applicable templates (e.g. an
- * `{{order_total}}` in a welcome message) don't leak `{{...}}` syntax to users.
+ * are removed from the output so partially-applicable templates don't leak
+ * `{{...}}` syntax to customers.
  */
 export function renderMessage(template: string, ctx: RenderContext): string {
     if (!template.includes("{{")) return template;
@@ -82,13 +81,7 @@ export function renderMessage(template: string, ctx: RenderContext): string {
 }
 
 function valueOf(key: string, ctx: RenderContext): string {
-    const { conversation, bot, state } = ctx;
-
-    if (key.startsWith("input.")) {
-        const fieldKey = key.slice("input.".length);
-        return state.inputs?.[fieldKey]?.trim() ?? "";
-    }
-
+    const { conversation, bot, customer, organization } = ctx;
     switch (key) {
         case "customer_name":
             return conversation.contactName?.trim() || "cliente";
@@ -96,25 +89,20 @@ function valueOf(key: string, ctx: RenderContext): string {
             return conversation.contactPhone ?? "";
         case "bot_name":
             return bot.name ?? "";
-        case "order_total":
-            return state.cart.length ? formatTotal(state.cart) : "";
-        case "order_items":
-            return state.cart.length
-                ? state.cart
-                    .map((item) => `• ${item.qty}x ${item.name}`)
-                    .join("\n")
-                : "";
         case "order_count":
-            return ctx.customer ? String(ctx.customer.orderCount) : "";
+            return customer ? String(customer.orderCount) : "";
+        case "menu_url":
+            return menuUrlFor(organization?.slug ?? "");
+        case "restaurant_name":
+            return organization?.name ?? "";
         default:
             return "";
     }
 }
 
-function formatTotal(cart: FlowCartItem[]): string {
-    const total = cart.reduce(
-        (sum, item) => sum + item.qty * Number.parseFloat(item.price || "0"),
-        0,
-    );
-    return `R$ ${total.toFixed(2).replace(".", ",")}`;
+function menuUrlFor(slug: string): string {
+    if (!slug) return "";
+    // Prefer the configured public client origin; fall back to a sensible default.
+    const base = (env.CLIENT_ORIGIN ?? "").replace(/\/$/, "");
+    return base ? `${base}/r/${slug}` : `/r/${slug}`;
 }

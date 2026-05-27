@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const flowStepTypeSchema = z.enum(["MESSAGE", "MENU", "CONFIRMATION", "PAYMENT"]);
+export const flowStepTypeSchema = z.enum(["MESSAGE"]);
 
 export const stepInputSchema = z.object({
     type: flowStepTypeSchema,

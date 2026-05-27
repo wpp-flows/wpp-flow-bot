@@ -23,6 +23,7 @@ const toConversation = (row: any): Conversation => ({
     botActive: row.botActive,
     currentStepId: row.currentStepId,
     flowState: (row.flowState as FlowState | null) ?? null,
+    lastBotReplyAt: row.lastBotReplyAt ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });

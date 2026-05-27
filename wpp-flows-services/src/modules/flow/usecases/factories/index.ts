@@ -1,4 +1,3 @@
-import { PrismaCategoryRepository } from "@/modules/menu/repositories/prisma/prisma-category-repo";
 import { PrismaFlowRepository } from "../../repositories/prisma/prisma-flow-repo";
 import {
     ActivateFlowUseCase,
@@ -14,7 +13,6 @@ import {
 } from "../flow-usecases";
 
 const repo = new PrismaFlowRepository();
-const categoryRepo = new PrismaCategoryRepository();
 
 export const makeListFlows = () => new ListFlowsUseCase(repo);
 export const makeGetActiveFlow = () => new GetActiveFlowUseCase(repo);
@@ -24,7 +22,7 @@ export const makeUpdateFlow = () => new UpdateFlowUseCase(repo);
 export const makeDeleteFlow = () => new DeleteFlowUseCase(repo);
 export const makeCreateNewFlowVersion = () => new CreateNewFlowVersionUseCase(repo);
 export const makeActivateFlow = () => new ActivateFlowUseCase(repo);
-export const makeReplaceFlowSteps = () => new ReplaceFlowStepsUseCase(repo, categoryRepo);
+export const makeReplaceFlowSteps = () => new ReplaceFlowStepsUseCase(repo);
 export const makeReorderFlowSteps = () => new ReorderFlowStepsUseCase(repo);
 
 export { repo as flowRepo };

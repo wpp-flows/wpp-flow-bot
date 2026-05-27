@@ -1,14 +1,13 @@
 import { Route } from "@/infrastructure/http/decorators/route-decorator";
-import { conversationRepo } from "@/modules/chat/usecases/factories";
-import { botRepo } from "@/modules/bot/usecases/factories";
-import { flowRunner } from "@/modules/webhook/usecases/factories";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { handleMercadoPagoWebhook } from "../../usecases/factories";
 
 /**
- * Public endpoint Mercado Pago hits when a payment changes state. We accept
- * the call, look up the order, mark it paid, credit the wallet, and resume the
- * flow. Failures are logged but always return 200 so MP doesn't retry forever.
+ * Public endpoint Mercado Pago hits when a payment changes state. The handler
+ * marks the order paid, credits the org wallet, and emits the dashboard
+ * notification. The customer-facing "payment confirmed" WhatsApp message is
+ * sent separately by the post-payment notifier. Failures are logged but always
+ * return 200 so MP doesn't retry forever.
  */
 export class MercadoPagoWebhookController {
     @Route("POST", "/webhook/mercadopago/:organizationId")
@@ -19,7 +18,7 @@ export class MercadoPagoWebhookController {
             return Array.isArray(raw) ? raw[0] : (raw);
         };
         try {
-            const result = await handleMercadoPagoWebhook.execute({
+            await handleMercadoPagoWebhook.execute({
                 organizationId,
                 body: request.body,
                 headers: {
@@ -27,38 +26,9 @@ export class MercadoPagoWebhookController {
                     requestId: headerOf("x-request-id"),
                 },
             });
-            // If payment cleared, advance the parked conversation.
-            if (result.paid && result.orderId) {
-                await resumeConversationForOrder(result.orderId);
-            }
         } catch (err) {
             console.error("Mercado Pago webhook handler failed:", err);
         }
         return reply.status(200).send({ ok: true });
     }
-}
-
-async function resumeConversationForOrder(orderId: string): Promise<void> {
-    const { prisma } = await import("@/infrastructure/database/client");
-    const order = await prisma.order.findUnique({
-        where: { id: orderId },
-        select: { conversationId: true },
-    });
-    if (!order?.conversationId) return;
-    const conversation = await prisma.conversation.findUnique({
-        where: { id: order.conversationId },
-        select: { id: true, botId: true, organizationId: true },
-    });
-    if (!conversation) return;
-    const bot = await botRepo.findByIdInOrg(
-        conversation.organizationId,
-        conversation.botId,
-    );
-    if (!bot) return;
-    const full = await conversationRepo.findByIdInOrg(
-        conversation.organizationId,
-        conversation.id,
-    );
-    if (!full) return;
-    await flowRunner.resumeAfterPayment({ bot, conversation: full });
 }

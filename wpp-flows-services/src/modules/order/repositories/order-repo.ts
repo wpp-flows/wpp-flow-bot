@@ -7,6 +7,8 @@ export type OrderStatus =
 
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 
+export type DeliveryMode = "PICKUP" | "DELIVERY";
+
 export interface OrderItemBundlePick {
     componentId: string;
     itemId: string;
@@ -25,11 +27,19 @@ export interface OrderItemBundle {
     answers: Record<string, string>;
 }
 
+export interface OrderItemAdditional {
+    id: string;
+    name: string;
+    price: string;
+}
+
 export interface OrderItem {
     itemId: string;
     name: string;
     price: string;
     qty: number;
+    notes?: string | null;
+    additionals?: OrderItemAdditional[];
     bundle?: OrderItemBundle | null;
 }
 
@@ -46,6 +56,10 @@ export interface Order {
     status: OrderStatus;
     observation: string | null;
     address: string | null;
+    deliveryMode: DeliveryMode;
+    deliveryFee: string;
+    couponCode: string | null;
+    couponDiscount: string | null;
     paymentStatus: PaymentStatus;
     paymentProvider: string | null;
     paymentProviderRef: string | null;
@@ -70,6 +84,10 @@ export interface OrderRepository {
         filters: OrderFilters,
     ): Promise<Order[]>;
     findByIdInOrg(organizationId: string, id: string): Promise<Order | null>;
+    findByOrgAndSequence(
+        organizationId: string,
+        sequence: number,
+    ): Promise<Order | null>;
     findByProviderRef(
         provider: string,
         providerRef: string,
@@ -85,6 +103,10 @@ export interface OrderRepository {
         total: number | string;
         observation?: string | null;
         address?: string | null;
+        deliveryMode?: DeliveryMode;
+        deliveryFee?: number | string;
+        couponCode?: string | null;
+        couponDiscount?: number | string | null;
         paymentStatus?: PaymentStatus;
         paymentProvider?: string | null;
         paymentProviderRef?: string | null;
