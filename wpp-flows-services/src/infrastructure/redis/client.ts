@@ -8,7 +8,7 @@ export function getRedisClient(): RedisClient {
 
     console.log("aaaaa: ", env.REDIS_URL);
     client = new Redis({
-        host: "redis",
+        host: "10.0.1.5",
         port: 6379,
         username: "default",
         password: "123",
