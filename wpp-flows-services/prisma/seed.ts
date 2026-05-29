@@ -1,6 +1,5 @@
 import { config as loadEnv } from "dotenv";
 
-// Respeita DOTENV_CONFIG_PATH (.env.qa no npm run qa:infra).
 loadEnv({ path: process.env.DOTENV_CONFIG_PATH ?? ".env" });
 import { auth } from "../src/infrastructure/auth/better-auth";
 import { prisma } from "../src/infrastructure/database/client";

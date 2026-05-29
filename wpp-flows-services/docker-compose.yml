@@ -36,7 +36,6 @@ services:
     container_name: evolution_api
     image: evoapicloud/evolution-api:v2.3.7
     restart: always
-    # API no host (npm run qa:api): webhooks em host.docker.internal:8080
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
