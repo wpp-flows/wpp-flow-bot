@@ -66,5 +66,19 @@ export const formatDateTime = (iso: string): string => {
   });
 };
 
+export const formatRelativeTime = (iso: string): string => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const diffMs = Date.now() - then;
+  if (diffMs < 60_000) return 'agora';
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) return `há ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `há ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `há ${days}d`;
+  return formatDateTime(iso);
+};
+
 export const orderNumber = (sequence: number): string =>
   `#${String(sequence).padStart(4, '0')}`;

@@ -9,38 +9,39 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { orderService } from '@/services/orderService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
-import { cn } from '@/lib/utils';
 import type { OrderStatus } from '@/types';
-import { FilterChip } from './components/FilterChip';
 import { OrderDetail } from './components/OrderDetail';
-import { OrderRowSummary } from './components/OrderRowSummary';
-import { ORDER_STATUSES, STATUS_LABEL, orderNumber } from '../../helpers/order-helpers';
-
-type StatusFilter = OrderStatus | 'all';
+import { OrderKanban } from './components/OrderKanban';
+import { orderNumber } from '@/helpers/order-helpers';
 
 export function OrdersPage() {
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
-
-  const openOrder = (id: string) => {
-    setSelectedId(id);
-    if (
-      typeof globalThis.window !== 'undefined' &&
-      !globalThis.window.matchMedia('(min-width: 1280px)').matches
-    ) {
-      setMobileDetailOpen(true);
-    }
-  };
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const ordersQ = useQuery({
     queryKey: queryKeys.orders.all,
     queryFn: () => orderService.list({}),
   });
 
-  const updateStatus = useMutation({
+  const openOrder = (id: string) => {
+    setSelectedId(id);
+    setDetailOpen(true);
+  };
+
+  const orders = ordersQ.data ?? [];
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o) => {
+      if (orderNumber(o.sequence).toLowerCase().includes(q)) return true;
+      return o.items.some((it) => it.name.toLowerCase().includes(q));
+    });
+  }, [orders, search]);
+
+  const advanceStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.updateStatus(id, status),
     onSuccess: () => {
@@ -51,56 +52,20 @@ export function OrdersPage() {
       toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status'),
   });
 
-  const orders = ordersQ.data ?? [];
-  const countsByStatus = useMemo(() => {
-    const counts: Record<OrderStatus, number> = {
-      RECEIVED: 0,
-      PREPARING: 0,
-      OUT_FOR_DELIVERY: 0,
-      DELIVERED: 0,
-      CANCELED: 0,
-    };
-    for (const o of orders) counts[o.status] += 1;
-    return counts;
-  }, [orders]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return orders.filter((o) => {
-      if (statusFilter !== 'all' && o.status !== statusFilter) return false;
-      if (!q) return true;
-      if (orderNumber(o.sequence).toLowerCase().includes(q)) return true;
-      return o.items.some((it) => it.name.toLowerCase().includes(q));
-    });
-  }, [orders, search, statusFilter]);
-
-  const selected =
-    filtered.find((o) => o.id === selectedId) ?? filtered[0] ?? null;
+  const selected = useMemo(
+    () => (selectedId ? (orders.find((o) => o.id === selectedId) ?? null) : null),
+    [orders, selectedId],
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Pedidos"
-        description="Acompanhe os pedidos confirmados pelo bot e mude o status conforme avança o preparo e a entrega."
+        description="Acompanhe os pedidos confirmados pelo bot. Arraste um card para mudar o status — a transição dispara as mesmas regras da ação “Avançar”."
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="Todos"
-          active={statusFilter === 'all'}
-          onClick={() => setStatusFilter('all')}
-          count={orders.length}
-        />
-        {ORDER_STATUSES.map((s) => (
-          <FilterChip
-            key={s}
-            label={STATUS_LABEL[s]}
-            active={statusFilter === s}
-            onClick={() => setStatusFilter(s)}
-            count={countsByStatus[s]}
-          />
-        ))}
-        <div className="ml-auto w-full sm:w-72">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="w-full sm:w-72">
           <Input
             placeholder="Buscar por nº do pedido ou item…"
             leftIcon={<Search />}
@@ -111,62 +76,37 @@ export function OrdersPage() {
       </div>
 
       {ordersQ.isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-64 rounded-xl" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : orders.length === 0 ? (
         <EmptyState
           icon={<Receipt />}
           title="Nenhum pedido por enquanto"
-          description="Os pedidos aparecem aqui assim que um cliente confirmar pelo bot."
+          description="Os pedidos aparecem aqui assim que um cliente confirmar pelo cardápio digital."
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_440px]">
-          <div className="space-y-2">
-            {filtered.map((order) => (
-              <button
-                key={order.id}
-                type="button"
-                onClick={() => openOrder(order.id)}
-                className={cn(
-                  'w-full rounded-xl border bg-card p-4 text-left transition hover:border-primary/40',
-                  selected?.id === order.id ? 'border-primary' : 'border-border',
-                )}
-              >
-                <OrderRowSummary order={order} />
-              </button>
-            ))}
-          </div>
-          <div className="hidden xl:block">
-            {selected ? (
-              <OrderDetail
-                order={selected}
-                onAdvance={(status) =>
-                  updateStatus.mutate({ id: selected.id, status })
-                }
-                pending={updateStatus.isPending}
-              />
-            ) : null}
-          </div>
-        </div>
+        <OrderKanban orders={filtered} onOpenDetail={openOrder} />
       )}
 
       <Modal
-        open={mobileDetailOpen && !!selected}
-        onClose={() => setMobileDetailOpen(false)}
+        open={detailOpen && !!selected}
+        onClose={() => setDetailOpen(false)}
         title={selected ? `Pedido ${orderNumber(selected.sequence)}` : 'Pedido'}
-        size="lg"
+        size="xl"
       >
         {selected ? (
           <OrderDetail
             order={selected}
             onAdvance={(status) => {
-              updateStatus.mutate({ id: selected.id, status });
-              setMobileDetailOpen(false);
+              advanceStatus.mutate(
+                { id: selected.id, status },
+                { onSuccess: () => setDetailOpen(false) },
+              );
             }}
-            pending={updateStatus.isPending}
+            pending={advanceStatus.isPending}
           />
         ) : null}
       </Modal>

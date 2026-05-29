@@ -2,7 +2,6 @@ import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { toast } from '@/stores/uiStore';
 import type { Order, OrderStatus } from '@/types';
 import {
@@ -13,7 +12,6 @@ import {
   formatBRL,
   formatDateTime,
   nextStatusOptions,
-  orderNumber,
 } from '../../../helpers/order-helpers';
 
 interface Props {
@@ -38,12 +36,9 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
     }
   };
   return (
-    <Card className="space-y-4 p-4">
+    <div className="space-y-4">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-mono text-base font-semibold tracking-tight">
-            {orderNumber(order.sequence)}
-          </p>
           <Badge tone={STATUS_TONE[order.status]} dot>
             {STATUS_LABEL[order.status]}
           </Badge>
@@ -157,7 +152,7 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
           ))}
         </div>
       ) : null}
-    </Card>
+    </div>
   );
 }
 
