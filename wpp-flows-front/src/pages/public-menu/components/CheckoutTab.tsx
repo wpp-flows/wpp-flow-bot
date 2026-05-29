@@ -211,16 +211,19 @@ export function CheckoutTab({
         </div>
       ) : null}
 
-      <div className="md:block">
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          loading={mutation.isPending}
-          disabled={!isOpen}
-        >
-          {isOpen ? `Pagar — ${formatBrl(total)}` : 'Restaurante fechado'}
-        </Button>
+      <div aria-hidden className="h-20" />
+      <div className="fixed inset-x-0 bottom-[calc(theme(spacing.16)+env(safe-area-inset-bottom))] z-20 px-4">
+        <div className="mx-auto max-w-3xl">
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full shadow-soft-lg"
+            loading={mutation.isPending}
+            disabled={!isOpen}
+          >
+            {isOpen ? `Pagar — ${formatBrl(total)}` : 'Restaurante fechado'}
+          </Button>
+        </div>
       </div>
     </form>
   );

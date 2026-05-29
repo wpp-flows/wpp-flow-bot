@@ -59,7 +59,7 @@ export const AVAILABLE_VARIABLES: VariableDescriptor[] = [
         key: "menu_url",
         label: "Link do cardápio",
         description:
-            "URL pública do cardápio digital do restaurante (sem query params).",
+            "URL pública do cardápio digital do restaurante, com nome e telefone do cliente no query string para autopreencher o checkout.",
     },
     {
         key: "restaurant_name",
@@ -92,7 +92,11 @@ function valueOf(key: string, ctx: RenderContext): string {
         case "order_count":
             return customer ? String(customer.orderCount) : "";
         case "menu_url":
-            return menuUrlFor(organization?.slug ?? "");
+            return menuUrlFor(
+                organization?.slug ?? "",
+                conversation.contactName,
+                conversation.contactPhone,
+            );
         case "restaurant_name":
             return organization?.name ?? "";
         default:
@@ -100,9 +104,19 @@ function valueOf(key: string, ctx: RenderContext): string {
     }
 }
 
-function menuUrlFor(slug: string): string {
+function menuUrlFor(
+    slug: string,
+    contactName: string | null | undefined,
+    contactPhone: string | null | undefined,
+): string {
     if (!slug) return "";
-    // Prefer the configured public client origin; fall back to a sensible default.
     const base = (env.CLIENT_ORIGIN ?? "").replace(/\/$/, "");
-    return base ? `${base}/r/${slug}` : `/r/${slug}`;
+    const path = `${base || ""}/r/${slug}`;
+    const params = new URLSearchParams();
+    const name = contactName?.trim();
+    if (name) params.set("name", name);
+    const phoneDigits = (contactPhone ?? "").replace(/\D/g, "");
+    if (phoneDigits) params.set("phone", phoneDigits);
+    const qs = params.toString();
+    return qs ? `${path}?${qs}` : path;
 }
