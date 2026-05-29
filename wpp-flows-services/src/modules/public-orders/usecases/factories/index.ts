@@ -13,6 +13,7 @@ import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/schedul
 import { CancelPublicOrderUseCase } from "../cancel-public-order";
 import { CreatePublicOrderUseCase } from "../create-public-order";
 import { GetCustomerContextUseCase } from "../get-customer-context";
+import { NotifyPaymentConfirmedUseCase } from "../notify-payment-confirmed";
 import { OrderCustomerNotifier } from "../order-customer-notifier";
 import { PaymentTimeoutHandler } from "../payment-timeout-handler";
 import { ValidatePublicCouponUseCase } from "../validate-public-coupon";
@@ -55,6 +56,12 @@ export const getCustomerContext = new GetCustomerContextUseCase(
     organizationRepo,
     customerRepo,
     promotionRepo,
+);
+
+export const notifyPaymentConfirmed = new NotifyPaymentConfirmedUseCase(
+    organizationRepo,
+    customerRepo,
+    customerNotifier,
 );
 
 const paymentTimeoutHandler = new PaymentTimeoutHandler(

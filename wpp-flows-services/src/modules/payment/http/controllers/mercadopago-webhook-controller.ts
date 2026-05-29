@@ -1,13 +1,17 @@
 import { Route } from "@/infrastructure/http/decorators/route-decorator";
+import { orderRepo } from "@/modules/order/usecases/factories";
+import { notifyPaymentConfirmed } from "@/modules/public-orders/usecases/factories";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { handleMercadoPagoWebhook } from "../../usecases/factories";
 
 /**
  * Public endpoint Mercado Pago hits when a payment changes state. The handler
  * marks the order paid, credits the org wallet, and emits the dashboard
- * notification. The customer-facing "payment confirmed" WhatsApp message is
- * sent separately by the post-payment notifier. Failures are logged but always
- * return 200 so MP doesn't retry forever.
+ * notification. On approved payments we also fire the customer-facing
+ * "payment confirmed" WhatsApp message so the customer hears from us even if
+ * they don't come back to WhatsApp via the success-page deep-link.
+ *
+ * Failures are logged but always return 200 so MP doesn't retry forever.
  */
 export class MercadoPagoWebhookController {
     @Route("POST", "/webhook/mercadopago/:organizationId")
@@ -18,7 +22,7 @@ export class MercadoPagoWebhookController {
             return Array.isArray(raw) ? raw[0] : (raw);
         };
         try {
-            await handleMercadoPagoWebhook.execute({
+            const result = await handleMercadoPagoWebhook.execute({
                 organizationId,
                 body: request.body,
                 headers: {
@@ -26,6 +30,16 @@ export class MercadoPagoWebhookController {
                     requestId: headerOf("x-request-id"),
                 },
             });
+
+            if (result.paid && result.orderId) {
+                const order = await orderRepo.findByIdInOrg(
+                    organizationId,
+                    result.orderId,
+                );
+                if (order) {
+                    void notifyPaymentConfirmed.execute(order);
+                }
+            }
         } catch (err) {
             console.error("Mercado Pago webhook handler failed:", err);
         }
