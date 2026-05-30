@@ -224,17 +224,19 @@ function ItemImage({ url, alt }: { url: string | null; alt: string }) {
   const [errored, setErrored] = useState(false);
   if (!url || errored) {
     return (
-      <div className="flex h-40 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground">
+      <div className="flex h-56 w-full items-center justify-center rounded-lg bg-muted text-muted-foreground sm:h-64">
         <ImageOff className="h-7 w-7" />
       </div>
     );
   }
   return (
-    <img
-      src={url}
-      alt={alt}
-      onError={() => setErrored(true)}
-      className="h-40 w-full rounded-lg object-cover"
-    />
+    <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-lg bg-muted/50 sm:h-64">
+      <img
+        src={url}
+        alt={alt}
+        onError={() => setErrored(true)}
+        className="h-full w-full object-contain"
+      />
+    </div>
   );
 }
