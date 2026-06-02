@@ -59,6 +59,7 @@ export interface Order {
   paymentProviderRef: string | null;
   paymentLink: string | null;
   receiptUrl: string | null;
+  cashChangeFor: string | null;
   appliedPromotionIds: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -69,4 +70,5 @@ export interface OrderFilters {
   customerId?: string;
   fromDate?: string;
   toDate?: string;
+  date?: string;
 }

@@ -6,9 +6,11 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { walletService } from '@/services/walletService';
+import { reportService } from '@/services/reportService';
 import { queryKeys } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { TransactionRow } from './components/TransactionRow';
+import { DailyReportsList } from './components/DailyReportsList';
 import { formatBRL } from '../../helpers/wallet-helpers';
 import { openWalletReport } from './wallet-report';
 
@@ -23,9 +25,15 @@ export function WalletPage() {
     queryKey: queryKeys.wallet.transactions,
     queryFn: walletService.listTransactions,
   });
+  
+  const reportsQ = useQuery({
+    queryKey: queryKeys.reports.daily,
+    queryFn: reportService.listDaily,
+  });
 
   const balance = walletQ.data?.balance ?? '0';
   const transactions = txQ.data ?? [];
+  const reports = reportsQ.data ?? [];
 
   const handleGenerateReport = () => {
     if (!walletQ.data) return;
@@ -93,6 +101,29 @@ export function WalletPage() {
             <li>· Use <span className="font-medium text-foreground">Gerar relatório</span> para baixar um PDF com todas as movimentações.</li>
           </ul>
         </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-1 text-sm font-semibold tracking-tight">
+          Relatórios diários
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Cada dia com pedidos gera um relatório próprio. Toque em{' '}
+          <span className="font-medium">Baixar PDF</span> para imprimir ou
+          salvar.
+        </p>
+        {reportsQ.isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <DailyReportsList
+            organizationName={organization?.name ?? '—'}
+            reports={reports}
+          />
+        )}
       </div>
 
       <div>

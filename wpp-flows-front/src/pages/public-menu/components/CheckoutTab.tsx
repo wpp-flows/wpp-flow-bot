@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bike, ShoppingCart, Sparkles, Store, Tag, X } from 'lucide-react';
+import {
+  Banknote,
+  Bike,
+  CreditCard,
+  ShoppingCart,
+  Sparkles,
+  Store,
+  Tag,
+  X,
+} from 'lucide-react';
 import {
   Controller,
   FormProvider,
@@ -46,6 +55,8 @@ const checkoutDefaultValues: PublicCheckoutFormValues = {
   observation: '',
   deliveryMode: 'DELIVERY',
   couponCode: '',
+  paymentMethod: 'MERCADOPAGO',
+  cashChangeFor: '',
 };
 
 export function CheckoutTab({
@@ -73,6 +84,7 @@ export function CheckoutTab({
 
   const { handleSubmit, watch, setValue, getValues } = form;
   const deliveryMode = watch('deliveryMode');
+  const paymentMethod = watch('paymentMethod');
   const phone = watch('phone');
   const couponCode = watch('couponCode');
 
@@ -129,27 +141,32 @@ export function CheckoutTab({
           })),
           bundle: it.bundle
             ? {
-                bundleId: it.bundle.bundleId,
-                picks: it.bundle.picks.map((p) => ({
-                  componentId: p.componentId,
-                  itemId: p.itemId,
-                })),
-                answers: it.bundle.answers,
-              }
+              bundleId: it.bundle.bundleId,
+              picks: it.bundle.picks.map((p) => ({
+                componentId: p.componentId,
+                itemId: p.itemId,
+              })),
+              answers: it.bundle.answers,
+            }
             : null,
         })),
         observation: values.observation.trim() || null,
         address:
           values.deliveryMode === 'DELIVERY'
             ? buildDeliveryAddress({
-                street: values.addressStreet,
-                number: values.addressNumber,
-                neighborhood: values.addressNeighborhood,
-                notes: values.addressNotes,
-              }) || null
+              street: values.addressStreet,
+              number: values.addressNumber,
+              neighborhood: values.addressNeighborhood,
+              notes: values.addressNotes,
+            }) || null
             : null,
         deliveryMode: values.deliveryMode,
         couponCode: coupon?.code ?? null,
+        paymentMethod: values.paymentMethod,
+        cashChangeFor:
+          values.paymentMethod === 'CASH' && values.cashChangeFor.trim()
+            ? Number(values.cashChangeFor.replace(',', '.'))
+            : null,
       }),
     onSuccess: (res, values) => {
       cart.clear();
@@ -200,6 +217,7 @@ export function CheckoutTab({
         <CustomerBanners banners={customerContext.data?.banners ?? []} />
         <DeliveryModeSection orgDeliveryFee={orgDeliveryFee} />
         <CustomerSection />
+        <PaymentMethodSection />
         <CouponSection
           coupon={coupon}
           couponError={couponError}
@@ -231,7 +249,11 @@ export function CheckoutTab({
               loading={mutation.isPending}
               disabled={!isOpen}
             >
-              {isOpen ? `Pagar — ${formatBrl(total)}` : 'Restaurante fechado'}
+              {!isOpen
+                ? 'Restaurante fechado'
+                : paymentMethod === 'CASH'
+                  ? `Confirmar pedido — ${formatBrl(total)}`
+                  : `Pagar — ${formatBrl(total)}`}
             </Button>
           </div>
         </div>
@@ -399,6 +421,99 @@ function DeliveryModeSection({ orgDeliveryFee }: { orgDeliveryFee: number }) {
 }
 
 function DeliveryModeOption({
+  active,
+  icon,
+  label,
+  hint,
+  onClick,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition',
+        active
+          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+          : 'border-border bg-background hover:bg-muted/40',
+      )}
+    >
+      <span className={cn(active ? 'text-primary' : 'text-muted-foreground')}>
+        {icon}
+      </span>
+      <span className="text-sm font-medium">{label}</span>
+      <span className="text-2xs text-muted-foreground">{hint}</span>
+    </button>
+  );
+}
+
+function PaymentMethodSection() {
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<PublicCheckoutFormValues>();
+  const paymentMethod = watch('paymentMethod');
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        Forma de pagamento
+      </h2>
+      <Controller
+        name="paymentMethod"
+        control={control}
+        render={({ field }) => (
+          <div className="grid grid-cols-2 gap-3">
+            <PaymentMethodOption
+              active={field.value === 'MERCADOPAGO'}
+              icon={<CreditCard className="h-5 w-5" />}
+              label="Pagar agora"
+              hint="Cartão ou Pix via Mercado Pago"
+              onClick={() => field.onChange('MERCADOPAGO')}
+            />
+            <PaymentMethodOption
+              active={field.value === 'CASH'}
+              icon={<Banknote className="h-5 w-5" />}
+              label="Dinheiro"
+              hint="Pagar na entrega"
+              onClick={() => field.onChange('CASH')}
+            />
+          </div>
+        )}
+      />
+
+      {paymentMethod === 'CASH' ? (
+        <FormField
+          className="mt-4"
+          label="Precisa de troco? (opcional)"
+          htmlFor="checkout-cash-change"
+          error={errors.cashChangeFor?.message}
+          hint="Informe a nota que vai entregar. Ex.: 50 para pagar com uma nota de R$ 50."
+        >
+          <Input
+            id="checkout-cash-change"
+            type="text"
+            inputMode="decimal"
+            placeholder="Ex.: 50"
+            invalid={!!errors.cashChangeFor}
+            {...register('cashChangeFor')}
+          />
+        </FormField>
+      ) : null}
+    </section>
+  );
+}
+
+function PaymentMethodOption({
   active,
   icon,
   label,

@@ -176,6 +176,14 @@ export class HandleMercadoPagoWebhookUseCase {
             await this.orderRepo.updatePayment(order.id, {
                 paymentStatus: payment.status === "refunded" ? "REFUNDED" : "FAILED",
             });
+
+            if (payment.status === "rejected" || payment.status === "cancelled") {
+                const timeoutMs = org.paymentTimeoutMinutes * 60 * 1000;
+                await paymentTimeoutScheduler.schedule(
+                    { organizationId: input.organizationId, orderId: order.id },
+                    timeoutMs,
+                );
+            }
         }
         return { orderId: order.id, paid: false };
     }

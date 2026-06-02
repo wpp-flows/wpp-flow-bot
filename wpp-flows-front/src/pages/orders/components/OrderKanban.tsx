@@ -17,10 +17,18 @@ import { OrderKanbanColumn } from './OrderKanbanColumn';
 interface Props {
   orders: Order[];
   onOpenDetail: (orderId: string) => void;
+  notifyCustomer?: boolean;
 }
 
-export function OrderKanban({ orders, onOpenDetail }: Readonly<Props>) {
-  const { columns, activeOrder, setActiveOrderId, moveOrder } = useOrderKanban(orders);
+export function OrderKanban({
+  orders,
+  onOpenDetail,
+  notifyCustomer,
+}: Readonly<Props>) {
+  const { columns, activeOrder, setActiveOrderId, moveOrder } = useOrderKanban(
+    orders,
+    { notifyCustomer },
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

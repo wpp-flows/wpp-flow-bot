@@ -13,8 +13,12 @@ export const listOrdersQuerySchema = z.object({
     customerId: z.uuid().optional(),
     fromDate: z.iso.datetime().optional(),
     toDate: z.iso.datetime().optional(),
+    date: z
+        .union([z.literal("today"), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
+        .optional(),
 });
 
 export const updateOrderStatusSchema = z.object({
     status: z.enum(ORDER_STATUSES),
+    notifyCustomer: z.boolean().optional().default(true),
 });

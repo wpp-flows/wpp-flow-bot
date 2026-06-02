@@ -1,4 +1,4 @@
-import { Check, Copy, Printer } from "lucide-react";
+import { Banknote, Check, Copy, Printer } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +11,7 @@ import {
   STATUS_TONE,
   formatBRL,
   formatDateTime,
-  nextStatusOptions, 
+  nextStatusOptions,
 } from "../../../helpers/order-helpers";
 import { buildReceiptHtml } from "./OrderPrintDetail";
 
@@ -19,14 +19,18 @@ interface Props {
   order: Order;
   restaurantName: string;
   pending: boolean;
+  markingPaid?: boolean;
   onAdvance: (status: OrderStatus) => void;
+  onMarkPaid?: () => void;
 }
 
 export function OrderDetail({
   order,
   restaurantName,
   pending,
+  markingPaid = false,
   onAdvance,
+  onMarkPaid,
 }: Readonly<Props>) {
   const nextOptions = nextStatusOptions(order.status);
   const [copied, setCopied] = useState(false);
@@ -152,6 +156,51 @@ export function OrderDetail({
           {order.observation?.trim() || "Sem observação"}
         </p>
       </Section>
+
+      {order.paymentProvider === "CASH" ? (
+        <Section title="Pagamento em dinheiro">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="warning" className="inline-flex items-center gap-1">
+                <Banknote className="h-3 w-3" />
+                Dinheiro na entrega
+              </Badge>
+              {order.cashChangeFor ? (
+                <span className="text-sm">
+                  Troco para{" "}
+                  <span className="font-mono font-semibold">
+                    {formatBRL(order.cashChangeFor)}
+                  </span>{" "}
+                  <span className="text-muted-foreground">
+                    (devolver {formatBRL(
+                      Math.max(
+                        0,
+                        Number.parseFloat(order.cashChangeFor) -
+                          Number.parseFloat(order.total),
+                      ),
+                    )})
+                  </span>
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  Sem troco solicitado.
+                </span>
+              )}
+            </div>
+            {order.paymentStatus === "PENDING" && onMarkPaid ? (
+              <Button
+                size="sm"
+                variant="primary"
+                leftIcon={<Check />}
+                loading={markingPaid}
+                onClick={onMarkPaid}
+              >
+                Marcar como pago
+              </Button>
+            ) : null}
+          </div>
+        </Section>
+      ) : null}
 
       {order.paymentProviderRef ? (
         <Section title="Comprovante de pagamento">

@@ -371,6 +371,7 @@ model Order {
   paymentProviderRef String?
   paymentLink     String?
   receiptUrl      String?
+  cashChangeFor   Decimal?      @db.Decimal(10, 2)
   /// Snapshot of the applied promotion ids (if any) so we can audit later.
   appliedPromotionIds Json?
   createdAt       DateTime      @default(now())

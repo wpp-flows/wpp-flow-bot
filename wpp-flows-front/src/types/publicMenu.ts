@@ -110,6 +110,8 @@ export interface PublicCartItem {
   } | null;
 }
 
+export type PublicPaymentMethod = 'MERCADOPAGO' | 'CASH';
+
 export interface CreatePublicOrderPayload {
   customer: { name: string; phone: string };
   items: Array<{
@@ -127,6 +129,8 @@ export interface CreatePublicOrderPayload {
   address?: string | null;
   deliveryMode: PublicDeliveryMode;
   couponCode?: string | null;
+  paymentMethod?: PublicPaymentMethod;
+  cashChangeFor?: number | null;
 }
 
 export interface ValidatedCoupon {

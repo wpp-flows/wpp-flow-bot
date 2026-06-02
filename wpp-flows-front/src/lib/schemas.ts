@@ -108,29 +108,42 @@ export const publicCheckoutSchema = z
     observation: z.string().max(500),
     deliveryMode: z.enum(['PICKUP', 'DELIVERY']),
     couponCode: z.string().max(40),
+    paymentMethod: z.enum(['MERCADOPAGO', 'CASH']),
+    cashChangeFor: z.string().max(20),
   })
   .superRefine((data, ctx) => {
-    if (data.deliveryMode !== 'DELIVERY') return;
-    if (!data.addressStreet.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Informe a rua.',
-        path: ['addressStreet'],
-      });
+    if (data.deliveryMode === 'DELIVERY') {
+      if (!data.addressStreet.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Informe a rua.',
+          path: ['addressStreet'],
+        });
+      }
+      if (!data.addressNumber.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Informe o número.',
+          path: ['addressNumber'],
+        });
+      }
+      if (!data.addressNeighborhood.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Informe o bairro.',
+          path: ['addressNeighborhood'],
+        });
+      }
     }
-    if (!data.addressNumber.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Informe o número.',
-        path: ['addressNumber'],
-      });
-    }
-    if (!data.addressNeighborhood.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Informe o bairro.',
-        path: ['addressNeighborhood'],
-      });
+    if (data.paymentMethod === 'CASH' && data.cashChangeFor.trim()) {
+      const parsed = Number(data.cashChangeFor.replace(',', '.'));
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Valor inválido.',
+          path: ['cashChangeFor'],
+        });
+      }
     }
   });
 export type PublicCheckoutFormValues = z.infer<typeof publicCheckoutSchema>;

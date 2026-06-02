@@ -37,6 +37,16 @@ export class GetOrderUseCase {
     }
 }
 
+export class MarkOrderPaidUseCase {
+    constructor(private readonly repo: OrderRepository) {}
+    async execute(input: { organizationId: string; id: string }): Promise<Order> {
+        const order = await this.repo.findByIdInOrg(input.organizationId, input.id);
+        if (!order) throw new NotFoundError("Order");
+        if (order.paymentStatus === "PAID") return order;
+        return this.repo.updatePayment(input.id, { paymentStatus: "PAID" });
+    }
+}
+
 export class UpdateOrderStatusUseCase {
     constructor(
         private readonly repo: OrderRepository,
@@ -46,6 +56,7 @@ export class UpdateOrderStatusUseCase {
         organizationId: string;
         id: string;
         status: OrderStatus;
+        notifyCustomer?: boolean;
     }): Promise<Order> {
         const order = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!order) throw new NotFoundError("Order");
@@ -58,7 +69,9 @@ export class UpdateOrderStatusUseCase {
             );
         }
         const updated = await this.repo.updateStatus(input.id, input.status);
-        void this.notifyCustomer.execute(updated, input.status);
+        if (input.notifyCustomer !== false) {
+            void this.notifyCustomer.execute(updated, input.status);
+        }
         return updated;
     }
 }
@@ -87,6 +100,8 @@ export class CreateOrderFromCartUseCase {
         deliveryFee?: number | null;
         couponCode?: string | null;
         couponDiscount?: number | null;
+        paymentProvider?: string | null;
+        cashChangeFor?: number | null;
     }): Promise<Order> {
         if (input.items.length === 0) {
             throw new ValidationError("Pedido vazio — adicione itens antes de confirmar.");
@@ -114,6 +129,11 @@ export class CreateOrderFromCartUseCase {
             couponDiscount:
                 input.couponDiscount && input.couponDiscount > 0
                     ? input.couponDiscount.toFixed(2)
+                    : null,
+            paymentProvider: input.paymentProvider ?? null,
+            cashChangeFor:
+                input.cashChangeFor && input.cashChangeFor > 0
+                    ? input.cashChangeFor.toFixed(2)
                     : null,
             appliedPromotionIds: input.appliedPromotionIds ?? null,
         });

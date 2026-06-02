@@ -6,6 +6,7 @@ import {
     CreateOrderFromCartUseCase,
     GetOrderUseCase,
     ListOrdersUseCase,
+    MarkOrderPaidUseCase,
     UpdateOrderStatusUseCase,
 } from "../order-usecases";
 import { NotifyCustomerOrderStatusChangeUseCase } from "../notify-customer-status-change";
@@ -24,5 +25,6 @@ export const makeUpdateOrderStatus = () =>
     new UpdateOrderStatusUseCase(repo, notifyCustomerStatusChange);
 export const makeCreateOrderFromCart = () =>
     new CreateOrderFromCartUseCase(repo, customerRepo);
+export const makeMarkOrderPaid = () => new MarkOrderPaidUseCase(repo);
 
 export { repo as orderRepo };

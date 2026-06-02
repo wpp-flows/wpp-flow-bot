@@ -1,7 +1,7 @@
 import { type CSSProperties, forwardRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MapPin, StickyNote, Tag, Package } from 'lucide-react';
+import { Banknote, GripVertical, MapPin, StickyNote, Tag, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import type { Order } from '@/types';
@@ -49,6 +49,7 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
   const hasBundle = order.items.some((it) => !!it.bundle);
   const hasDiscount = !!order.discount && Number.parseFloat(order.discount) > 0;
   const hasObservation = !!order.observation?.trim();
+  const isCash = order.paymentProvider === 'CASH';
   const addressShort = order.address?.split(',')[0]?.trim() || null;
   const accent = ACCENT_BY_TONE[(STATUS_TONE[order.status] ?? 'neutral') as keyof typeof ACCENT_BY_TONE];
 
@@ -109,6 +110,12 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
         ) : null}
 
         <div className="flex flex-wrap items-center gap-1.5">
+          {isCash ? (
+            <Badge tone="warning" size="sm" className="inline-flex items-center gap-1">
+              <Banknote className="h-3 w-3" />
+              Dinheiro
+            </Badge>
+          ) : null}
           <Badge tone={PAYMENT_TONE[order.paymentStatus]} size="sm">
             {PAYMENT_LABEL[order.paymentStatus]}
           </Badge>

@@ -42,6 +42,8 @@ export const createPublicOrderSchema = z.object({
     address: z.string().max(500).nullable().optional(),
     deliveryMode: z.enum(["PICKUP", "DELIVERY"]),
     couponCode: z.string().max(40).nullable().optional(),
+    paymentMethod: z.enum(["MERCADOPAGO", "CASH"]).default("MERCADOPAGO"),
+    cashChangeFor: z.number().positive().max(99999.99).nullable().optional(),
 });
 
 export const validateCouponQuerySchema = z.object({

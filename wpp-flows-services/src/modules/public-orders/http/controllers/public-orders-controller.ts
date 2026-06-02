@@ -29,6 +29,8 @@ export class PublicOrdersController {
             address: body.address ?? null,
             deliveryMode: body.deliveryMode,
             couponCode: body.couponCode ?? null,
+            paymentMethod: body.paymentMethod,
+            cashChangeFor: body.cashChangeFor ?? null,
         });
         return reply.status(201).send(result);
     }

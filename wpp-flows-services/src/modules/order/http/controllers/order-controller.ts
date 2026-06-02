@@ -4,21 +4,51 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import {
     makeGetOrder,
     makeListOrders,
+    makeMarkOrderPaid,
     makeUpdateOrderStatus,
 } from "../../usecases/factories";
 import { listOrdersQuerySchema, updateOrderStatusSchema } from "../schema";
+
+function resolveDateRange(
+    date: string | undefined,
+): { from: Date; to: Date } | null {
+    if (!date) return null;
+    let year: number;
+    let month: number;
+    let day: number;
+    if (date === "today") {
+        const now = new Date();
+        year = now.getUTCFullYear();
+        month = now.getUTCMonth();
+        day = now.getUTCDate();
+    } else {
+        const [y, m, d] = date.split("-").map(Number);
+        if (!y || !m || !d) return null;
+        year = y;
+        month = m - 1;
+        day = d;
+    }
+    const from = new Date(Date.UTC(year, month, day));
+    const to = new Date(Date.UTC(year, month, day + 1));
+    return { from, to };
+}
 
 export class OrderController {
     @Route("GET", "/api/orders", { middlewares: [requireOrganization] })
     async list(request: FastifyRequest, reply: FastifyReply) {
         const query = listOrdersQuerySchema.parse(request.query ?? {});
+        const dateRange = resolveDateRange(query.date);
         const result = await makeListOrders().execute({
             organizationId: request.organizationId,
             filters: {
                 status: query.status,
                 customerId: query.customerId,
-                fromDate: query.fromDate ? new Date(query.fromDate) : undefined,
-                toDate: query.toDate ? new Date(query.toDate) : undefined,
+                fromDate:
+                    dateRange?.from ??
+                    (query.fromDate ? new Date(query.fromDate) : undefined),
+                toDate:
+                    dateRange?.to ??
+                    (query.toDate ? new Date(query.toDate) : undefined),
             },
         });
         return reply.send(result);
@@ -44,6 +74,19 @@ export class OrderController {
             organizationId: request.organizationId,
             id,
             status: body.status,
+            notifyCustomer: body.notifyCustomer,
+        });
+        return reply.send(result);
+    }
+
+    @Route("PATCH", "/api/orders/:id/mark-paid", {
+        middlewares: [requireOrganization],
+    })
+    async markPaid(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const result = await makeMarkOrderPaid().execute({
+            organizationId: request.organizationId,
+            id,
         });
         return reply.send(result);
     }

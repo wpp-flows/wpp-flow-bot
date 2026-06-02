@@ -17,6 +17,7 @@ import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluat
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import { env } from "@/infrastructure/config/env";
 
 export interface PublicOrderItemAdditionalInput {
     id: string;
@@ -36,6 +37,8 @@ export interface PublicOrderItemInput {
     } | null;
 }
 
+export type PublicPaymentMethod = "MERCADOPAGO" | "CASH";
+
 export interface CreatePublicOrderInput {
     slug: string;
     customer: {
@@ -48,6 +51,8 @@ export interface CreatePublicOrderInput {
     deliveryMode: DeliveryMode;
     /** Customer-typed coupon code at checkout. Empty/whitespace = no coupon. */
     couponCode?: string | null;
+    paymentMethod?: PublicPaymentMethod;
+    cashChangeFor?: number | null;
 }
 
 export interface CreatePublicOrderResult {
@@ -197,6 +202,9 @@ export class CreatePublicOrderUseCase {
             conversationId = conversation.id;
         }
 
+        const paymentMethod = input.paymentMethod ?? "MERCADOPAGO";
+        const isCash = paymentMethod === "CASH";
+
         const order = await this.createOrderFromCart.execute({
             organizationId: org.id,
             customerId: customer.id,
@@ -212,24 +220,33 @@ export class CreatePublicOrderUseCase {
             deliveryFee,
             couponCode,
             couponDiscount: couponDiscount > 0 ? couponDiscount : null,
+            paymentProvider: isCash ? "CASH" : null,
+            cashChangeFor: isCash ? input.cashChangeFor ?? null : null,
         });
 
-        const { paymentLink } = await this.createPaymentLink.execute({
-            organizationId: org.id,
-            orderId: order.id,
-        });
+        let paymentLink: string;
+        if (isCash) {
+            const base = (env.CLIENT_ORIGIN ?? "").replace(/\/$/, "");
+            paymentLink = `${base}/r/${input.slug}/pedido/${order.id}`;
+        } else {
+            const link = await this.createPaymentLink.execute({
+                organizationId: org.id,
+                orderId: order.id,
+            });
+            paymentLink = link.paymentLink;
 
-        const timeoutMs = org.paymentTimeoutMinutes * 60 * 1000;
-        await paymentTimeoutScheduler.schedule(
-            { organizationId: org.id, orderId: order.id },
-            timeoutMs,
-        );
+            const timeoutMs = org.paymentTimeoutMinutes * 60 * 1000;
+            await paymentTimeoutScheduler.schedule(
+                { organizationId: org.id, orderId: order.id },
+                timeoutMs,
+            );
+        }
 
         void this.notificationEmitter.emit({
             organizationId: org.id,
             type: "NEW_ORDER",
             title: `Novo pedido #${String(order.sequence).padStart(4, "0")}`,
-            body: `${customer.name} — total R$ ${order.total}`,
+            body: `${customer.name} — total R$ ${order.total}${isCash ? " (dinheiro)" : ""}`,
             link: `/orders?id=${order.id}`,
             requirePreference: "newOrders",
         });

@@ -65,6 +65,7 @@ export interface Order {
     paymentProviderRef: string | null;
     paymentLink: string | null;
     receiptUrl: string | null;
+    cashChangeFor: string | null;
     appliedPromotionIds: string[] | null;
     createdAt: Date;
     updatedAt: Date;
@@ -110,6 +111,7 @@ export interface OrderRepository {
         paymentStatus?: PaymentStatus;
         paymentProvider?: string | null;
         paymentProviderRef?: string | null;
+        cashChangeFor?: number | string | null;
         appliedPromotionIds?: string[] | null;
     }): Promise<Order>;
     updateStatus(id: string, status: OrderStatus): Promise<Order>;

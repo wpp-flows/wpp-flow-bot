@@ -22,12 +22,16 @@ export class PaymentTimeoutHandler {
             payload.orderId,
         );
         if (!order) return;
-        if (order.paymentStatus !== "PENDING" || order.status === "CANCELED") {
+        const cancelable =
+            order.paymentStatus === "PENDING" || order.paymentStatus === "FAILED";
+        if (!cancelable || order.status === "CANCELED") {
             return;
         }
 
         await this.orderRepo.updateStatus(order.id, "CANCELED");
-        await this.orderRepo.updatePayment(order.id, { paymentStatus: "FAILED" });
+        if (order.paymentStatus === "PENDING") {
+            await this.orderRepo.updatePayment(order.id, { paymentStatus: "FAILED" });
+        }
 
         const [org, customer] = await Promise.all([
             this.orgRepo.findById(payload.organizationId),

@@ -76,3 +76,4 @@ export type {
   NotificationPage,
 } from './notification';
 export type { Coupon, CouponDiscountType, CouponInput } from './coupon';
+export type { DailyReportSummary, DailyReportDetail } from './report';

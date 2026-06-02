@@ -45,7 +45,12 @@ export const queryKeys = {
   },
   orders: {
     all: ['orders'] as const,
+    today: ['orders', 'today'] as const,
     detail: (id: string) => ['orders', id] as const,
+  },
+  reports: {
+    daily: ['reports', 'daily'] as const,
+    dailyDetail: (date: string) => ['reports', 'daily', date] as const,
   },
   wallet: {
     me: ['wallet'] as const,

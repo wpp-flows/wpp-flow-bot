@@ -17,7 +17,15 @@ export interface KanbanColumnDescriptor {
   orders: Order[];
 }
 
-export function useOrderKanban(orders: Order[]) {
+export interface UseOrderKanbanOptions {
+  notifyCustomer?: boolean;
+}
+
+export function useOrderKanban(
+  orders: Order[],
+  options: UseOrderKanbanOptions = {},
+) {
+  const notifyCustomer = options.notifyCustomer ?? true;
   const qc = useQueryClient();
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
@@ -52,20 +60,20 @@ export function useOrderKanban(orders: Order[]) {
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
-      orderService.updateStatus(id, status),
+      orderService.updateStatus(id, status, { notifyCustomer }),
     onMutate: async ({ id, status }) => {
-      await qc.cancelQueries({ queryKey: queryKeys.orders.all });
-      const previous = qc.getQueryData<Order[]>(queryKeys.orders.all);
+      await qc.cancelQueries({ queryKey: queryKeys.orders.today });
+      const previous = qc.getQueryData<Order[]>(queryKeys.orders.today);
       if (previous) {
         qc.setQueryData<Order[]>(
-          queryKeys.orders.all,
+          queryKeys.orders.today,
           previous.map((o) => (o.id === id ? { ...o, status } : o)),
         );
       }
       return { previous };
     },
     onError: (err, _vars, ctx) => {
-      if (ctx?.previous) qc.setQueryData(queryKeys.orders.all, ctx.previous);
+      if (ctx?.previous) qc.setQueryData(queryKeys.orders.today, ctx.previous);
       toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status');
     },
     onSuccess: (_data, vars) => {
@@ -75,7 +83,10 @@ export function useOrderKanban(orders: Order[]) {
       );
     },
     onSettled: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.orders.all }]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.orders.all },
+        { queryKey: queryKeys.reports.daily },
+      ]);
     },
   });
 

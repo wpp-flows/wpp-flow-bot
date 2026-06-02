@@ -82,3 +82,33 @@ export const formatRelativeTime = (iso: string): string => {
 
 export const orderNumber = (sequence: number): string =>
   `#${String(sequence).padStart(4, '0')}`;
+
+export const isToday = (iso: string): boolean => {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+};
+
+export const localDayKey = (iso: string): string => {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const formatDayLabel = (key: string): string => {
+  const [y, m, d] = key.split('-').map(Number);
+  if (!y || !m || !d) return key;
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
