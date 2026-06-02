@@ -91,3 +91,46 @@ export const flowSchema = z.object({
   name: z.string().min(1).max(60),
 });
 export type FlowFormValues = z.infer<typeof flowSchema>;
+
+export const publicCheckoutSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Informe seu nome.').max(120),
+    phone: z
+      .string()
+      .trim()
+      .min(1, 'Informe seu telefone.')
+      .max(20)
+      .regex(/^[+\d\s()\-]+$/, 'Telefone inválido.'),
+    addressStreet: z.string().max(200),
+    addressNumber: z.string().max(20),
+    addressNeighborhood: z.string().max(120),
+    addressNotes: z.string().max(300),
+    observation: z.string().max(500),
+    deliveryMode: z.enum(['PICKUP', 'DELIVERY']),
+    couponCode: z.string().max(40),
+  })
+  .superRefine((data, ctx) => {
+    if (data.deliveryMode !== 'DELIVERY') return;
+    if (!data.addressStreet.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Informe a rua.',
+        path: ['addressStreet'],
+      });
+    }
+    if (!data.addressNumber.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Informe o número.',
+        path: ['addressNumber'],
+      });
+    }
+    if (!data.addressNeighborhood.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Informe o bairro.',
+        path: ['addressNeighborhood'],
+      });
+    }
+  });
+export type PublicCheckoutFormValues = z.infer<typeof publicCheckoutSchema>;

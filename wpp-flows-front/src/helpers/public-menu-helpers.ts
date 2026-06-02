@@ -24,3 +24,26 @@ export function buildWhatsAppLink(phoneDigits: string, message?: string): string
   if (!message) return base;
   return `${base}?text=${encodeURIComponent(message)}`;
 }
+
+/** Monta o endereço de entrega em uma linha para persistência no pedido. */
+export function buildDeliveryAddress(parts: {
+  street: string;
+  number: string;
+  neighborhood: string;
+  notes?: string;
+}): string {
+  const street = parts.street.trim();
+  const number = parts.number.trim();
+  const neighborhood = parts.neighborhood.trim();
+  const notes = parts.notes?.trim() ?? '';
+
+  const main = [street, number].filter(Boolean).join(', ');
+  let address = main;
+  if (neighborhood) {
+    address = address ? `${address} — ${neighborhood}` : neighborhood;
+  }
+  if (notes) {
+    address = address ? `${address} (Obs: ${notes})` : `Obs: ${notes}`;
+  }
+  return address;
+}
