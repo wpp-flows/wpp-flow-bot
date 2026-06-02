@@ -1,9 +1,9 @@
-import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { toast } from '@/stores/uiStore';
-import type { Order, OrderStatus } from '@/types';
+import { Check, Copy, Printer } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { toast } from "@/stores/uiStore";
+import type { Order, OrderStatus } from "@/types";
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
@@ -11,16 +11,23 @@ import {
   STATUS_TONE,
   formatBRL,
   formatDateTime,
-  nextStatusOptions,
-} from '../../../helpers/order-helpers';
+  nextStatusOptions, 
+} from "../../../helpers/order-helpers";
+import { buildReceiptHtml } from "./OrderPrintDetail";
 
 interface Props {
   order: Order;
+  restaurantName: string;
   pending: boolean;
   onAdvance: (status: OrderStatus) => void;
 }
 
-export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
+export function OrderDetail({
+  order,
+  restaurantName,
+  pending,
+  onAdvance,
+}: Readonly<Props>) {
   const nextOptions = nextStatusOptions(order.status);
   const [copied, setCopied] = useState(false);
 
@@ -29,12 +36,30 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
     try {
       await navigator.clipboard.writeText(order.paymentProviderRef);
       setCopied(true);
-      toast.success('ID copiado');
+      toast.success("ID copiado");
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Não foi possível copiar');
+      toast.error("Não foi possível copiar");
     }
   };
+
+  const printReceipt = () => {
+    const html = buildReceiptHtml({ order, restaurantName });
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const win = globalThis.open(url, "_blank", "width=420,height=700");
+    if (!win) {
+      URL.revokeObjectURL(url);
+      toast.error("Não foi possível abrir a impressão");
+      return;
+    }
+    win.addEventListener("load", () => {
+      win.focus();
+      win.print();
+    });
+    win.addEventListener("pagehide", () => URL.revokeObjectURL(url));
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -50,6 +75,17 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
           Criado em {formatDateTime(order.createdAt)}
         </p>
       </div>
+
+      {order.paymentStatus === "PAID" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          leftIcon={<Printer />}
+          onClick={printReceipt}
+        >
+          Imprimir recibo
+        </Button>
+      ) : null}
 
       <Section title="Itens">
         <ul className="space-y-2 text-sm">
@@ -102,14 +138,18 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
       </Section>
 
       <Section title="Endereço de entrega">
-        <p className={`text-sm ${order.address ? '' : 'italic text-muted-foreground'}`}>
-          {order.address?.trim() || 'Não informado'}
+        <p
+          className={`text-sm ${order.address ? "" : "italic text-muted-foreground"}`}
+        >
+          {order.address?.trim() || "Não informado"}
         </p>
       </Section>
 
       <Section title="Observação do cliente">
-        <p className={`text-sm ${order.observation ? '' : 'italic text-muted-foreground'}`}>
-          {order.observation?.trim() || 'Sem observação'}
+        <p
+          className={`text-sm ${order.observation ? "" : "italic text-muted-foreground"}`}
+        >
+          {order.observation?.trim() || "Sem observação"}
         </p>
       </Section>
 
@@ -126,12 +166,12 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
                 leftIcon={copied ? <Check /> : <Copy />}
                 onClick={copyPaymentRef}
               >
-                {copied ? 'Copiado' : 'Copiar ID'}
+                {copied ? "Copiado" : "Copiar ID"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              O comprovante completo está disponível no app ou painel do Mercado Pago — busque
-              pelo ID acima.
+              O comprovante completo está disponível no app ou painel do Mercado
+              Pago — busque pelo ID acima.
             </p>
           </div>
         </Section>
@@ -142,7 +182,7 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
           {nextOptions.map((status) => (
             <Button
               key={status}
-              variant={status === 'CANCELED' ? 'outline' : 'primary'}
+              variant={status === "CANCELED" ? "outline" : "primary"}
               size="sm"
               loading={pending}
               onClick={() => onAdvance(status)}
@@ -156,7 +196,10 @@ export function OrderDetail({ order, pending, onAdvance }: Readonly<Props>) {
   );
 }
 
-function Section(props: Readonly<{ title: string; children: React.ReactNode }>) {
+
+function Section(
+  props: Readonly<{ title: string; children: React.ReactNode }>,
+) {
   return (
     <div className="space-y-1.5">
       <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">

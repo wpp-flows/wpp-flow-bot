@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { orderService } from '@/services/orderService';
+import { useAuth } from '@/hooks/useAuth';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import type { OrderStatus } from '@/types';
@@ -16,6 +17,7 @@ import { orderNumber } from '@/helpers/order-helpers';
 
 export function OrdersPage() {
   const qc = useQueryClient();
+  const { organization } = useAuth();
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -100,6 +102,7 @@ export function OrdersPage() {
         {selected ? (
           <OrderDetail
             order={selected}
+            restaurantName={organization?.name ?? 'Restaurante'}
             onAdvance={(status) => {
               advanceStatus.mutate(
                 { id: selected.id, status },

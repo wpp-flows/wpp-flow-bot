@@ -7,6 +7,8 @@ export type OrderStatus =
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
+export type DeliveryMode = 'PICKUP' | 'DELIVERY';
+
 export interface OrderItemBundlePick {
   componentId: string;
   itemId: string;
@@ -19,11 +21,19 @@ export interface OrderItemBundle {
   answers: Record<string, string>;
 }
 
+export interface OrderItemAdditional {
+  id: string;
+  name: string;
+  price: string;
+}
+
 export interface OrderItem {
   itemId: string;
   name: string;
   price: string;
   qty: number;
+  notes?: string | null;
+  additionals?: OrderItemAdditional[];
   bundle?: OrderItemBundle | null;
 }
 
@@ -40,10 +50,16 @@ export interface Order {
   status: OrderStatus;
   observation: string | null;
   address: string | null;
+  deliveryMode: DeliveryMode;
+  deliveryFee: string;
+  couponCode: string | null;
+  couponDiscount: string | null;
   paymentStatus: PaymentStatus;
   paymentProvider: string | null;
   paymentProviderRef: string | null;
+  paymentLink: string | null;
   receiptUrl: string | null;
+  appliedPromotionIds: string[] | null;
   createdAt: string;
   updatedAt: string;
 }
