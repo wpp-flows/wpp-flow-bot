@@ -1,30 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Bike, ShoppingCart, Sparkles, Store, Tag, X } from 'lucide-react';
+import {
+  Controller,
+  FormProvider,
+  useForm,
+  useFormContext,
+} from 'react-hook-form';
 import { ApiError } from '@/instances/api';
 import { Button } from '@/components/ui/Button';
+import { FormField } from '@/components/ui/FormField';
 import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
 import { Textarea } from '@/components/ui/Textarea';
 import { cn } from '@/lib/utils';
+import {
+  publicCheckoutSchema,
+  type PublicCheckoutFormValues,
+} from '@/lib/schemas';
 import { publicMenuService } from '@/services/publicMenuService';
-import type {
-  CustomerContextBanner,
-  PublicDeliveryMode,
-  ValidatedCoupon,
-} from '@/types/publicMenu';
+import type { CustomerContextBanner, ValidatedCoupon } from '@/types/publicMenu';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { usePublicCart } from '../hooks/usePublicCart';
-import { formatBrl, readAutofillFromQuery } from '@/helpers/public-menu-helpers';
-
-interface FormState {
-  name: string;
-  phone: string;
-  address: string;
-  observation: string;
-  deliveryMode: PublicDeliveryMode;
-  couponCode: string;
-}
+import {
+  buildDeliveryAddress,
+  formatBrl,
+  readAutofillFromQuery,
+} from '@/helpers/public-menu-helpers';
 
 interface Props {
   slug: string;
@@ -34,6 +36,18 @@ interface Props {
   onBrowseMenu: () => void;
 }
 
+const checkoutDefaultValues: PublicCheckoutFormValues = {
+  name: '',
+  phone: '',
+  addressStreet: '',
+  addressNumber: '',
+  addressNeighborhood: '',
+  addressNotes: '',
+  observation: '',
+  deliveryMode: 'DELIVERY',
+  couponCode: '',
+};
+
 export function CheckoutTab({
   slug,
   queryString,
@@ -42,34 +56,42 @@ export function CheckoutTab({
   onBrowseMenu,
 }: Readonly<Props>) {
   const cart = usePublicCart(slug);
-
   const autofill = useMemo(() => readAutofillFromQuery(queryString), [queryString]);
 
-  const [form, setForm] = useState<FormState>(() => ({
-    name: autofill.name,
-    phone: autofill.phone,
-    address: '',
-    observation: '',
-    deliveryMode: 'DELIVERY',
-    couponCode: '',
-  }));
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [coupon, setCoupon] = useState<ValidatedCoupon | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setForm((f) => ({
-      ...f,
-      name: f.name || autofill.name,
-      phone: f.phone || autofill.phone,
-    }));
-  }, [autofill.name, autofill.phone]);
+  const form = useForm<PublicCheckoutFormValues>({
+    resolver: zodResolver(publicCheckoutSchema),
+    defaultValues: {
+      ...checkoutDefaultValues,
+      name: autofill.name,
+      phone: autofill.phone,
+    },
+    mode: 'onSubmit',
+  });
 
-  const deliveryFee = form.deliveryMode === 'DELIVERY' ? orgDeliveryFee : 0;
+  const { handleSubmit, watch, setValue, getValues } = form;
+  const deliveryMode = watch('deliveryMode');
+  const phone = watch('phone');
+  const couponCode = watch('couponCode');
+
+  useEffect(() => {
+    if (autofill.name) {
+      const current = getValues('name');
+      if (!current) setValue('name', autofill.name);
+    }
+    if (autofill.phone) {
+      const current = getValues('phone');
+      if (!current) setValue('phone', autofill.phone);
+    }
+  }, [autofill.name, autofill.phone, getValues, setValue]);
+
+  const deliveryFee = deliveryMode === 'DELIVERY' ? orgDeliveryFee : 0;
   const couponDiscount = coupon?.discount ?? 0;
   const total = Math.max(0, cart.subtotal - couponDiscount) + deliveryFee;
 
-  const debouncedPhone = useDebouncedValue(form.phone.trim(), 400);
+  const debouncedPhone = useDebouncedValue(phone.trim(), 400);
   const customerContext = useQuery({
     queryKey: ['public-menu', slug, 'customer-context', debouncedPhone],
     queryFn: () => publicMenuService.getCustomerContext(slug, debouncedPhone),
@@ -79,7 +101,7 @@ export function CheckoutTab({
 
   const validateCoupon = useMutation({
     mutationFn: () =>
-      publicMenuService.validateCoupon(slug, form.couponCode.trim(), cart.subtotal),
+      publicMenuService.validateCoupon(slug, couponCode.trim(), cart.subtotal),
     onSuccess: (validated) => {
       setCoupon(validated);
       setCouponError(null);
@@ -93,9 +115,9 @@ export function CheckoutTab({
   });
 
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (values: PublicCheckoutFormValues) =>
       publicMenuService.createOrder(slug, {
-        customer: { name: form.name.trim(), phone: form.phone.trim() },
+        customer: { name: values.name.trim(), phone: values.phone.trim() },
         items: cart.items.map((it) => ({
           itemId: it.itemId,
           qty: it.qty,
@@ -107,55 +129,49 @@ export function CheckoutTab({
           })),
           bundle: it.bundle
             ? {
-              bundleId: it.bundle.bundleId,
-              picks: it.bundle.picks.map((p) => ({
-                componentId: p.componentId,
-                itemId: p.itemId,
-              })),
-              answers: it.bundle.answers,
-            }
+                bundleId: it.bundle.bundleId,
+                picks: it.bundle.picks.map((p) => ({
+                  componentId: p.componentId,
+                  itemId: p.itemId,
+                })),
+                answers: it.bundle.answers,
+              }
             : null,
         })),
-        observation: form.observation.trim() || null,
-        address: form.deliveryMode === 'DELIVERY' ? form.address.trim() || null : null,
-        deliveryMode: form.deliveryMode,
+        observation: values.observation.trim() || null,
+        address:
+          values.deliveryMode === 'DELIVERY'
+            ? buildDeliveryAddress({
+                street: values.addressStreet,
+                number: values.addressNumber,
+                neighborhood: values.addressNeighborhood,
+                notes: values.addressNotes,
+              }) || null
+            : null,
+        deliveryMode: values.deliveryMode,
         couponCode: coupon?.code ?? null,
       }),
-    onSuccess: (res) => {
+    onSuccess: (res, values) => {
       cart.clear();
       const successUrl = new URL(
         `/r/${slug}/pedido/${res.orderId}`,
         globalThis.location.origin,
       );
-      if (form.phone) successUrl.searchParams.set('phone', form.phone);
+      if (values.phone) successUrl.searchParams.set('phone', values.phone);
       sessionStorage.setItem('mesa.public-checkout.return-url', successUrl.toString());
       globalThis.location.href = res.paymentLink;
     },
   });
 
-  function validate(): boolean {
-    const next: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) next.name = 'Informe seu nome.';
-    if (!form.phone.trim()) next.phone = 'Informe seu telefone.';
-    if (form.deliveryMode === 'DELIVERY' && !form.address.trim()) {
-      next.address = 'Informe o endereço de entrega.';
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!isOpen) return;
-    if (cart.items.length === 0) return;
-    if (!validate()) return;
-    mutation.mutate();
-  }
+  const onSubmit = (values: PublicCheckoutFormValues) => {
+    if (!isOpen || cart.items.length === 0) return;
+    mutation.mutate(values);
+  };
 
   function removeCoupon() {
     setCoupon(null);
     setCouponError(null);
-    setForm((f) => ({ ...f, couponCode: '' }));
+    setValue('couponCode', '');
   }
 
   const errorMessage =
@@ -179,163 +195,205 @@ export function CheckoutTab({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <CustomerBanners banners={customerContext.data?.banners ?? []} />
-      <DeliveryModeSection
-        form={form}
-        setForm={setForm}
-        errors={errors}
-        orgDeliveryFee={orgDeliveryFee}
-      />
-      <CustomerSection form={form} setForm={setForm} errors={errors} />
-      <CouponSection
-        form={form}
-        setForm={setForm}
-        coupon={coupon}
-        couponError={couponError}
-        applying={validateCoupon.isPending}
-        onApply={() => validateCoupon.mutate()}
-        onRemove={removeCoupon}
-      />
-      <SummarySection
-        subtotal={cart.subtotal}
-        couponDiscount={couponDiscount}
-        couponCode={coupon?.code ?? null}
-        deliveryFee={deliveryFee}
-        total={total}
-      />
+    <FormProvider {...form}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <CustomerBanners banners={customerContext.data?.banners ?? []} />
+        <DeliveryModeSection orgDeliveryFee={orgDeliveryFee} />
+        <CustomerSection />
+        <CouponSection
+          coupon={coupon}
+          couponError={couponError}
+          applying={validateCoupon.isPending}
+          onApply={() => validateCoupon.mutate()}
+          onRemove={removeCoupon}
+        />
+        <SummarySection
+          subtotal={cart.subtotal}
+          couponDiscount={couponDiscount}
+          couponCode={coupon?.code ?? null}
+          deliveryFee={deliveryFee}
+          total={total}
+        />
 
-      {errorMessage ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          {errorMessage}
-        </div>
-      ) : null}
+        {errorMessage ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        ) : null}
 
-      <div aria-hidden className="h-20" />
-      <div className="fixed inset-x-0 bottom-[calc(theme(spacing.16)+env(safe-area-inset-bottom))] z-20 px-4">
-        <div className="mx-auto max-w-3xl">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full shadow-soft-lg"
-            loading={mutation.isPending}
-            disabled={!isOpen}
-          >
-            {isOpen ? `Pagar — ${formatBrl(total)}` : 'Restaurante fechado'}
-          </Button>
+        <div aria-hidden className="h-20" />
+        <div className="fixed inset-x-0 bottom-[calc(theme(spacing.16)+env(safe-area-inset-bottom))] z-20 px-4">
+          <div className="mx-auto max-w-3xl">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full shadow-soft-lg"
+              loading={mutation.isPending}
+              disabled={!isOpen}
+            >
+              {isOpen ? `Pagar — ${formatBrl(total)}` : 'Restaurante fechado'}
+            </Button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </FormProvider>
   );
 }
 
-function CustomerSection({
-  form,
-  setForm,
-  errors,
-}: {
-  form: FormState;
-  setForm: React.Dispatch<React.SetStateAction<FormState>>;
-  errors: Partial<Record<keyof FormState, string>>;
-}) {
+function CustomerSection() {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<PublicCheckoutFormValues>();
+
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Seus dados
       </h2>
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="checkout-name">Nome</Label>
+        <FormField
+          label="Nome"
+          htmlFor="checkout-name"
+          error={errors.name?.message}
+          required
+        >
           <Input
             id="checkout-name"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             invalid={!!errors.name}
             placeholder="Como devemos te chamar?"
+            {...register('name')}
           />
-          {errors.name ? (
-            <p className="mt-1 text-xs text-destructive">{errors.name}</p>
-          ) : null}
-        </div>
-        <div>
-          <Label htmlFor="checkout-phone">WhatsApp</Label>
+        </FormField>
+        <FormField
+          label="WhatsApp"
+          htmlFor="checkout-phone"
+          error={errors.phone?.message}
+          required
+        >
           <Input
             id="checkout-phone"
-            value={form.phone}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            type="tel"
             invalid={!!errors.phone}
             placeholder="+55 19 9 9999-9999"
-            type="tel"
+            {...register('phone')}
           />
-          {errors.phone ? (
-            <p className="mt-1 text-xs text-destructive">{errors.phone}</p>
-          ) : null}
-        </div>
+        </FormField>
       </div>
     </section>
   );
 }
 
-function DeliveryModeSection({
-  form,
-  setForm,
-  errors,
-  orgDeliveryFee,
-}: {
-  form: FormState;
-  setForm: React.Dispatch<React.SetStateAction<FormState>>;
-  errors: Partial<Record<keyof FormState, string>>;
-  orgDeliveryFee: number;
-}) {
+function DeliveryModeSection({ orgDeliveryFee }: { orgDeliveryFee: number }) {
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<PublicCheckoutFormValues>();
+  const deliveryMode = watch('deliveryMode');
+
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Como você quer receber?
       </h2>
-      <div className="grid grid-cols-2 gap-3">
-        <DeliveryModeOption
-          active={form.deliveryMode === 'DELIVERY'}
-          icon={<Bike className="h-5 w-5" />}
-          label="Entrega"
-          hint={orgDeliveryFee > 0 ? `Taxa: ${formatBrl(orgDeliveryFee)}` : 'Entrega grátis'}
-          onClick={() => setForm((f) => ({ ...f, deliveryMode: 'DELIVERY' }))}
-        />
-        <DeliveryModeOption
-          active={form.deliveryMode === 'PICKUP'}
-          icon={<Store className="h-5 w-5" />}
-          label="Retirar no local"
-          hint="Sem taxa"
-          onClick={() => setForm((f) => ({ ...f, deliveryMode: 'PICKUP' }))}
-        />
-      </div>
+      <Controller
+        name="deliveryMode"
+        control={control}
+        render={({ field }) => (
+          <div className="grid grid-cols-2 gap-3">
+            <DeliveryModeOption
+              active={field.value === 'DELIVERY'}
+              icon={<Bike className="h-5 w-5" />}
+              label="Entrega"
+              hint={
+                orgDeliveryFee > 0 ? `Taxa: ${formatBrl(orgDeliveryFee)}` : 'Entrega grátis'
+              }
+              onClick={() => field.onChange('DELIVERY')}
+            />
+            <DeliveryModeOption
+              active={field.value === 'PICKUP'}
+              icon={<Store className="h-5 w-5" />}
+              label="Retirar no local"
+              hint="Sem taxa"
+              onClick={() => field.onChange('PICKUP')}
+            />
+          </div>
+        )}
+      />
 
-      {form.deliveryMode === 'DELIVERY' ? (
-        <div className="mt-4">
-          <Label htmlFor="checkout-address">Endereço de entrega</Label>
-          <Textarea
-            id="checkout-address"
-            rows={3}
-            value={form.address}
-            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-            invalid={!!errors.address}
-            placeholder="Rua, número, complemento, bairro…"
-          />
-          {errors.address ? (
-            <p className="mt-1 text-xs text-destructive">{errors.address}</p>
-          ) : null}
+      {deliveryMode === 'DELIVERY' ? (
+        <div className="mt-4 space-y-4">
+          <p className="text-sm font-medium">Endereço de entrega</p>
+          <FormField
+            label="Bairro"
+            htmlFor="checkout-neighborhood"
+            error={errors.addressNeighborhood?.message}
+            required
+          >
+            <Input
+              id="checkout-neighborhood"
+              invalid={!!errors.addressNeighborhood}
+              placeholder="Centro, Vila Mariana…"
+              {...register('addressNeighborhood')}
+            />
+          </FormField>
+          <div className="grid grid-cols-[1fr_5.5rem] gap-3">
+            <FormField
+              label="Rua"
+              htmlFor="checkout-street"
+              error={errors.addressStreet?.message}
+              required
+            >
+              <Input
+                id="checkout-street"
+                invalid={!!errors.addressStreet}
+                placeholder="Avenida Brasil"
+                {...register('addressStreet')}
+              />
+            </FormField>
+            <FormField
+              label="Número"
+              htmlFor="checkout-number"
+              error={errors.addressNumber?.message}
+              required
+            >
+              <Input
+                id="checkout-number"
+                invalid={!!errors.addressNumber}
+                placeholder="120"
+                {...register('addressNumber')}
+              />
+            </FormField>
+          </div>
+          <FormField
+            label="Observações do endereço (opcional)"
+            htmlFor="checkout-address-notes"
+          >
+            <Textarea
+              id="checkout-address-notes"
+              rows={2}
+              placeholder="Apartamento, bloco, ponto de referência…"
+              {...register('addressNotes')}
+            />
+          </FormField>
         </div>
       ) : null}
 
-      <div className="mt-4">
-        <Label htmlFor="checkout-observation">Observações do pedido (opcional)</Label>
+      <FormField
+        className="mt-4"
+        label="Observações do pedido (opcional)"
+        htmlFor="checkout-observation"
+        error={errors.observation?.message}
+      >
         <Textarea
           id="checkout-observation"
           rows={2}
-          value={form.observation}
-          onChange={(e) => setForm((f) => ({ ...f, observation: e.target.value }))}
           placeholder="Algum detalhe geral sobre o pedido…"
+          {...register('observation')}
         />
-      </div>
+      </FormField>
     </section>
   );
 }
@@ -375,22 +433,21 @@ function DeliveryModeOption({
 }
 
 function CouponSection({
-  form,
-  setForm,
   coupon,
   couponError,
   applying,
   onApply,
   onRemove,
 }: {
-  form: FormState;
-  setForm: React.Dispatch<React.SetStateAction<FormState>>;
   coupon: ValidatedCoupon | null;
   couponError: string | null;
   applying: boolean;
   onApply: () => void;
   onRemove: () => void;
 }) {
+  const { register, watch } = useFormContext<PublicCheckoutFormValues>();
+  const couponCode = watch('couponCode');
+
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -423,18 +480,17 @@ function CouponSection({
         <div className="flex gap-2">
           <Input
             id="checkout-coupon"
-            value={form.couponCode}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, couponCode: e.target.value.toUpperCase() }))
-            }
             placeholder="Digite o código"
             className="font-mono"
+            {...register('couponCode', {
+              setValueAs: (v) => String(v ?? '').toUpperCase(),
+            })}
           />
           <Button
             type="button"
             variant="outline"
             loading={applying}
-            disabled={!form.couponCode.trim()}
+            disabled={!couponCode.trim()}
             onClick={onApply}
           >
             Aplicar
