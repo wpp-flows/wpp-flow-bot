@@ -6,8 +6,8 @@
   "scripts": {
     "lint": "eslint '**/*.{ts,tsx}'",
     "start:dev": "tsx watch src/server.ts",
-    "qa:infra": "docker compose --env-file qa.env up -d --wait postgres redis evolution-api && DOTENV_CONFIG_PATH=qa.env npx prisma generate && DOTENV_CONFIG_PATH=qa.env npx prisma migrate deploy && DOTENV_CONFIG_PATH=qa.env npx prisma db seed",
-    "qa:api": "DOTENV_CONFIG_PATH=qa.env tsx watch src/server.ts",
+    "qa:infra": "docker compose --env-file .env.qa up -d --wait postgres redis evolution-api && DOTENV_CONFIG_PATH=.env.qa npx prisma generate && DOTENV_CONFIG_PATH=.env.qa npx prisma migrate deploy && DOTENV_CONFIG_PATH=.env.qa npx prisma db seed",
+    "qa:api": "DOTENV_CONFIG_PATH=.env.qa tsx watch src/server.ts",
     "start": "node dist/server.js",
     "build": "npx prisma generate && tsup src k6 --out-dir dist --sourcemap inline --format esm",
     "docker:build": "docker build -t wpp-flows-services .",
