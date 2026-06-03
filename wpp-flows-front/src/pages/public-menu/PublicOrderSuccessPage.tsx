@@ -91,7 +91,7 @@ function OrderStateCard({
     return <FailedCard orderNumber={orderNumber} />;
   }
   if (order.paymentStatus === 'PAID') {
-    return <PaidCard order={order} orderNumber={orderNumber} customerPhone={customerPhone} />;
+    return <PaidCard order={order} orderNumber={orderNumber} />;
   }
   if (order.paymentProvider === 'CASH') {
     return <CashOnDeliveryCard order={order} orderNumber={orderNumber} customerPhone={customerPhone} />;
@@ -110,11 +110,9 @@ function OrderStateCard({
 function PaidCard({
   order,
   orderNumber,
-  customerPhone,
 }: {
   order: PublicOrderStatusResponse;
   orderNumber: string;
-  customerPhone: string | null;
 }) {
   const botDigits = digitsOnly(order.bot?.phoneNumber);
   const message = `Olá! Fiz o pedido ${orderNumber} pela plataforma!`;
