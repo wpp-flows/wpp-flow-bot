@@ -1,9 +1,10 @@
 import { APP_CONFIG } from "@/constants/app";
-import type { Order, PaymentStatus } from "@/types";
+import type { Order } from "@/types";
 import {
   formatBRL,
   orderNumber,
 } from "../../../helpers/order-helpers";
+import { PaymentProvider } from "@/types/order";
 
 export function buildReceiptHtml({
   order,
@@ -13,7 +14,7 @@ export function buildReceiptHtml({
   restaurantName: string;
 }): string {
   const generatedAt = formatReceiptDate(order.createdAt);
-  const paymentLabel = receiptPaymentLabel(order.paymentStatus);
+  const paymentLabel = receiptPaymentLabel(order.paymentProvider);
   const deliveryFee = Number.parseFloat(order.deliveryFee || "0");
   const hasDeliveryFee = order.deliveryMode === "DELIVERY" || deliveryFee > 0;
   const hasDiscount = !!order.discount && Number.parseFloat(order.discount) > 0;
@@ -41,14 +42,14 @@ export function buildReceiptHtml({
       const bundleRows = item.bundle
         ? `
           ${item.bundle.picks
-            .map((pick) => `<li>+ ${escapeHtml(pick.itemName)}</li>`)
-            .join("")}
+          .map((pick) => `<li>+ ${escapeHtml(pick.itemName)}</li>`)
+          .join("")}
           ${Object.entries(item.bundle.answers)
-            .map(
-              ([key, value]) =>
-                `<li>+ ${escapeHtml(key)}: ${escapeHtml(value)}</li>`,
-            )
-            .join("")}
+          .map(
+            ([key, value]) =>
+              `<li>+ ${escapeHtml(key)}: ${escapeHtml(value)}</li>`,
+          )
+          .join("")}
         `
         : "";
       const notes = item.notes?.trim()
@@ -61,11 +62,10 @@ export function buildReceiptHtml({
             <span>${item.qty}x ${escapeHtml(item.name)}</span>
             <span>${formatBRL(itemTotal)}</span>
           </div>
-          ${
-            additionalRows || bundleRows
-              ? `<ul class="details">${additionalRows}${bundleRows}</ul>`
-              : ""
-          }
+          ${additionalRows || bundleRows
+          ? `<ul class="details">${additionalRows}${bundleRows}</ul>`
+          : ""
+        }
           ${notes}
         </li>
       `;
@@ -217,16 +217,14 @@ export function buildReceiptHtml({
       <ul>${itemRows}</ul>
       <div class="totals">
         <div class="row"><span>Valor dos produtos</span><span>${formatBRL(order.subtotal)}</span></div>
-        ${
-          hasDiscount
-            ? `<div class="row"><span>Descontos</span><span>- ${formatBRL(order.discount ?? 0)}</span></div>`
-            : ""
-        }
-        ${
-          hasDeliveryFee
-            ? `<div class="row"><span>Taxa de entrega</span><span>${formatBRL(order.deliveryFee)}</span></div>`
-            : ""
-        }
+        ${hasDiscount
+      ? `<div class="row"><span>Descontos</span><span>- ${formatBRL(order.discount ?? 0)}</span></div>`
+      : ""
+    }
+        ${hasDeliveryFee
+      ? `<div class="row"><span>Taxa de entrega</span><span>${formatBRL(order.deliveryFee)}</span></div>`
+      : ""
+    }
         <div class="row total"><span>Total</span><span>${formatBRL(order.total)}</span></div>
       </div>
     </section>
@@ -250,8 +248,8 @@ export function buildReceiptHtml({
 </html>`;
 }
 
-function receiptPaymentLabel(paymentStatus: PaymentStatus): string {
-  return paymentStatus === "PAID" ? "Plataforma" : "Pagamento na entrega";
+function receiptPaymentLabel(paymentProvider: PaymentProvider | null): string {
+  return paymentProvider === "MERCADO_PAGO" ? "Plataforma" : "Pagamento na entrega";
 }
 
 /** Inline bot mark (Lucide Bot) — works in print without external assets. */

@@ -9,6 +9,8 @@ export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export type DeliveryMode = 'PICKUP' | 'DELIVERY';
 
+export type PaymentProvider = 'MERCADO_PAGO' | 'CASH';
+
 export interface OrderItemBundlePick {
   componentId: string;
   itemId: string;
@@ -55,7 +57,7 @@ export interface Order {
   couponCode: string | null;
   couponDiscount: string | null;
   paymentStatus: PaymentStatus;
-  paymentProvider: string | null;
+  paymentProvider: PaymentProvider | null;
   paymentProviderRef: string | null;
   paymentLink: string | null;
   receiptUrl: string | null;
