@@ -117,8 +117,7 @@ function PaidCard({
   customerPhone: string | null;
 }) {
   const botDigits = digitsOnly(order.bot?.phoneNumber);
-  const message = `Olá! Pedido ${orderNumber} confirmado.${customerPhone ? '' : ' Pode me confirmar?'
-    }`;
+  const message = `Olá! Fiz o pedido ${orderNumber} pela plataforma!`;
   const link = botDigits ? buildWhatsAppLink(botDigits, message) : null;
 
   return (
