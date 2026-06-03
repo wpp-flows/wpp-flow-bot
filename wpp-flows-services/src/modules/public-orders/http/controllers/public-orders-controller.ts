@@ -70,6 +70,7 @@ export class PublicOrdersController {
             sequence: order.sequence,
             status: order.status,
             paymentStatus: order.paymentStatus,
+            paymentProvider: order.paymentProvider,
             total: order.total,
             paymentLink: order.paymentLink,
             bot: bot

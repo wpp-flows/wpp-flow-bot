@@ -61,7 +61,7 @@ export function OrderKanban({
       onDragCancel={handleDragCancel}
     >
       <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-gutter:stable] xl:overflow-visible">
-        <div className="grid grid-flow-col auto-cols-[minmax(280px,1fr)] gap-3 sm:auto-cols-[minmax(300px,1fr)] xl:mx-auto xl:max-w-[2000px] xl:grid-flow-row xl:auto-cols-auto xl:grid-cols-5">
+        <div className="grid min-h-[60vh] grid-flow-col auto-cols-[minmax(280px,1fr)] gap-3 sm:auto-cols-[minmax(300px,1fr)] xl:mx-auto xl:max-w-[2000px] xl:grid-flow-row xl:auto-cols-auto xl:grid-cols-5">
           {columns.map((col) => (
             <OrderKanbanColumn
               key={col.status}

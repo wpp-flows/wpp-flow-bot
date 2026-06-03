@@ -1,6 +1,8 @@
 import { prisma } from "@/infrastructure/database/client";
 import type { Order } from "@/modules/order/repositories/order-repo";
 
+const REPORT_TZ = "America/Sao_Paulo";
+
 export interface DailyReportSummary {
     date: string;
     count: number;
@@ -29,8 +31,10 @@ export class ListDailyReportsUseCase {
     async execute(organizationId: string): Promise<DailyReportSummary[]> {
         const rows = await prisma.$queryRaw<DailyAggRow[]>`
             SELECT
-                to_char(date_trunc('day', "createdAt" AT TIME ZONE 'UTC'), 'YYYY-MM-DD')
-                    AS "date",
+                to_char(
+                    date_trunc('day', "createdAt" AT TIME ZONE ${REPORT_TZ}),
+                    'YYYY-MM-DD'
+                ) AS "date",
                 COUNT(*) AS "count",
                 COALESCE(
                     SUM(CASE WHEN "status" <> 'CANCELED' THEN "total" END),
@@ -109,8 +113,8 @@ function parseDayRange(date: string): { from: Date; to: Date } | null {
     const year = Number(y);
     const month = Number(m) - 1;
     const day = Number(d);
-    const from = new Date(Date.UTC(year, month, day));
-    const to = new Date(Date.UTC(year, month, day + 1));
+    const from = new Date(Date.UTC(year, month, day, 3, 0, 0));
+    const to = new Date(Date.UTC(year, month, day + 1, 3, 0, 0));
     return { from, to };
 }
 

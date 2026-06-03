@@ -17,10 +17,17 @@ function resolveDateRange(
     let month: number;
     let day: number;
     if (date === "today") {
-        const now = new Date();
-        year = now.getUTCFullYear();
-        month = now.getUTCMonth();
-        day = now.getUTCDate();
+        const parts = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        }).formatToParts(new Date());
+        const get = (type: string) =>
+            Number(parts.find((p) => p.type === type)?.value ?? "0");
+        year = get("year");
+        month = get("month") - 1;
+        day = get("day");
     } else {
         const [y, m, d] = date.split("-").map(Number);
         if (!y || !m || !d) return null;
@@ -28,8 +35,8 @@ function resolveDateRange(
         month = m - 1;
         day = d;
     }
-    const from = new Date(Date.UTC(year, month, day));
-    const to = new Date(Date.UTC(year, month, day + 1));
+    const from = new Date(Date.UTC(year, month, day, 3, 0, 0));
+    const to = new Date(Date.UTC(year, month, day + 1, 3, 0, 0));
     return { from, to };
 }
 

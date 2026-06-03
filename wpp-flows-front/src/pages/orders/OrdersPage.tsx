@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, CalendarClock, Receipt, Search } from 'lucide-react';
+import { Bell, BellOff, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -99,6 +98,25 @@ export function OrdersPage() {
       <PageHeader
         title="Pedidos"
         description="Acompanhe os pedidos confirmados pelo bot. Arraste um card para mudar o status — a transição dispara as mesmas regras da ação “Avançar”."
+        info={
+          <div className="space-y-2">
+            <p className="font-medium tracking-tight text-foreground">
+              Mostrando apenas os pedidos de hoje.
+            </p>
+            <p className="text-muted-foreground">
+              Para evitar poluição do quadro com pedidos de dias anteriores,
+              o kanban é zerado todo dia. Os pedidos anteriores ficam
+              disponíveis na{' '}
+              <Link
+                to="/wallet"
+                className="font-medium text-info underline-offset-2 hover:underline"
+              >
+                Carteira → Relatórios diários
+              </Link>
+              .
+            </p>
+          </div>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -133,39 +151,12 @@ export function OrdersPage() {
         </label>
       </div>
 
-      <div className="flex items-start gap-3 rounded-xl border border-info/30 bg-info-soft/40 p-4 text-sm">
-        <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-info" />
-        <div className="flex-1 space-y-1">
-          <p className="font-medium tracking-tight text-foreground">
-            Mostrando apenas os pedidos de hoje.
-          </p>
-          <p className="text-muted-foreground">
-            Para evitar poluição do quadro com pedidos de dias anteriores, o
-            kanban é zerado todo dia. Os pedidos anteriores ficam disponíveis
-            na{' '}
-            <Link
-              to="/wallet"
-              className="font-medium text-info underline-offset-2 hover:underline"
-            >
-              Carteira → Relatórios diários
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-
       {ordersQ.isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-64 rounded-xl" />
           ))}
         </div>
-      ) : todaysOrders.length === 0 ? (
-        <EmptyState
-          icon={<Receipt />}
-          title="Nenhum pedido hoje ainda"
-          description="Os pedidos aparecem aqui assim que um cliente confirmar pelo cardápio digital."
-        />
       ) : (
         <OrderKanban
           orders={filtered}

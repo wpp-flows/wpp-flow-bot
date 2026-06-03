@@ -152,6 +152,7 @@ export interface PublicOrderStatusResponse {
   sequence: number;
   status: 'RECEIVED' | 'PREPARING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELED';
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  paymentProvider: string | null;
   total: string;
   paymentLink: string | null;
   bot: { phoneNumber: string | null } | null;

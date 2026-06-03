@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { FileDown, Receipt, Info } from 'lucide-react';
+import { FileDown, Receipt } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -49,6 +49,19 @@ export function WalletPage() {
       <PageHeader
         title="Carteira"
         description="Resumo do que foi recebido por pedidos pagos via Mercado Pago. Para sacar, use o painel do MP."
+        info={
+          <div className="space-y-2">
+            <p className="font-medium tracking-tight text-foreground">
+              Os valores ficam na sua conta do Mercado Pago.
+            </p>
+            <p className="text-muted-foreground">
+              Cada pedido aprovado vai direto para o saldo da sua conta MP.
+              Para sacar para a sua conta bancária ou chave PIX, acesse o
+              aplicativo ou painel do Mercado Pago. Aqui você acompanha o
+              histórico e gera relatórios financeiros.
+            </p>
+          </div>
+        }
         actions={
           <Button
             leftIcon={<FileDown />}
@@ -59,20 +72,6 @@ export function WalletPage() {
           </Button>
         }
       />
-
-      <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft/40 p-4 text-sm">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-        <div className="space-y-1">
-          <p className="font-medium tracking-tight text-foreground">
-            Os valores ficam na sua conta do Mercado Pago.
-          </p>
-          <p className="text-muted-foreground">
-            Cada pedido aprovado vai direto para o saldo da sua conta MP. Para sacar para a sua
-            conta bancária ou chave PIX, acesse o aplicativo ou painel do Mercado Pago. Aqui você
-            acompanha o histórico e gera relatórios financeiros.
-          </p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-1">
