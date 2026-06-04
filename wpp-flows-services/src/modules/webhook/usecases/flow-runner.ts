@@ -33,7 +33,7 @@ const OOH_COOLDOWN_MS = 30 * 60 * 1000;
 /**
  * MESSAGE-only flow runner. With the digital-menu pivot, the WhatsApp bot's
  * job shrinks to: greet, hand off to the menu URL, and stay out of the way.
- * Each inbound from the customer advances one step until the flow ends.
+ * Each inbound from the customer advances one step until the flow endss.
  *
  * Two guard rails sit at the entry point:
  *  1. **Working hours** — outside the org's schedule, the bot replies with a
