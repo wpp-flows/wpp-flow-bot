@@ -2,10 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ROUTES } from '@/constants/app';
 import { AppShell } from '@/components/layout/AppShell';
+import { AdminShell } from '@/components/layout/AdminShell';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import {
   RedirectIfAuthenticated,
   RedirectIfHasOrganization,
+  RequireAdmin,
   RequireAuth,
   RequireOrganization,
 } from '@/components/layout/RouteGuards';
@@ -74,6 +76,11 @@ const PublicOrderSuccessPage = lazy(() =>
     default: m.PublicOrderSuccessPage,
   })),
 );
+const AdminInvitationsPage = lazy(() =>
+  import('@/pages/admin/InvitationsPage').then((m) => ({
+    default: m.InvitationsPage,
+  })),
+);
 
 function PageFallback() {
   return (
@@ -105,6 +112,21 @@ export function AppRouter() {
         <Route element={<RedirectIfHasOrganization />}>
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.onboarding} element={<OnboardingPage />} />
+          </Route>
+        </Route>
+
+        <Route element={<RequireAuth />}>
+          <Route element={<RequireAdmin />}>
+            <Route element={<AdminShell />}>
+              <Route
+                path={ROUTES.admin}
+                element={<Navigate to={ROUTES.adminInvitations} replace />}
+              />
+              <Route
+                path={ROUTES.adminInvitations}
+                element={<AdminInvitationsPage />}
+              />
+            </Route>
           </Route>
         </Route>
 

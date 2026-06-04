@@ -21,6 +21,8 @@ const schema = z.object({
     SUPABASE_URL: z.string().optional(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
     SUPABASE_STORAGE_BUCKET: z.string().default("mesa-uploads"),
+    RESEND_API_KEY: z.string().optional(),
+    INVITE_FROM_EMAIL: z.string().default("Mesa <onboarding@resend.dev>"),
 })
 
 const parsed = schema.safeParse(process.env)

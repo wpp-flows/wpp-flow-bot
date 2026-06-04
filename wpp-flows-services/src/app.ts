@@ -4,6 +4,7 @@ import fastifyMultipart from "@fastify/multipart";
 import { env } from "@/infrastructure/config/env";
 import { globalErrorHandler } from "@/infrastructure/http/error-handler";
 import { registerRoutes } from "./infrastructure/http/decorators/route-decorator";
+import { adminRoutes } from "./modules/admin/http/routes";
 import { authRoutes } from "./modules/auth/http/routes";
 import { botRoutes } from "./modules/bot/http/routes";
 import { chatRoutes } from "./modules/chat/http/routes";
@@ -58,6 +59,7 @@ app.setErrorHandler(globalErrorHandler);
 
 registerRoutes(app, [
   ...authRoutes,
+  ...adminRoutes,
   ...organizationRoutes,
   ...botRoutes,
   ...menuRoutes,

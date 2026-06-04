@@ -28,9 +28,9 @@ export function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'demo@famigliarossi.com.br',
-      password: 'pizzaria2026',
-      remember: true,
+      email: '',
+      password: '',
+      remember: false,
     },
   });
 
@@ -189,17 +189,9 @@ export function LoginPage() {
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Novo no {APP_CONFIG.name}?{' '}
-            <Link to={ROUTES.signUp} className="font-medium text-primary hover:underline underline-offset-4">
-              Criar um workspace
-            </Link>
+            Acesso ao {APP_CONFIG.name} é apenas por convite.
           </p>
         </form>
-
-        <div className="mt-auto rounded-lg border border-dashed border-border bg-muted/40 p-3 text-2xs text-muted-foreground">
-          <p className="font-semibold text-foreground">Credenciais de demo</p>
-          <p className="mt-0.5 font-mono text-foreground/80">demo@bellini.com · mesademo2026</p>
-        </div>
       </div>
     </div>
   );

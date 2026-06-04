@@ -1,4 +1,5 @@
 import { auth } from "@/infrastructure/auth/better-auth";
+import { prisma } from "@/infrastructure/database/client";
 import { Route } from "@/infrastructure/http/decorators/route-decorator";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyReply, FastifyRequest } from "fastify";
@@ -8,6 +9,16 @@ export class AuthController {
     async handler(request: FastifyRequest, reply: FastifyReply) {
         try {
             const url = new URL(request.url, `http://${request.headers.host}`);
+
+            if (
+                request.method === "POST" &&
+                url.pathname.startsWith("/api/auth/sign-up")
+            ) {
+                return reply.status(403).send({
+                    error: "Cadastro público desabilitado. Acesso somente por convite.",
+                    code: "SIGN_UP_DISABLED",
+                });
+            }
 
             const headers = fromNodeHeaders(request.headers);
 
@@ -39,6 +50,14 @@ export class AuthController {
         if (!session) {
             return reply.status(401).send({ error: "Unauthorized" });
         }
-        return reply.send(session);
+
+        const meta = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isAdmin: true },
+        });
+        return reply.send({
+            ...session,
+            user: { ...session.user, isAdmin: meta?.isAdmin ?? false },
+        });
     }
 }

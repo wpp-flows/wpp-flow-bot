@@ -35,6 +35,8 @@ export const ROUTES = {
   settings: '/settings',
   privacy: '/privacidade',
   terms: '/termos',
+  admin: '/admin',
+  adminInvitations: '/admin/invitations',
 } as const;
 
 export const API_LATENCY_MS = 600;

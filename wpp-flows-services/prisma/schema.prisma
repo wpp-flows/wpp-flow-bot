@@ -13,27 +13,53 @@ datasource db {
 }
 
 model User {
-  id            String         @id
-  name          String
-  email         String
-  emailVerified Boolean        @default(false)
-  image         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  organization  Organization?
+  id              String        @id
+  name            String
+  email           String
+  emailVerified   Boolean       @default(false)
+  image           String?
+  isAdmin         Boolean       @default(false)
+  createdAt       DateTime      @default(now()) @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @db.Timestamptz
+  sessions        Session[]
+  accounts        Account[]
+  organization    Organization?
+  sentInvitations Invitation[]  @relation("InvitedBy")
 
   @@unique([email])
   @@map("user")
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model Invitation {
+  id          String           @id @default(uuid())
+  email       String
+  token       String           @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime         @db.Timestamptz
+  acceptedAt  DateTime?        @db.Timestamptz
+  invitedById String
+  invitedBy   User             @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now()) @db.Timestamptz
+  updatedAt   DateTime         @updatedAt @db.Timestamptz
+
+  @@index([email])
+  @@index([invitedById])
+  @@map("invitation")
+}
+
 model Session {
   id        String   @id
-  expiresAt DateTime
+  expiresAt DateTime @db.Timestamptz
   token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
   ipAddress String?
   userAgent String?
   userId    String
@@ -53,12 +79,12 @@ model Account {
   accessToken           String?
   refreshToken          String?
   idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz
+  refreshTokenExpiresAt DateTime? @db.Timestamptz
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime  @default(now()) @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @db.Timestamptz
 
   @@index([userId])
   @@map("account")
@@ -68,65 +94,65 @@ model Verification {
   id         String   @id
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime @db.Timestamptz
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
 
   @@index([identifier])
   @@map("verification")
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  ownerId   String   @unique
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id                       String   @id @default(uuid())
+  name                     String
+  slug                     String   @unique
+  ownerId                  String   @unique
+  owner                    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   /// Mercado Pago access token (Brazilian PaaS test/prod). Per-org so each
   /// restaurant collects into its own MP account.
-  mercadoPagoAccessToken String?
-  mercadoPagoPublicKey   String?
+  mercadoPagoAccessToken   String?
+  mercadoPagoPublicKey     String?
   /// Webhook validation secret (used by /webhook/mercadopago to confirm origin).
   mercadoPagoWebhookSecret String?
   /// PIX key (cpf/cnpj/email/phone/random) where the wallet pays out withdrawals.
-  payoutPixKey           String?
-  payoutPixKeyType       String?
+  payoutPixKey             String?
+  payoutPixKeyType         String?
   /// Per-org notification toggles (new orders, bot disconnects, idle convs).
-  notificationPreferences Json?
+  notificationPreferences  Json?
   /// Minutes before an unpaid order auto-cancels (default 15). Replaces the
   /// per-step PAYMENT metadata since payment lives on the web checkout now.
-  paymentTimeoutMinutes  Int     @default(15)
+  paymentTimeoutMinutes    Int      @default(15)
   /// Message sent on WhatsApp when the customer cancels their pending order
   /// from the web checkout. Null = fall back to a friendly default.
-  paymentCancelMessage   String?
+  paymentCancelMessage     String?
   /// Message sent on WhatsApp when the order auto-cancels after the timeout
   /// window. Null = fall back to a friendly default.
-  paymentTimeoutMessage  String?
+  paymentTimeoutMessage    String?
   /// Message sent on WhatsApp when the customer hits the post-checkout
   /// success page and taps the deep-link (matched by "Pedido #XXXX confirmado").
   /// Null = fall back to a friendly default.
-  paymentReceivedMessage String?
+  paymentReceivedMessage   String?
   /// Flat delivery fee added to web-checkout orders when the customer chooses
   /// delivery (vs. pickup). 0 = free delivery. Stored as Decimal for currency safety.
-  deliveryFee            Decimal @default(0) @db.Decimal(10, 2)
+  deliveryFee              Decimal  @default(0) @db.Decimal(10, 2)
   /// Operating hours shared across the restaurant. The WhatsApp flow runner and
   /// public menu site both honor these — having them at the org level means a
   /// multi-bot setup doesn't disagree about whether the restaurant is open.
   /// 0..6 (Sunday..Saturday). Empty = open every day. Null start/end = no
   /// time-of-day restriction.
-  workingDaysOfWeek      Int[]     @default([])
-  workingStartTime       String?
-  workingEndTime         String?
+  workingDaysOfWeek        Int[]    @default([])
+  workingStartTime         String?
+  workingEndTime           String?
   /// Sent on WhatsApp when an inbound message arrives outside working hours.
   /// Accepts {{days_of_work}}, {{from}}, {{to}} variables.
-  outOfHoursMessage      String?
+  outOfHoursMessage        String?
   /// Cooldown (minutes) between consecutive bot replies on the same conversation.
   /// While the cooldown is active, inbound customer messages are accepted (logged
   /// + visible in the dashboard) but the flow runner doesn't reply — operators
   /// can step in via the dashboard. 0 = no cooldown.
-  botCooldownMinutes     Int     @default(60)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  botCooldownMinutes       Int      @default(60)
+  createdAt                DateTime @default(now()) @db.Timestamptz
+  updatedAt                DateTime @updatedAt @db.Timestamptz
 
   bots          Bot[]
   categories    MenuCategory[]
@@ -151,20 +177,20 @@ enum BotStatus {
 }
 
 model Bot {
-  id                   String    @id @default(uuid())
-  organizationId       String
-  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  name                 String
-  evolutionInstanceName String   @unique
-  phoneNumber          String?
-  status               BotStatus @default(CONNECTING)
-  qrCode               String?
-  webhookUrl           String?
-  flowId               String?
-  flow                 Flow?     @relation(fields: [flowId], references: [id], onDelete: SetNull)
-  lastConnectedAt      DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                    String       @id @default(uuid())
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                  String
+  evolutionInstanceName String       @unique
+  phoneNumber           String?
+  status                BotStatus    @default(CONNECTING)
+  qrCode                String?
+  webhookUrl            String?
+  flowId                String?
+  flow                  Flow?        @relation(fields: [flowId], references: [id], onDelete: SetNull)
+  lastConnectedAt       DateTime?    @db.Timestamptz
+  createdAt             DateTime     @default(now()) @db.Timestamptz
+  updatedAt             DateTime     @updatedAt @db.Timestamptz
 
   conversations Conversation[]
 
@@ -173,14 +199,14 @@ model Bot {
 }
 
 model MenuCategory {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   description    String?
-  position       Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  position       Int          @default(0)
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
 
   items MenuItem[]
 
@@ -189,28 +215,28 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id             String   @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  categoryId     String
-  category       MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  name           String
-  description    String
-  price          Decimal  @db.Decimal(10, 2)
-  imageUrl       String?
-  available      Boolean  @default(true)
+  id                  String       @id @default(uuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categoryId          String
+  category            MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name                String
+  description         String
+  price               Decimal      @db.Decimal(10, 2)
+  imageUrl            String?
+  available           Boolean      @default(true)
   /// 0–6 (Sunday..Saturday). Empty array means available every day. When set,
   /// the bot only lists this item on the matching weekdays.
-  availableDaysOfWeek Int[] @default([])
-  position       Int      @default(0)
+  availableDaysOfWeek Int[]        @default([])
+  position            Int          @default(0)
   /// Optional adicionais the customer can tick when ordering this item on the
   /// public menu (e.g. "Borda recheada", "Queijo extra"). Shape:
   ///   [{ id: string, name: string, price: string }]
   /// Stored as JSON because the list is small and item-scoped — querying
   /// inside it isn't needed.
-  additionals    Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  additionals         Json?
+  createdAt           DateTime     @default(now()) @db.Timestamptz
+  updatedAt           DateTime     @updatedAt @db.Timestamptz
 
   featuredInPromotions Promotion[]
 
@@ -220,14 +246,14 @@ model MenuItem {
 }
 
 model Flow {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
-  isActive       Boolean  @default(false)
-  version        Int      @default(1)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isActive       Boolean      @default(false)
+  version        Int          @default(1)
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
 
   steps FlowStep[]
   bots  Bot[]
@@ -250,8 +276,8 @@ model FlowStep {
   content   String
   order     Int          @default(0)
   metadata  Json?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime     @default(now()) @db.Timestamptz
+  updatedAt DateTime     @updatedAt @db.Timestamptz
 
   @@index([flowId])
   @@map("flow_step")
@@ -264,31 +290,31 @@ enum ConversationStatus {
 }
 
 model Conversation {
-  id              String   @id @default(uuid())
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  botId           String
-  bot             Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
-  customerId      String?
-  customer        Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  remoteJid       String
-  contactName     String
-  contactPhone    String
-  contactAvatar   String?
-  status          ConversationStatus @default(OPEN)
-  unreadCount     Int      @default(0)
-  lastMessagePreview String  @default("")
-  lastMessageAt   DateTime @default(now())
-  botActive       Boolean  @default(true)
-  currentStepId   String?
-  flowState       Json?
+  id                 String             @id @default(uuid())
+  organizationId     String
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  botId              String
+  bot                Bot                @relation(fields: [botId], references: [id], onDelete: Cascade)
+  customerId         String?
+  customer           Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  remoteJid          String
+  contactName        String
+  contactPhone       String
+  contactAvatar      String?
+  status             ConversationStatus @default(OPEN)
+  unreadCount        Int                @default(0)
+  lastMessagePreview String             @default("")
+  lastMessageAt      DateTime           @default(now()) @db.Timestamptz
+  botActive          Boolean            @default(true)
+  currentStepId      String?
+  flowState          Json?
   /// Timestamp of the bot's most recent outbound message on this conversation.
   /// Combined with `Organization.botCooldownMinutes`, the flow runner skips
   /// re-firing the flow while the customer is in active back-and-forth so
   /// operators can take over without the bot spamming over them.
-  lastBotReplyAt  DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lastBotReplyAt     DateTime?          @db.Timestamptz
+  createdAt          DateTime           @default(now()) @db.Timestamptz
+  updatedAt          DateTime           @updatedAt @db.Timestamptz
 
   messages Message[]
   orders   Order[]
@@ -309,8 +335,8 @@ model Customer {
   orderCount     Int          @default(0)
   /// Snapshot of recent addresses the customer has used. Newest first.
   savedAddresses Json?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
 
   conversations Conversation[]
   orders        Order[]
@@ -341,41 +367,41 @@ enum DeliveryMode {
 }
 
 model Order {
-  id              String        @id @default(uuid())
-  organizationId  String
-  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customerId      String
-  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  conversationId  String?
-  conversation    Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  id                  String        @id @default(uuid())
+  organizationId      String
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId          String
+  customer            Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  conversationId      String?
+  conversation        Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   /// Auto-incrementing display number scoped to the organization. Populated by the use case.
-  sequence        Int
+  sequence            Int
   /// Snapshot of items at the time of order, shape matches FlowCartItem.
-  items           Json
-  subtotal        Decimal       @db.Decimal(10, 2)
-  discount        Decimal?      @db.Decimal(10, 2)
-  total           Decimal       @db.Decimal(10, 2)
-  status          OrderStatus   @default(RECEIVED)
-  observation     String?
-  address         String?
+  items               Json
+  subtotal            Decimal       @db.Decimal(10, 2)
+  discount            Decimal?      @db.Decimal(10, 2)
+  total               Decimal       @db.Decimal(10, 2)
+  status              OrderStatus   @default(RECEIVED)
+  observation         String?
+  address             String?
   /// PICKUP = customer picks the order up at the restaurant; DELIVERY = restaurant delivers
   /// and `deliveryFee` (snapshot of the org's fee at order time) is added to the total.
-  deliveryMode    DeliveryMode  @default(DELIVERY)
-  deliveryFee     Decimal       @default(0) @db.Decimal(10, 2)
+  deliveryMode        DeliveryMode  @default(DELIVERY)
+  deliveryFee         Decimal       @default(0) @db.Decimal(10, 2)
   /// Code of the coupon applied at checkout (if any). The discount it produced
   /// is rolled into `discount` along with any other applied promotions.
-  couponCode      String?
-  couponDiscount  Decimal?      @db.Decimal(10, 2)
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentProvider String?
-  paymentProviderRef String?
-  paymentLink     String?
-  receiptUrl      String?
-  cashChangeFor   Decimal?      @db.Decimal(10, 2)
+  couponCode          String?
+  couponDiscount      Decimal?      @db.Decimal(10, 2)
+  paymentStatus       PaymentStatus @default(PENDING)
+  paymentProvider     String?
+  paymentProviderRef  String?
+  paymentLink         String?
+  receiptUrl          String?
+  cashChangeFor       Decimal?      @db.Decimal(10, 2)
   /// Snapshot of the applied promotion ids (if any) so we can audit later.
   appliedPromotionIds Json?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt           DateTime      @default(now()) @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @db.Timestamptz
 
   walletTransactions WalletTransaction[]
 
@@ -393,23 +419,23 @@ enum CouponDiscountType {
 }
 
 model Coupon {
-  id             String              @id @default(uuid())
+  id             String             @id @default(uuid())
   organizationId String
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// Case-insensitive code the customer types at checkout. We normalize to
   /// uppercase before saving and compare case-insensitively at validation.
   code           String
   discountType   CouponDiscountType
   /// For PERCENT: 0-100. For FIXED: BRL amount.
-  discountValue  Decimal             @db.Decimal(10, 2)
-  isActive       Boolean             @default(true)
+  discountValue  Decimal            @db.Decimal(10, 2)
+  isActive       Boolean            @default(true)
   /// Inclusive validity window. Both null = always valid.
-  validFrom      DateTime?
-  validUntil     DateTime?
+  validFrom      DateTime?          @db.Timestamptz
+  validUntil     DateTime?          @db.Timestamptz
   /// Free-text label shown to the org owner (optional).
   description    String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime           @default(now()) @db.Timestamptz
+  updatedAt      DateTime           @updatedAt @db.Timestamptz
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -423,8 +449,8 @@ model Wallet {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   balance        Decimal      @default(0) @db.Decimal(10, 2)
   currency       String       @default("BRL")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
 
   transactions WalletTransaction[]
 
@@ -452,8 +478,8 @@ model WalletTransaction {
   orderId   String?
   order     Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
   note      String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime       @default(now()) @db.Timestamptz
+  updatedAt DateTime       @updatedAt @db.Timestamptz
 
   @@index([walletId])
   @@index([walletId, status])
@@ -479,27 +505,27 @@ enum PromotionDiscountType {
 }
 
 model Promotion {
-  id             String        @id @default(uuid())
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  kind           PromotionKind
-  name           String
-  isActive       Boolean       @default(true)
+  id                String                 @id @default(uuid())
+  organizationId    String
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind              PromotionKind
+  name              String
+  isActive          Boolean                @default(true)
   /// NTH_ORDER_DISCOUNT: every Nth order qualifies.
-  nthOrder       Int?
+  nthOrder          Int?
   /// NTH_ORDER_DISCOUNT: discount amount (% or fixed BRL).
-  discountType   PromotionDiscountType?
-  discountValue  Decimal?      @db.Decimal(10, 2)
+  discountType      PromotionDiscountType?
+  discountValue     Decimal?               @db.Decimal(10, 2)
   /// DAILY_MESSAGE: 0–6 (sunday..saturday) days the message fires. Empty = every day.
-  daysOfWeek     Int[]         @default([])
+  daysOfWeek        Int[]                  @default([])
   /// Message sent before showing the menu (DAILY_MESSAGE only).
-  message        String?
+  message           String?
   /// DAILY_MESSAGE: optional menu item highlighted as the "item do dia". The
   /// flow runner appends item details to the greeting message and, when
   /// `promotionalPrice` is set, discounts the price difference at checkout.
   featuredItemId    String?
-  featuredItem      MenuItem? @relation(fields: [featuredItemId], references: [id], onDelete: SetNull)
-  promotionalPrice  Decimal?  @db.Decimal(10, 2)
+  featuredItem      MenuItem?              @relation(fields: [featuredItemId], references: [id], onDelete: SetNull)
+  promotionalPrice  Decimal?               @db.Decimal(10, 2)
   /// NTH_ORDER_DISCOUNT: optional teaser shown the order *before* the qualifying one
   /// (e.g. shown on the 3rd order announcing the 5th-order bonus).
   teaserOrderOffset Int?
@@ -514,9 +540,9 @@ model Promotion {
   ///     questions: [{ id, label, fieldKey }] }
   /// Stored as JSON because the shape will evolve as we ship the orderable
   /// promo experience and we don't query inside it.
-  bundle         Json?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  bundle            Json?
+  createdAt         DateTime               @default(now()) @db.Timestamptz
+  updatedAt         DateTime               @updatedAt @db.Timestamptz
 
   @@index([organizationId])
   @@index([organizationId, isActive])
@@ -539,14 +565,14 @@ enum MessageStatus {
 }
 
 model Message {
-  id              String   @id @default(uuid())
-  conversationId  String
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  evolutionMessageId String?  @unique
-  author          MessageAuthor
-  content         String
-  status          MessageStatus @default(SENT)
-  createdAt       DateTime @default(now())
+  id                 String        @id @default(uuid())
+  conversationId     String
+  conversation       Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  evolutionMessageId String?       @unique
+  author             MessageAuthor
+  content            String
+  status             MessageStatus @default(SENT)
+  createdAt          DateTime      @default(now()) @db.Timestamptz
 
   @@index([conversationId])
   @@map("message")
@@ -561,9 +587,9 @@ enum NotificationType {
 }
 
 model Notification {
-  id             String       @id @default(uuid())
+  id             String           @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   type           NotificationType
   title          String
   body           String?
@@ -571,8 +597,8 @@ model Notification {
   link           String?
   /// When the notification was marked as read. Read notifications are deleted
   /// 24h after this timestamp by a lazy cleanup that runs on every list query.
-  readAt         DateTime?
-  createdAt      DateTime     @default(now())
+  readAt         DateTime?        @db.Timestamptz
+  createdAt      DateTime         @default(now()) @db.Timestamptz
 
   @@index([organizationId, createdAt])
   @@index([organizationId, readAt])

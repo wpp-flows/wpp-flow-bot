@@ -20,6 +20,15 @@ export const signUpSchema = z.object({
 });
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
+export const acceptInvitationSchema = z.object({
+  name: z.string().trim().min(2, 'Nome muito curto.').max(120),
+  password: z
+    .string()
+    .min(8, 'Senha precisa de pelo menos 8 caracteres.')
+    .max(64, 'Senha muito longa.'),
+});
+export type AcceptInvitationFormValues = z.infer<typeof acceptInvitationSchema>;
+
 export const organizationOnboardingSchema = z.object({
   name: z.string().min(2, 'Restaurant name must be at least 2 characters').max(120),
   slug: z

@@ -6,6 +6,9 @@ export type {
   AuthSession,
   LoginCredentials,
   SignUpCredentials,
+  Invitation,
+  InvitationTokenInfo,
+  AcceptInvitationPayload,
 } from './auth';
 export type { BotInstance, BotStatus, CreateBotPayload, UpdateBotPayload } from './bot';
 export type {

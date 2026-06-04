@@ -36,19 +36,30 @@ export function RequireOrganization() {
 }
 
 export function RedirectIfAuthenticated() {
-  const { isAuthenticated, organization, status } = useAuth();
+  const { isAuthenticated, organization, user, status } = useAuth();
 
   if (status === 'idle') return null;
   if (isAuthenticated) {
+    if (user?.isAdmin) return <Navigate to={ROUTES.adminInvitations} replace />;
     return <Navigate to={organization ? ROUTES.dashboard : ROUTES.onboarding} replace />;
   }
   return <Outlet />;
 }
 
 export function RedirectIfHasOrganization() {
-  const { organization, status, isAuthenticated } = useAuth();
+  const { organization, status, isAuthenticated, user } = useAuth();
   if (status === 'idle') return <LoadingScreen />;
   if (!isAuthenticated) return <Navigate to={ROUTES.login} replace />;
+  // Admins never go through onboarding (no org of their own).
+  if (user?.isAdmin) return <Navigate to={ROUTES.adminInvitations} replace />;
   if (organization) return <Navigate to={ROUTES.dashboard} replace />;
+  return <Outlet />;
+}
+
+export function RequireAdmin() {
+  const { user, status, isAuthenticated } = useAuth();
+  if (status === 'idle') return <LoadingScreen />;
+  if (!isAuthenticated) return <Navigate to={ROUTES.login} replace />;
+  if (!user?.isAdmin) return <Navigate to={ROUTES.dashboard} replace />;
   return <Outlet />;
 }

@@ -16,9 +16,16 @@ import { prisma } from "../src/infrastructure/database/client";
  * Idempotent: each phase short-circuits if its anchor row already exists.
  *
  * Login depois do seed:
- *   email:    demo@famigliarossi.com.br
- *   password: pizzaria2026
+ *   Operador demo:
+ *     email:    demo@famigliarossi.com.br
+ *     password: pizzaria2026
  */
+
+const ADMIN = {
+  name: "Mesa Admin",
+  email: process.env.ADMIN_USER!,
+  password: process.env.ADMIN_PASSWORD!,
+};
 
 const DEMO = {
   user: {
@@ -65,6 +72,32 @@ async function ensureUser(): Promise<string> {
     },
   });
   return result.user.id;
+}
+
+async function ensureAdmin(): Promise<void> {
+  const existing = await prisma.user.findUnique({
+    where: { email: ADMIN.email },
+  });
+  if (existing) {
+    if (!existing.isAdmin) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { isAdmin: true },
+      });
+    }
+    return;
+  }
+  const result = await auth.api.signUpEmail({
+    body: {
+      name: ADMIN.name,
+      email: ADMIN.email,
+      password: ADMIN.password,
+    },
+  });
+  await prisma.user.update({
+    where: { id: result.user.id },
+    data: { isAdmin: true },
+  });
 }
 
 async function ensureOrganization(ownerId: string) {
@@ -501,6 +534,10 @@ async function seedCustomers(organizationId: string) {
 async function main() {
   console.log("🌱 Populando seed PT-BR…\n");
 
+  console.log("• admin do backoffice");
+  await ensureAdmin();
+  console.log(`  · ${ADMIN.email}`);
+
   console.log("• usuário");
   const userId = await ensureUser();
   console.log(`  · ${DEMO.user.email}`);
@@ -534,9 +571,13 @@ async function main() {
   console.log("• clientes");
   await seedCustomers(org.id);
 
-  console.log("\n✅ Tudo pronto. Faça login com:");
-  console.log(`   email:    ${DEMO.user.email}`);
-  console.log(`   senha:    ${DEMO.user.password}`);
+  console.log("\n✅ Tudo pronto.");
+  console.log("\n   Operador demo:");
+  console.log(`     email:    ${DEMO.user.email}`);
+  console.log(`     senha:    ${DEMO.user.password}`);
+  console.log("\n   Admin do backoffice (acesso em /admin):");
+  console.log(`     email:    ${ADMIN.email}`);
+  console.log(`     senha:    ${ADMIN.password}`);
   console.log(`\n   Cardápio público: /r/${org.slug}`);
 }
 

@@ -4,6 +4,32 @@ export interface User {
   email: string;
   emailVerified: boolean;
   image?: string | null;
+  isAdmin?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InvitationTokenInfo {
+  valid: boolean;
+  email: string | null;
+  expiresAt: string | null;
+}
+
+export interface AcceptInvitationPayload {
+  token: string;
+  name: string;
+  password: string;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  token: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REVOKED' | 'EXPIRED';
+  expiresAt: string;
+  acceptedAt: string | null;
+  invitedById: string;
+  invitedByName: string | null;
   createdAt: string;
   updatedAt: string;
 }

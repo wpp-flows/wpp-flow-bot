@@ -46,3 +46,20 @@ export async function requireOrganization(
 
     request.organizationId = organization.id;
 }
+
+export async function requireAdmin(
+    request: FastifyRequest,
+    reply: FastifyReply
+): Promise<void> {
+    await requireAuth(request, reply);
+    if (reply.sent) return;
+
+    const user = await prisma.user.findUnique({
+        where: { id: request.userId },
+        select: { isAdmin: true },
+    });
+
+    if (!user?.isAdmin) {
+        return reply.status(403).send({ error: "Acesso restrito ao administrador." });
+    }
+}
