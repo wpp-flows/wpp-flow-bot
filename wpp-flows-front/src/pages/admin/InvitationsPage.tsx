@@ -170,7 +170,7 @@ export function InvitationsPage() {
           </div>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200">
+        <div className="mt-4 rounded-xl border border-zinc-200">
           <table className="w-full text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50/60">
               <tr>
@@ -309,7 +309,7 @@ function InvitationRow({
           </button>
           <div
             className={cn(
-              'absolute right-0 top-full z-10 mt-1 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg transition-all',
+              'absolute right-0 top-full z-50 mt-1 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg transition-all',
               menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
             )}
           >
