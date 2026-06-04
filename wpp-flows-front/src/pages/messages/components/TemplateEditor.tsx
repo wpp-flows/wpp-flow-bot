@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Eye } from 'lucide-react';
 import { Label } from '@/components/ui/Label';
 import { Textarea } from '@/components/ui/Textarea';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { MessagePreview } from '@/components/messaging/MessagePreview';
 import { queryKeys } from '@/lib/queryClient';
 import {
   templateVariablesService,
@@ -69,8 +71,19 @@ export function TemplateEditor({
       />
       <p className="mt-1 text-2xs text-muted-foreground">{hint}</p>
 
+      <div className="mt-3 space-y-1">
+        <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Eye className="h-3 w-3" />
+          Pré-visualização
+        </div>
+        <MessagePreview
+          value={value}
+          variables={(list ?? []).map((v) => ({ key: v.key, label: v.label }))}
+        />
+      </div>
+
       {list ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {list.map((variable) => (
             <Tooltip key={variable.key} content={variable.description}>
               <button

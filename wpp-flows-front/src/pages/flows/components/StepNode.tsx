@@ -4,6 +4,7 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronRight,
+  Eye,
   GripVertical,
   Tag,
   Trash2,
@@ -11,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { IconButton } from '@/components/ui/IconButton';
 import { Textarea } from '@/components/ui/Textarea';
+import { MessagePreview } from '@/components/messaging/MessagePreview';
 import { cn } from '@/lib/utils';
 import type { FlowStep } from '@/types';
 import { FLOW_VARIABLES, formatVariable } from '../flow-variables';
@@ -156,6 +158,20 @@ export function StepNode({
               placeholder="Ex: Olá {{customer_name}}! Faça seu pedido em {{menu_url}}"
             />
           </label>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              Pré-visualização
+            </div>
+            <MessagePreview
+              value={step.content}
+              variables={FLOW_VARIABLES.map((v) => ({
+                key: v.key,
+                label: v.label,
+              }))}
+            />
+          </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
