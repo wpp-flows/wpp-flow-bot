@@ -1,14 +1,33 @@
 import { apiCall } from '@/instances/api';
-import type { DailyReportDetail, DailyReportSummary } from '@/types';
+import type {
+  DailyReportDetail,
+  DailyReportSummary,
+  WalletServiceType,
+} from '@/types';
 
 export const reportService = {
-  listDaily(): Promise<DailyReportSummary[]> {
-    return apiCall<DailyReportSummary[]>({ endpoint: '/api/reports/daily' });
+  listDaily(filters: { serviceType?: WalletServiceType } = {}): Promise<
+    DailyReportSummary[]
+  > {
+    const params = new URLSearchParams();
+    if (filters.serviceType) params.set('serviceType', filters.serviceType);
+    const qs = params.toString();
+    return apiCall<DailyReportSummary[]>({
+      endpoint: qs ? `/api/reports/daily?${qs}` : '/api/reports/daily',
+    });
   },
 
-  getDaily(date: string): Promise<DailyReportDetail> {
+  getDaily(
+    date: string,
+    filters: { serviceType?: WalletServiceType } = {},
+  ): Promise<DailyReportDetail> {
+    const params = new URLSearchParams();
+    if (filters.serviceType) params.set('serviceType', filters.serviceType);
+    const qs = params.toString();
     return apiCall<DailyReportDetail>({
-      endpoint: `/api/reports/daily/${date}`,
+      endpoint: qs
+        ? `/api/reports/daily/${date}?${qs}`
+        : `/api/reports/daily/${date}`,
     });
   },
 };

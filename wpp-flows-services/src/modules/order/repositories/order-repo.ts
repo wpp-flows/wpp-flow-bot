@@ -9,6 +9,8 @@ export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 
 export type DeliveryMode = "PICKUP" | "DELIVERY";
 
+export type ServiceType = "DELIVERY" | "LOCAL";
+
 export interface OrderItemBundlePick {
     componentId: string;
     itemId: string;
@@ -66,6 +68,10 @@ export interface Order {
     paymentLink: string | null;
     receiptUrl: string | null;
     cashChangeFor: string | null;
+    serviceType: ServiceType;
+    tableId: string | null;
+    billId: string | null;
+    customerName: string | null;
     appliedPromotionIds: string[] | null;
     createdAt: Date;
     updatedAt: Date;
@@ -77,6 +83,9 @@ export interface OrderFilters {
     search?: string;
     fromDate?: Date;
     toDate?: Date;
+    serviceType?: ServiceType;
+    tableId?: string;
+    unbilledOnly?: boolean;
 }
 
 export interface OrderRepository {
@@ -112,6 +121,8 @@ export interface OrderRepository {
         paymentProvider?: string | null;
         paymentProviderRef?: string | null;
         cashChangeFor?: number | string | null;
+        serviceType?: ServiceType;
+        tableId?: string | null;
         appliedPromotionIds?: string[] | null;
     }): Promise<Order>;
     updateStatus(id: string, status: OrderStatus): Promise<Order>;
@@ -129,4 +140,5 @@ export interface OrderRepository {
         id: string,
         data: Partial<{ observation: string | null; address: string | null }>,
     ): Promise<Order>;
+    attachToBill(orderIds: string[], billId: string): Promise<number>;
 }

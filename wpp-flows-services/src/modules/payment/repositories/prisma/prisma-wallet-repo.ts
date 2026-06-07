@@ -1,8 +1,10 @@
 import { prisma } from "@/infrastructure/database/client";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import type {
+    ListTransactionsFilters,
     Wallet,
     WalletRepository,
+    WalletServiceType,
     WalletTransaction,
     WalletTxKind,
     WalletTxStatus,
@@ -12,6 +14,7 @@ const toWallet = (row: any): Wallet => ({
     id: row.id,
     organizationId: row.organizationId,
     balance: String(row.balance),
+    localBalance: row.localBalance != null ? String(row.localBalance) : "0",
     currency: row.currency,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -24,7 +27,9 @@ const toTx = (row: any): WalletTransaction => ({
     amount: String(row.amount),
     status: row.status as WalletTxStatus,
     orderId: row.orderId ?? null,
+    billId: row.billId ?? null,
     note: row.note ?? null,
+    serviceType: (row.serviceType ?? "DELIVERY") as WalletServiceType,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
@@ -44,9 +49,15 @@ export class PrismaWalletRepository implements WalletRepository {
         return toWallet(row);
     }
 
-    async listTransactions(walletId: string): Promise<WalletTransaction[]> {
+    async listTransactions(
+        walletId: string,
+        filters: ListTransactionsFilters = {},
+    ): Promise<WalletTransaction[]> {
         const rows = await prisma.walletTransaction.findMany({
-            where: { walletId },
+            where: {
+                walletId,
+                ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
+            },
             orderBy: { createdAt: "desc" },
         });
         return rows.map(toTx);
@@ -58,9 +69,12 @@ export class PrismaWalletRepository implements WalletRepository {
         amount: number | string;
         status?: WalletTxStatus;
         orderId?: string | null;
+        billId?: string | null;
         note?: string | null;
+        serviceType?: WalletServiceType;
     }): Promise<WalletTransaction> {
         const status = input.status ?? "COMPLETED";
+        const serviceType = input.serviceType ?? "DELIVERY";
         const numericAmount =
             typeof input.amount === "number"
                 ? input.amount
@@ -69,26 +83,29 @@ export class PrismaWalletRepository implements WalletRepository {
             throw new ValidationError("Wallet amount must be a positive number.");
         }
 
-        // CREDIT (COMPLETED) → add to balance.
-        // WITHDRAWAL (PENDING) → hold the funds immediately (subtract).
-        // Other combinations create the record without touching the balance.
+        const balanceField = serviceType === "LOCAL" ? "localBalance" : "balance";
+
         const tx = await prisma.$transaction(async (db) => {
             if (input.kind === "WITHDRAWAL" && status === "PENDING") {
                 const wallet = await db.wallet.findUnique({
                     where: { id: input.walletId },
                 });
                 if (!wallet) throw new NotFoundError("Wallet");
-                if (Number.parseFloat(String(wallet.balance)) < numericAmount) {
+                const current =
+                    serviceType === "LOCAL"
+                        ? Number.parseFloat(String(wallet.localBalance ?? "0"))
+                        : Number.parseFloat(String(wallet.balance));
+                if (current < numericAmount) {
                     throw new ValidationError("Saldo insuficiente para saque.");
                 }
                 await db.wallet.update({
                     where: { id: input.walletId },
-                    data: { balance: { decrement: numericAmount } },
+                    data: { [balanceField]: { decrement: numericAmount } } as any,
                 });
             } else if (input.kind === "CREDIT" && status === "COMPLETED") {
                 await db.wallet.update({
                     where: { id: input.walletId },
-                    data: { balance: { increment: numericAmount } },
+                    data: { [balanceField]: { increment: numericAmount } } as any,
                 });
             }
 
@@ -99,7 +116,9 @@ export class PrismaWalletRepository implements WalletRepository {
                     amount: numericAmount,
                     status,
                     orderId: input.orderId ?? null,
+                    billId: input.billId ?? null,
                     note: input.note ?? null,
+                    serviceType,
                 },
             });
         });
@@ -116,17 +135,17 @@ export class PrismaWalletRepository implements WalletRepository {
             });
             if (!existing) throw new NotFoundError("WalletTransaction");
             if (existing.status === nextStatus) return existing;
+            const serviceType =
+                ((existing as any).serviceType ?? "DELIVERY") as WalletServiceType;
+            const balanceField = serviceType === "LOCAL" ? "localBalance" : "balance";
 
-            // Only handle the legal transitions we care about:
-            // - PENDING WITHDRAWAL → COMPLETED: balance already debited at PENDING time. No-op.
-            // - PENDING WITHDRAWAL → REJECTED: release the held funds back to balance.
             if (existing.kind === "WITHDRAWAL" && existing.status === "PENDING") {
                 if (nextStatus === "REJECTED") {
                     await db.wallet.update({
                         where: { id: existing.walletId },
                         data: {
-                            balance: { increment: Number(existing.amount) },
-                        },
+                            [balanceField]: { increment: Number(existing.amount) },
+                        } as any,
                     });
                 } else if (nextStatus !== "COMPLETED") {
                     throw new ValidationError(

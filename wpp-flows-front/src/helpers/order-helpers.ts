@@ -17,6 +17,20 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   CANCELED: 'Cancelado',
 };
 
+export const LOCAL_STATUS_LABEL: Record<OrderStatus, string> = {
+  RECEIVED: 'Recebido',
+  PREPARING: 'Preparando',
+  OUT_FOR_DELIVERY: 'Pronto para servir',
+  DELIVERED: 'Servido',
+  CANCELED: 'Cancelado',
+};
+
+export function statusLabelFor(
+  serviceType: 'DELIVERY' | 'LOCAL' | undefined,
+): Record<OrderStatus, string> {
+  return serviceType === 'LOCAL' ? LOCAL_STATUS_LABEL : STATUS_LABEL;
+}
+
 export const STATUS_TONE: Record<OrderStatus, BadgeProps['tone']> = {
   RECEIVED: 'info',
   PREPARING: 'warning',

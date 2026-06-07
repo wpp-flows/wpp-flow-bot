@@ -27,6 +27,7 @@ const TAB_LABELS: Record<PublicTab, string> = {
   catalog: "Cardápio",
   orders: "Pedidos",
   checkout: "Pagamento",
+  status: "Status", // nem é usado aqui
 };
 
 export function PublicMenuPage() {

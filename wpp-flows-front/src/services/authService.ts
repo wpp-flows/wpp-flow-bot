@@ -78,6 +78,10 @@ export const authService = {
     workingStartTime?: string | null;
     workingEndTime?: string | null;
     outOfHoursMessage?: string | null;
+    localWorkingDaysOfWeek?: number[];
+    localWorkingStartTime?: string | null;
+    localWorkingEndTime?: string | null;
+    localOutOfHoursMessage?: string | null;
     botCooldownMinutes?: number;
   }): Promise<Organization> {
     return apiCall<Organization>({
@@ -87,11 +91,6 @@ export const authService = {
     });
   },
 
-  /**
-   * Updates the current user's display fields via better-auth's update-user
-   * endpoint. Only `name` and `image` are exposed by better-auth's default
-   * config; email changes require the change-email flow which we don't surface here.
-   */
   async updateUser(payload: { name?: string; image?: string }): Promise<User> {
     return apiCall<User>({
       endpoint: '/api/auth/update-user',

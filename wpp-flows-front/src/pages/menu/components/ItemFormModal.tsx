@@ -49,12 +49,16 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
       imageUrl: '',
       available: true,
       availableDaysOfWeek: [],
+      availableForDelivery: true,
+      availableForLocal: true,
       additionals: [],
     },
   });
 
   const available = watch('available');
   const availableDaysOfWeek = watch('availableDaysOfWeek') ?? [];
+  const availableForDelivery = watch('availableForDelivery') ?? true;
+  const availableForLocal = watch('availableForLocal') ?? true;
   const imageUrl = watch('imageUrl');
 
   const additionals = useFieldArray({ control, name: 'additionals' });
@@ -80,6 +84,8 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
         availableDaysOfWeek: item?.availableDaysOfWeek ?? [],
+        availableForDelivery: item?.availableForDelivery ?? true,
+        availableForLocal: item?.availableForLocal ?? true,
         additionals:
           item?.additionals.map((a) => ({
             id: a.id,
@@ -100,6 +106,8 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
+        availableForDelivery: v.availableForDelivery ?? true,
+        availableForLocal: v.availableForLocal ?? true,
         additionals: v.additionals ?? [],
       }),
     onSuccess: () => {
@@ -117,6 +125,8 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
         description: v.description ?? '',
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
+        availableForDelivery: v.availableForDelivery ?? true,
+        availableForLocal: v.availableForLocal ?? true,
         additionals: v.additionals ?? [],
       }),
     onSuccess: () => {
@@ -286,6 +296,38 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
             checked={!!available}
             onChange={(e) => setValue('available', e.target.checked, { shouldDirty: true })}
           />
+        </div>
+
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
+          <p className="text-sm font-medium">Disponível em</p>
+          <p className="text-2xs text-muted-foreground">
+            Escolha em quais canais este item aparece. Por padrão, fica
+            disponível para os dois.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={availableForDelivery}
+                onChange={(e) =>
+                  setValue('availableForDelivery', e.target.checked, {
+                    shouldDirty: true,
+                  })
+                }
+              />
+              Delivery
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={availableForLocal}
+                onChange={(e) =>
+                  setValue('availableForLocal', e.target.checked, {
+                    shouldDirty: true,
+                  })
+                }
+              />
+              Salão (mesas)
+            </label>
+          </div>
         </div>
 
         <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">

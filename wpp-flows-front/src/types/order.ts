@@ -7,6 +7,8 @@ export type OrderStatus =
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
+export type ServiceType = 'DELIVERY' | 'LOCAL';
+
 export type DeliveryMode = 'PICKUP' | 'DELIVERY';
 
 export type PaymentProvider = 'MERCADO_PAGO' | 'CASH';
@@ -62,6 +64,10 @@ export interface Order {
   paymentLink: string | null;
   receiptUrl: string | null;
   cashChangeFor: string | null;
+  serviceType: ServiceType;
+  tableId: string | null;
+  billId: string | null;
+  customerName: string | null;
   appliedPromotionIds: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -73,4 +79,7 @@ export interface OrderFilters {
   fromDate?: string;
   toDate?: string;
   date?: string;
+  serviceType?: ServiceType;
+  tableId?: string;
+  unbilledOnly?: boolean;
 }

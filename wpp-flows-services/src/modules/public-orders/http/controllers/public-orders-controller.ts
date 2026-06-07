@@ -31,6 +31,8 @@ export class PublicOrdersController {
             couponCode: body.couponCode ?? null,
             paymentMethod: body.paymentMethod,
             cashChangeFor: body.cashChangeFor ?? null,
+            tableToken: body.tableToken ?? null,
+            customerName: body.customerName ?? null,
         });
         return reply.status(201).send(result);
     }

@@ -9,6 +9,7 @@ import { orderRepo } from "@/modules/order/usecases/factories";
 import { CreateOrderFromCartUseCase } from "@/modules/order/usecases/order-usecases";
 import { createPaymentLink } from "@/modules/payment/usecases/factories";
 import { promotionRepo } from "@/modules/promotion/usecases/factories";
+import { tableRepo } from "@/modules/local-service/usecases/factories";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { CancelPublicOrderUseCase } from "../cancel-public-order";
 import { CreatePublicOrderUseCase } from "../create-public-order";
@@ -38,6 +39,7 @@ export const createPublicOrder = new CreatePublicOrderUseCase(
     createOrderFromCart,
     createPaymentLink,
     notificationEmitter,
+    tableRepo,
 );
 
 export const cancelPublicOrder = new CancelPublicOrderUseCase(

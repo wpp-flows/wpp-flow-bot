@@ -50,6 +50,9 @@ export class OrderController {
             filters: {
                 status: query.status,
                 customerId: query.customerId,
+                serviceType: query.serviceType,
+                tableId: query.tableId,
+                unbilledOnly: query.unbilledOnly === "true",
                 fromDate:
                     dateRange?.from ??
                     (query.fromDate ? new Date(query.fromDate) : undefined),

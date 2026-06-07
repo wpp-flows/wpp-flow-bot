@@ -9,6 +9,9 @@ export const orderService = {
     if (filters.fromDate) params.set('fromDate', filters.fromDate);
     if (filters.toDate) params.set('toDate', filters.toDate);
     if (filters.date) params.set('date', filters.date);
+    if (filters.serviceType) params.set('serviceType', filters.serviceType);
+    if (filters.tableId) params.set('tableId', filters.tableId);
+    if (filters.unbilledOnly) params.set('unbilledOnly', 'true');
     const qs = params.toString();
     return apiCall<Order[]>({
       endpoint: qs ? `/api/orders?${qs}` : '/api/orders',

@@ -62,6 +62,8 @@ export class PrismaItemRepository implements ItemRepository {
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        availableForDelivery?: boolean;
+        availableForLocal?: boolean;
         position: number;
         additionals?: MenuItemAdditional[];
     }): Promise<MenuItem> {
@@ -86,6 +88,8 @@ export class PrismaItemRepository implements ItemRepository {
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
+            availableForDelivery?: boolean;
+            availableForLocal?: boolean;
             position?: number;
             additionals?: MenuItemAdditional[];
         }

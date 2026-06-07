@@ -1,6 +1,7 @@
 import type {
     Wallet,
     WalletRepository,
+    WalletServiceType,
     WalletTransaction,
 } from "../repositories/wallet-repo";
 
@@ -13,8 +14,13 @@ export class GetWalletUseCase {
 
 export class ListWalletTransactionsUseCase {
     constructor(private readonly repo: WalletRepository) {}
-    async execute(organizationId: string): Promise<WalletTransaction[]> {
+    async execute(
+        organizationId: string,
+        filters: { serviceType?: WalletServiceType } = {},
+    ): Promise<WalletTransaction[]> {
         const wallet = await this.repo.getOrCreate(organizationId);
-        return this.repo.listTransactions(wallet.id);
+        return this.repo.listTransactions(wallet.id, {
+            serviceType: filters.serviceType,
+        });
     }
 }

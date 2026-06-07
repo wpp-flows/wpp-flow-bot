@@ -9,7 +9,9 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import type { Order, OrderStatus } from '@/types';
+import { queryKeys } from '@/lib/queryClient';
+import { statusLabelFor } from '@/helpers/order-helpers';
+import type { Order, OrderStatus, ServiceType } from '@/types';
 import { useOrderKanban } from '../hooks/useOrderKanban';
 import { OrderKanbanCard } from './OrderKanbanCard';
 import { OrderKanbanColumn } from './OrderKanbanColumn';
@@ -18,16 +20,41 @@ interface Props {
   orders: Order[];
   onOpenDetail: (orderId: string) => void;
   notifyCustomer?: boolean;
+  serviceType?: ServiceType;
+  tableLabelById?: Map<string, string>;
 }
 
 export function OrderKanban({
   orders,
   onOpenDetail,
   notifyCustomer,
+  serviceType = 'DELIVERY',
+  tableLabelById,
 }: Readonly<Props>) {
+  const optimisticQueryKey =
+    serviceType === 'LOCAL'
+      ? queryKeys.localOrders.all
+      : queryKeys.orders.today;
+  const invalidationKeys =
+    serviceType === 'LOCAL'
+      ? [
+          queryKeys.localOrders.all,
+          queryKeys.localTables.all,
+          queryKeys.orders.all,
+          queryKeys.reports.daily,
+        ]
+      : [queryKeys.orders.all, queryKeys.reports.daily];
+
+  const statusLabel = statusLabelFor(serviceType);
+
   const { columns, activeOrder, setActiveOrderId, moveOrder } = useOrderKanban(
     orders,
-    { notifyCustomer },
+    {
+      notifyCustomer,
+      optimisticQueryKey,
+      invalidationKeys,
+      statusLabel,
+    },
   );
 
   const sensors = useSensors(
@@ -69,6 +96,7 @@ export function OrderKanban({
               title={col.title}
               orders={col.orders}
               onOpenDetail={onOpenDetail}
+              tableLabelById={tableLabelById}
             />
           ))}
         </div>
@@ -76,7 +104,11 @@ export function OrderKanban({
 
       <DragOverlay dropAnimation={null}>
         {activeOrder ? (
-          <OrderKanbanCard order={activeOrder} isOverlay />
+          <OrderKanbanCard
+            order={activeOrder}
+            isOverlay
+            tableLabelById={tableLabelById}
+          />
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -7,11 +7,11 @@ import type { Order, OrderStatus } from "@/types";
 import {
   PAYMENT_LABEL,
   PAYMENT_TONE,
-  STATUS_LABEL,
   STATUS_TONE,
   formatBRL,
   formatDateTime,
   nextStatusOptions,
+  statusLabelFor,
 } from "../../../helpers/order-helpers";
 import { buildReceiptHtml } from "./OrderPrintDetail";
 
@@ -33,6 +33,7 @@ export function OrderDetail({
   onMarkPaid,
 }: Readonly<Props>) {
   const nextOptions = nextStatusOptions(order.status);
+  const statusLabel = statusLabelFor(order.serviceType);
   const [copied, setCopied] = useState(false);
 
   const copyPaymentRef = async () => {
@@ -69,12 +70,22 @@ export function OrderDetail({
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={STATUS_TONE[order.status]} dot>
-            {STATUS_LABEL[order.status]}
+            {statusLabel[order.status]}
           </Badge>
           <Badge tone={PAYMENT_TONE[order.paymentStatus]}>
             {PAYMENT_LABEL[order.paymentStatus]}
           </Badge>
         </div>
+        {order.serviceType === "LOCAL" &&
+        order.customerName &&
+        !order.customerName.toLowerCase().startsWith("mesa ") ? (
+          <p className="text-xs text-muted-foreground">
+            Cliente:{" "}
+            <span className="font-medium text-foreground">
+              {order.customerName}
+            </span>
+          </p>
+        ) : null}
         <p className="text-xs text-muted-foreground">
           Criado em {formatDateTime(order.createdAt)}
         </p>
@@ -236,7 +247,7 @@ export function OrderDetail({
               loading={pending}
               onClick={() => onAdvance(status)}
             >
-              Mover para {STATUS_LABEL[status]}
+              Mover para {statusLabel[status]}
             </Button>
           ))}
         </div>

@@ -19,6 +19,9 @@ export interface KanbanColumnDescriptor {
 
 export interface UseOrderKanbanOptions {
   notifyCustomer?: boolean;
+  optimisticQueryKey?: readonly unknown[];
+  invalidationKeys?: readonly (readonly unknown[])[];
+  statusLabel?: Record<OrderStatus, string>;
 }
 
 export function useOrderKanban(
@@ -26,6 +29,12 @@ export function useOrderKanban(
   options: UseOrderKanbanOptions = {},
 ) {
   const notifyCustomer = options.notifyCustomer ?? true;
+  const optimisticKey = options.optimisticQueryKey ?? queryKeys.orders.today;
+  const invalidationKeys = options.invalidationKeys ?? [
+    queryKeys.orders.all,
+    queryKeys.reports.daily,
+  ];
+  const labels = options.statusLabel ?? STATUS_LABEL;
   const qc = useQueryClient();
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
@@ -45,10 +54,10 @@ export function useOrderKanban(
     }
     return ORDER_STATUSES.map((status) => ({
       status,
-      title: STATUS_LABEL[status],
+      title: labels[status],
       orders: buckets[status],
     }));
-  }, [orders]);
+  }, [orders, labels]);
 
   const orderById = useMemo(() => {
     const map = new Map<string, Order>();
@@ -62,31 +71,31 @@ export function useOrderKanban(
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       orderService.updateStatus(id, status, { notifyCustomer }),
     onMutate: async ({ id, status }) => {
-      await qc.cancelQueries({ queryKey: queryKeys.orders.today });
-      const previous = qc.getQueryData<Order[]>(queryKeys.orders.today);
+      await qc.cancelQueries({ queryKey: optimisticKey });
+      const previous = qc.getQueryData<Order[]>(optimisticKey);
       if (previous) {
         qc.setQueryData<Order[]>(
-          queryKeys.orders.today,
+          optimisticKey,
           previous.map((o) => (o.id === id ? { ...o, status } : o)),
         );
       }
       return { previous };
     },
     onError: (err, _vars, ctx) => {
-      if (ctx?.previous) qc.setQueryData(queryKeys.orders.today, ctx.previous);
+      if (ctx?.previous) qc.setQueryData(optimisticKey, ctx.previous);
       toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status');
     },
     onSuccess: (_data, vars) => {
       const updated = orderById.get(vars.id);
       toast.success(
-        `Pedido ${updated ? orderNumber(updated.sequence) : ''} → ${STATUS_LABEL[vars.status]}`.trim(),
+        `Pedido ${updated ? orderNumber(updated.sequence) : ''} → ${labels[vars.status]}`.trim(),
       );
     },
     onSettled: () => {
-      void invalidateQueriesByFilters(qc, [
-        { queryKey: queryKeys.orders.all },
-        { queryKey: queryKeys.reports.daily },
-      ]);
+      void invalidateQueriesByFilters(
+        qc,
+        invalidationKeys.map((k) => ({ queryKey: k })),
+      );
     },
   });
 
@@ -98,7 +107,7 @@ export function useOrderKanban(
     if (!allowed.includes(nextStatus)) {
       toast.warning(
         `Transição inválida`,
-        `${STATUS_LABEL[order.status]} → ${STATUS_LABEL[nextStatus]} não é permitida.`,
+        `${labels[order.status]} → ${labels[nextStatus]} não é permitida.`,
       );
       return;
     }

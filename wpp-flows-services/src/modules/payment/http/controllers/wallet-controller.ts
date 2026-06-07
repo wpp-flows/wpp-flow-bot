@@ -17,8 +17,14 @@ export class WalletController {
         middlewares: [requireOrganization],
     })
     async listTransactions(request: FastifyRequest, reply: FastifyReply) {
+        const query = (request.query ?? {}) as { serviceType?: string };
+        const serviceType =
+            query.serviceType === "DELIVERY" || query.serviceType === "LOCAL"
+                ? query.serviceType
+                : undefined;
         const tx = await makeListWalletTransactions().execute(
             request.organizationId,
+            { serviceType },
         );
         return reply.send(tx);
     }

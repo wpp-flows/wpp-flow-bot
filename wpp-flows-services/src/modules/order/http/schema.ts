@@ -16,6 +16,11 @@ export const listOrdersQuerySchema = z.object({
     date: z
         .union([z.literal("today"), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
         .optional(),
+    serviceType: z.enum(["DELIVERY", "LOCAL"]).optional(),
+    tableId: z.uuid().optional(),
+    unbilledOnly: z
+        .union([z.literal("true"), z.literal("false")])
+        .optional(),
 });
 
 export const updateOrderStatusSchema = z.object({

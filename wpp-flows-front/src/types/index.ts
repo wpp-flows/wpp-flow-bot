@@ -56,12 +56,14 @@ export type {
   OrderStatus,
   OrderFilters,
   PaymentStatus,
+  ServiceType,
 } from './order';
 export type {
   Wallet,
   WalletTransaction,
   WalletTxKind,
   WalletTxStatus,
+  WalletServiceType,
 } from './wallet';
 export type {
   Promotion,
@@ -80,3 +82,12 @@ export type {
 } from './notification';
 export type { Coupon, CouponDiscountType, CouponInput } from './coupon';
 export type { DailyReportSummary, DailyReportDetail } from './report';
+export type {
+  RestaurantTable,
+  TableStatus,
+  TableBill,
+  LocalPaymentMethod,
+  PublicTableResolved,
+  PublicTableOrder,
+  PublicTableOrdersResponse,
+} from './localService';

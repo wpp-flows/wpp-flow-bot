@@ -1,4 +1,7 @@
-import { isWithinWorkingHours } from "@/modules/organization/working-hours";
+import {
+    isWithinWorkingHours,
+    workingHoursFor,
+} from "@/modules/organization/working-hours";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
 import type { ConversationRepository } from "@/modules/chat/repositories/chat-repo";
 import type { CouponRepository } from "@/modules/coupon/repositories/coupon-repo";
@@ -18,6 +21,7 @@ import type { NotificationEmitter } from "@/modules/notification/usecases/notifi
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import { env } from "@/infrastructure/config/env";
+import type { TableRepository } from "@/modules/local-service/repositories/table-repo";
 
 export interface PublicOrderItemAdditionalInput {
     id: string;
@@ -41,18 +45,20 @@ export type PublicPaymentMethod = "MERCADOPAGO" | "CASH";
 
 export interface CreatePublicOrderInput {
     slug: string;
-    customer: {
+    customer?: {
         name: string;
         phone: string;
     };
     items: PublicOrderItemInput[];
     observation?: string | null;
     address?: string | null;
-    deliveryMode: DeliveryMode;
+    deliveryMode?: DeliveryMode;
     /** Customer-typed coupon code at checkout. Empty/whitespace = no coupon. */
     couponCode?: string | null;
     paymentMethod?: PublicPaymentMethod;
     cashChangeFor?: number | null;
+    tableToken?: string | null;
+    customerName?: string | null;
 }
 
 export interface CreatePublicOrderResult {
@@ -75,15 +81,27 @@ export class CreatePublicOrderUseCase {
         private readonly createOrderFromCart: CreateOrderFromCartUseCase,
         private readonly createPaymentLink: CreatePaymentLinkUseCase,
         private readonly notificationEmitter: NotificationEmitter,
+        private readonly tableRepo: TableRepository,
     ) { }
 
     async execute(input: CreatePublicOrderInput): Promise<CreatePublicOrderResult> {
         const org = await this.orgRepo.findBySlug(input.slug);
         if (!org) throw new NotFoundError("Restaurant");
 
-        if (!isWithinWorkingHours(org)) {
+        const table = input.tableToken
+            ? await this.tableRepo.findByToken(input.tableToken)
+            : null;
+        if (input.tableToken && (!table || table.organizationId !== org.id)) {
+            throw new NotFoundError("Mesa");
+        }
+        const isLocal = !!table;
+
+        const hours = workingHoursFor(org, isLocal ? "LOCAL" : "DELIVERY");
+        if (!isWithinWorkingHours(hours)) {
             throw new ValidationError(
-                "O restaurante está fechado no momento. Tente novamente durante o horário de funcionamento.",
+                isLocal
+                    ? "O salão está fechado no momento. Tente novamente durante o horário de atendimento."
+                    : "O restaurante está fechado no momento. Tente novamente durante o horário de funcionamento.",
             );
         }
         const bots = await this.botRepo.listByOrg(org.id);
@@ -137,10 +155,42 @@ export class CreatePublicOrderUseCase {
             }
         }
 
+        // LOCAL orders may omit `customer` — fabricate a per-table
+        // synthetic with a non-phone unique key so the customer upsert
+        // doesn't collide with real WhatsApp customers. DELIVERY orders
+        // still require customer (the schema enforced that at the route).
+        //
+        // When the diner typed their name on the table menu, key theW
+        // synthetic by (table, slug-of-name) so two people at the same
+        // table get distinct customer rows — the dashboard kanban can
+        // then show "Mesa 3 — João" vs "Mesa 3 — Maria" instead of
+        // collapsing both into "Mesa 3".
+        let customerInput: { name: string; phone: string };
+        if (isLocal && table) {
+            const typedName = input.customerName?.trim() || input.customer?.name?.trim() || "";
+            if (typedName) {
+                customerInput = {
+                    name: typedName,
+                    phone: `local:${table.id}:${slugifyName(typedName)}`,
+                };
+            } else {
+                customerInput = {
+                    name: `Mesa ${table.label}`,
+                    phone: `local:${table.id}`,
+                };
+            }
+        } else if (input.customer) {
+            customerInput = {
+                name: input.customer.name.trim() || input.customer.phone,
+                phone: input.customer.phone.trim(),
+            };
+        } else {
+            throw new ValidationError("Dados do cliente são obrigatórios.");
+        }
         const customer = await this.customerRepo.upsert({
             organizationId: org.id,
-            name: input.customer.name.trim() || input.customer.phone,
-            phone: input.customer.phone.trim(),
+            name: customerInput.name,
+            phone: customerInput.phone,
         });
 
         const promotions = await this.promotionRepo.listActive(org.id);
@@ -186,24 +236,32 @@ export class CreatePublicOrderUseCase {
         const deliveryFee =
             input.deliveryMode === "DELIVERY" ? Number(org.deliveryFee) : 0;
 
-        const bot = bots.find((b) => b.status === "ONLINE") ?? bots[0] ?? null;
         let conversationId: string | null = null;
-        if (bot) {
-            const remoteJid = `${input.customer.phone.replace(/\D/g, "")}@s.whatsapp.net`;
-            const conversation =
-                (await this.conversationRepo.findByBotAndRemoteJid(bot.id, remoteJid)) ??
-                (await this.conversationRepo.create({
-                    organizationId: org.id,
-                    botId: bot.id,
-                    remoteJid,
-                    contactName: customer.name,
-                    contactPhone: customer.phone,
-                }));
-            conversationId = conversation.id;
+        if (!isLocal && input.customer) {
+            const bot = bots.find((b) => b.status === "ONLINE") ?? bots[0] ?? null;
+            if (bot) {
+                const remoteJid = `${input.customer.phone.replace(/\D/g, "")}@s.whatsapp.net`;
+                const conversation =
+                    (await this.conversationRepo.findByBotAndRemoteJid(
+                        bot.id,
+                        remoteJid,
+                    )) ??
+                    (await this.conversationRepo.create({
+                        organizationId: org.id,
+                        botId: bot.id,
+                        remoteJid,
+                        contactName: customer.name,
+                        contactPhone: customer.phone,
+                    }));
+                conversationId = conversation.id;
+            }
         }
 
         const paymentMethod = input.paymentMethod ?? "MERCADOPAGO";
-        const isCash = paymentMethod === "CASH";
+        const isCash = !isLocal && paymentMethod === "CASH";
+        const deliveryModeForOrder = isLocal
+            ? "PICKUP"
+            : input.deliveryMode ?? "DELIVERY";
 
         const order = await this.createOrderFromCart.execute({
             organizationId: org.id,
@@ -211,21 +269,36 @@ export class CreatePublicOrderUseCase {
             conversationId,
             items: cartItems,
             observation: input.observation ?? null,
-            address: input.deliveryMode === "DELIVERY" ? input.address ?? null : null,
+            address: isLocal
+                ? null
+                : deliveryModeForOrder === "DELIVERY"
+                  ? input.address ?? null
+                  : null,
             discount: discount > 0 ? discount : null,
             appliedPromotionIds: appliedPromotionIds.length
                 ? appliedPromotionIds
                 : null,
-            deliveryMode: input.deliveryMode,
-            deliveryFee,
+            deliveryMode: deliveryModeForOrder,
+            deliveryFee: isLocal ? 0 : deliveryFee,
             couponCode,
             couponDiscount: couponDiscount > 0 ? couponDiscount : null,
             paymentProvider: isCash ? "CASH" : null,
             cashChangeFor: isCash ? input.cashChangeFor ?? null : null,
+            serviceType: isLocal ? "LOCAL" : "DELIVERY",
+            tableId: isLocal && table ? table.id : null,
         });
 
+        if (isLocal && table) {
+            await this.tableRepo.update(table.id, {
+                status: table.status === "BILL_REQUESTED" ? "BILL_REQUESTED" : "OCCUPIED",
+            });
+        }
+
         let paymentLink: string;
-        if (isCash) {
+        if (isLocal) {
+            const base = (env.CLIENT_ORIGIN ?? "").replace(/\/$/, "");
+            paymentLink = `${base}/r/${input.slug}/pedido/${order.id}`;
+        } else if (isCash) {
             const base = (env.CLIENT_ORIGIN ?? "").replace(/\/$/, "");
             paymentLink = `${base}/r/${input.slug}/pedido/${order.id}`;
         } else {
@@ -242,12 +315,15 @@ export class CreatePublicOrderUseCase {
             );
         }
 
+        const sideLabel = isLocal ? " (mesa)" : isCash ? " (dinheiro)" : "";
         void this.notificationEmitter.emit({
             organizationId: org.id,
             type: "NEW_ORDER",
             title: `Novo pedido #${String(order.sequence).padStart(4, "0")}`,
-            body: `${customer.name} — total R$ ${order.total}${isCash ? " (dinheiro)" : ""}`,
-            link: `/orders?id=${order.id}`,
+            body: `${customer.name} — total R$ ${order.total}${sideLabel}`,
+            link: isLocal
+                ? `/local/tables/${table?.id ?? ""}`
+                : `/orders?id=${order.id}`,
             requirePreference: "newOrders",
         });
 
@@ -258,5 +334,15 @@ export class CreatePublicOrderUseCase {
             total: order.total,
         };
     }
+}
+
+function slugifyName(name: string): string {
+    return name
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .slice(0, 60) || "anon";
 }
 

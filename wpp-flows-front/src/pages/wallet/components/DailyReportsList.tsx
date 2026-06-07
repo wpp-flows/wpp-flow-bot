@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from '@/stores/uiStore';
 import { reportService } from '@/services/reportService';
-import type { DailyReportSummary } from '@/types';
+import type { DailyReportSummary, WalletServiceType } from '@/types';
 import {
   formatBRL,
   formatDayLabel,
@@ -17,11 +17,17 @@ import { openDailyReport } from '../daily-report';
 interface Props {
   organizationName: string;
   reports: DailyReportSummary[];
+  serviceType?: WalletServiceType;
 }
 
-export function DailyReportsList({ organizationName, reports }: Readonly<Props>) {
+export function DailyReportsList({
+  organizationName,
+  reports,
+  serviceType,
+}: Readonly<Props>) {
   const download = useMutation({
-    mutationFn: (date: string) => reportService.getDaily(date),
+    mutationFn: (date: string) =>
+      reportService.getDaily(date, { serviceType }),
     onSuccess: (detail) => {
       openDailyReport({ organizationName, report: detail });
     },

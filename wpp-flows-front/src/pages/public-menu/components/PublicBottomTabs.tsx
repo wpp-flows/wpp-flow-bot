@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type PublicTab = 'catalog' | 'orders' | 'checkout';
+export type PublicTab = 'catalog' | 'orders' | 'checkout' | 'status';
 
 interface TabDescriptor {
   id: PublicTab;
