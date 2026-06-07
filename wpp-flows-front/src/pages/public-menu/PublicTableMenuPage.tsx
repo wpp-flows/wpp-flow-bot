@@ -20,7 +20,7 @@ import { publicTableService } from '@/services/publicTableService';
 import { queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { ApiError } from '@/instances/api';
-import type { PublicCartItem, PublicMenuItem } from '@/types/publicMenu';
+import type { PublicMenuItem } from '@/types/publicMenu';
 import type { PublicTableOrder } from '@/types';
 import { cn } from '@/lib/utils';
 import { CatalogTab } from './components/CatalogTab';
