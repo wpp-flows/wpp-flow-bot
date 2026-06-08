@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/Card";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/stores/uiStore";
