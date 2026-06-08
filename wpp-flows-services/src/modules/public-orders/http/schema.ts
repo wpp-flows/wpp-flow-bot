@@ -33,17 +33,21 @@ const cartItemSchema = z.object({
 });
 
 export const createPublicOrderSchema = z.object({
-    customer: z.object({
-        name: z.string().min(1).max(120),
-        phone: phoneSchema,
-    }),
+    customer: z
+        .object({
+            name: z.string().min(1).max(120),
+            phone: phoneSchema,
+        })
+        .optional(),
     items: z.array(cartItemSchema).min(1),
     observation: z.string().max(500).nullable().optional(),
     address: z.string().max(500).nullable().optional(),
-    deliveryMode: z.enum(["PICKUP", "DELIVERY"]),
+    deliveryMode: z.enum(["PICKUP", "DELIVERY"]).optional(),
     couponCode: z.string().max(40).nullable().optional(),
     paymentMethod: z.enum(["MERCADOPAGO", "CASH"]).default("MERCADOPAGO"),
     cashChangeFor: z.number().positive().max(99999.99).nullable().optional(),
+    tableToken: z.string().min(8).max(128).optional(),
+    customerName: z.string().trim().min(1).max(120).optional(),
 });
 
 export const validateCouponQuerySchema = z.object({

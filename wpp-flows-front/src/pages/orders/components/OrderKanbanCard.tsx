@@ -1,7 +1,16 @@
 import { type CSSProperties, forwardRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Banknote, GripVertical, MapPin, StickyNote, Tag, Package } from 'lucide-react';
+import {
+  Banknote,
+  GripVertical,
+  MapPin,
+  Package,
+  StickyNote,
+  Table as TableIcon,
+  Tag,
+  User,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import type { Order } from '@/types';
@@ -18,6 +27,7 @@ interface Props {
   order: Order;
   isOverlay?: boolean;
   onOpenDetail?: (orderId: string) => void;
+  tableLabelById?: Map<string, string>;
 }
 
 const ACCENT_BY_TONE: Record<string, string> = {
@@ -30,9 +40,18 @@ const ACCENT_BY_TONE: Record<string, string> = {
 };
 
 export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderKanbanCard(
-  { order, isOverlay = false, onOpenDetail },
+  { order, isOverlay = false, onOpenDetail, tableLabelById },
   forwardedRef,
 ) {
+  const tableLabel = order.tableId
+    ? tableLabelById?.get(order.tableId) ?? null
+    : null;
+  const dinerName =
+    order.serviceType === 'LOCAL' &&
+    order.customerName &&
+    !order.customerName.toLowerCase().startsWith('mesa ')
+      ? order.customerName
+      : null;
   const sortable = useSortable({
     id: order.id,
     data: { type: 'order', status: order.status },
@@ -110,6 +129,27 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
         ) : null}
 
         <div className="flex flex-wrap items-center gap-1.5">
+          {tableLabel ? (
+            <Badge
+              tone="primary"
+              size="sm"
+              className="inline-flex items-center gap-1"
+            >
+              <TableIcon className="h-3 w-3" />
+              {tableLabel}
+            </Badge>
+          ) : null}
+          {dinerName ? (
+            <Badge
+              tone="info"
+              size="sm"
+              className="inline-flex items-center gap-1"
+              title={`Cliente: ${dinerName}`}
+            >
+              <User className="h-3 w-3" />
+              {dinerName}
+            </Badge>
+          ) : null}
           {isCash ? (
             <Badge tone="warning" size="sm" className="inline-flex items-center gap-1">
               <Banknote className="h-3 w-3" />

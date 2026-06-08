@@ -17,6 +17,37 @@ export interface WorkingHoursSource {
     outOfHoursMessage: string | null;
 }
 
+export interface OrgHoursSource extends WorkingHoursSource {
+    localWorkingDaysOfWeek?: number[];
+    localWorkingStartTime?: string | null;
+    localWorkingEndTime?: string | null;
+    localOutOfHoursMessage?: string | null;
+}
+
+export function workingHoursFor(
+    org: OrgHoursSource,
+    serviceType: "DELIVERY" | "LOCAL",
+): WorkingHoursSource {
+    if (serviceType !== "LOCAL") {
+        return {
+            workingDaysOfWeek: org.workingDaysOfWeek,
+            workingStartTime: org.workingStartTime,
+            workingEndTime: org.workingEndTime,
+            outOfHoursMessage: org.outOfHoursMessage,
+        };
+    }
+    const localDays = org.localWorkingDaysOfWeek ?? [];
+    return {
+        workingDaysOfWeek:
+            localDays.length > 0 ? localDays : org.workingDaysOfWeek,
+        workingStartTime:
+            org.localWorkingStartTime ?? org.workingStartTime,
+        workingEndTime: org.localWorkingEndTime ?? org.workingEndTime,
+        outOfHoursMessage:
+            org.localOutOfHoursMessage ?? org.outOfHoursMessage,
+    };
+}
+
 function localNow(now: Date): { weekday: number; hhmm: string } {
     const parts = new Intl.DateTimeFormat("en-US", {
         timeZone: TIMEZONE,

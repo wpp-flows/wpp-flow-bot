@@ -45,6 +45,8 @@ export class CreateItemUseCase {
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        availableForDelivery?: boolean;
+        availableForLocal?: boolean;
         additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const category = await this.categoryRepo.findByIdInOrg(
@@ -78,6 +80,8 @@ export class UpdateItemUseCase {
         imageUrl?: string | null;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        availableForDelivery?: boolean;
+        availableForLocal?: boolean;
         additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const existing = await this.itemRepo.findByIdInOrg(
@@ -102,6 +106,8 @@ export class UpdateItemUseCase {
             imageUrl: input.imageUrl,
             available: input.available,
             availableDaysOfWeek: input.availableDaysOfWeek,
+            availableForDelivery: input.availableForDelivery,
+            availableForLocal: input.availableForLocal,
             additionals: normalizeAdditionals(input.additionals),
         });
     }

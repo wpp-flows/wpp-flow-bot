@@ -28,7 +28,11 @@ interface DailyAggRow {
 }
 
 export class ListDailyReportsUseCase {
-    async execute(organizationId: string): Promise<DailyReportSummary[]> {
+    async execute(
+        organizationId: string,
+        filters: { serviceType?: "DELIVERY" | "LOCAL" } = {},
+    ): Promise<DailyReportSummary[]> {
+        const serviceType = filters.serviceType ?? null;
         const rows = await prisma.$queryRaw<DailyAggRow[]>`
             SELECT
                 to_char(
@@ -48,6 +52,7 @@ export class ListDailyReportsUseCase {
                 COUNT(*) FILTER (WHERE "status" = 'CANCELED') AS "canceled_count"
             FROM "order"
             WHERE "organizationId" = ${organizationId}
+              AND (${serviceType}::text IS NULL OR "serviceType"::text = ${serviceType}::text)
             GROUP BY 1
             ORDER BY 1 DESC
         `;
@@ -66,6 +71,7 @@ export class GetDailyReportUseCase {
     async execute(input: {
         organizationId: string;
         date: string;
+        serviceType?: "DELIVERY" | "LOCAL";
     }): Promise<DailyReportDetail | null> {
         const range = parseDayRange(input.date);
         if (!range) return null;
@@ -74,7 +80,9 @@ export class GetDailyReportUseCase {
             where: {
                 organizationId: input.organizationId,
                 createdAt: { gte: range.from, lt: range.to },
+                ...(input.serviceType ? { serviceType: input.serviceType } : {}),
             },
+            include: { customer: { select: { name: true } } },
             orderBy: { createdAt: "asc" },
         });
         if (orders.length === 0) return null;
@@ -144,6 +152,12 @@ function toOrderShape(row: any): Order {
         receiptUrl: row.receiptUrl,
         cashChangeFor:
             row.cashChangeFor == null ? null : String(row.cashChangeFor),
+        serviceType: (row.serviceType ?? "DELIVERY") as
+            | "DELIVERY"
+            | "LOCAL",
+        tableId: row.tableId ?? null,
+        billId: row.billId ?? null,
+        customerName: row.customer?.name ?? null,
         appliedPromotionIds: (row.appliedPromotionIds as string[] | null) ?? null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,

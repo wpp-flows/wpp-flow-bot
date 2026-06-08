@@ -17,6 +17,7 @@ import { organizationRoutes } from "./modules/organization/http/routes";
 import { notificationRoutes } from "./modules/notification/http/routes";
 import { paymentRoutes } from "./modules/payment/http/routes";
 import { promotionRoutes } from "./modules/promotion/http/routes";
+import { localServiceRoutes } from "./modules/local-service/http/routes";
 import { publicMenuRoutes } from "./modules/public-menu/http/routes";
 import { publicOrdersRoutes } from "./modules/public-orders/http/routes";
 import { reportRoutes } from "./modules/reports/http/routes";
@@ -72,6 +73,7 @@ registerRoutes(app, [
   ...couponRoutes,
   ...publicMenuRoutes,
   ...publicOrdersRoutes,
+  ...localServiceRoutes,
   ...reportRoutes,
   ...uploadRoutes,
   ...notificationRoutes,

@@ -7,6 +7,7 @@ import type {
     OrderRepository,
     OrderStatus,
     PaymentStatus,
+    ServiceType,
 } from "../order-repo";
 
 const toOrder = (row: any): Order => ({
@@ -33,10 +34,18 @@ const toOrder = (row: any): Order => ({
     paymentLink: row.paymentLink ?? null,
     receiptUrl: row.receiptUrl,
     cashChangeFor: row.cashChangeFor == null ? null : String(row.cashChangeFor),
+    serviceType: (row.serviceType ?? "DELIVERY") as ServiceType,
+    tableId: row.tableId ?? null,
+    billId: row.billId ?? null,
+    customerName: row.customer?.name ?? null,
     appliedPromotionIds: (row.appliedPromotionIds as string[] | null) ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
+
+const customerInclude = {
+    customer: { select: { name: true } },
+} as const;
 
 export class PrismaOrderRepository implements OrderRepository {
     async listByOrg(
@@ -48,6 +57,9 @@ export class PrismaOrderRepository implements OrderRepository {
                 organizationId,
                 ...(filters.status ? { status: filters.status } : {}),
                 ...(filters.customerId ? { customerId: filters.customerId } : {}),
+                ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
+                ...(filters.tableId ? { tableId: filters.tableId } : {}),
+                ...(filters.unbilledOnly ? { billId: null } : {}),
                 ...(filters.fromDate || filters.toDate
                     ? {
                         createdAt: {
@@ -57,6 +69,7 @@ export class PrismaOrderRepository implements OrderRepository {
                     }
                     : {}),
             },
+            include: customerInclude,
             orderBy: { createdAt: "desc" },
         });
         return rows.map(toOrder);
@@ -68,6 +81,7 @@ export class PrismaOrderRepository implements OrderRepository {
     ): Promise<Order | null> {
         const row = await prisma.order.findFirst({
             where: { id, organizationId },
+            include: customerInclude,
         });
         return row ? toOrder(row) : null;
     }
@@ -78,6 +92,7 @@ export class PrismaOrderRepository implements OrderRepository {
     ): Promise<Order | null> {
         const row = await prisma.order.findFirst({
             where: { organizationId, sequence },
+            include: customerInclude,
         });
         return row ? toOrder(row) : null;
     }
@@ -88,6 +103,7 @@ export class PrismaOrderRepository implements OrderRepository {
     ): Promise<Order | null> {
         const row = await prisma.order.findFirst({
             where: { paymentProvider: provider, paymentProviderRef: providerRef },
+            include: customerInclude,
         });
         return row ? toOrder(row) : null;
     }
@@ -110,6 +126,8 @@ export class PrismaOrderRepository implements OrderRepository {
         paymentProvider?: string | null;
         paymentProviderRef?: string | null;
         cashChangeFor?: number | string | null;
+        serviceType?: ServiceType;
+        tableId?: string | null;
         appliedPromotionIds?: string[] | null;
     }): Promise<Order> {
         // Reserve a new per-org sequence inside a transaction so concurrent
@@ -141,6 +159,8 @@ export class PrismaOrderRepository implements OrderRepository {
                     paymentProvider: data.paymentProvider ?? null,
                     paymentProviderRef: data.paymentProviderRef ?? null,
                     cashChangeFor: data.cashChangeFor ?? null,
+                    serviceType: data.serviceType ?? "DELIVERY",
+                    tableId: data.tableId ?? null,
                     appliedPromotionIds:
                         data.appliedPromotionIds && data.appliedPromotionIds.length > 0
                             ? (data.appliedPromotionIds as any)
@@ -176,5 +196,14 @@ export class PrismaOrderRepository implements OrderRepository {
             data,
         });
         return toOrder(row);
+    }
+
+    async attachToBill(orderIds: string[], billId: string): Promise<number> {
+        if (orderIds.length === 0) return 0;
+        const result = await prisma.order.updateMany({
+            where: { id: { in: orderIds } },
+            data: { billId },
+        });
+        return result.count;
     }
 }

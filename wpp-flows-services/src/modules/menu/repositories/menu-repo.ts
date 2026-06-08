@@ -28,6 +28,8 @@ export interface MenuItem {
      * restricts the item to those weekdays in the bot's menu.
      */
     availableDaysOfWeek: number[];
+    availableForDelivery: boolean;
+    availableForLocal: boolean;
     position: number;
     additionals: MenuItemAdditional[];
     createdAt: Date;
@@ -65,6 +67,8 @@ export interface ItemRepository {
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
+        availableForDelivery?: boolean;
+        availableForLocal?: boolean;
         position: number;
         additionals?: MenuItemAdditional[];
     }): Promise<MenuItem>;
@@ -78,6 +82,8 @@ export interface ItemRepository {
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
+            availableForDelivery?: boolean;
+            availableForLocal?: boolean;
             position?: number;
             additionals?: MenuItemAdditional[];
         }

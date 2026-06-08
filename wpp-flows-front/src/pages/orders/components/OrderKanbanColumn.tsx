@@ -11,9 +11,16 @@ interface Props {
   title: string;
   orders: Order[];
   onOpenDetail: (orderId: string) => void;
+  tableLabelById?: Map<string, string>;
 }
 
-export function OrderKanbanColumn({ status, title, orders, onOpenDetail }: Readonly<Props>) {
+export function OrderKanbanColumn({
+  status,
+  title,
+  orders,
+  onOpenDetail,
+  tableLabelById,
+}: Readonly<Props>) {
   const droppable = useDroppable({
     id: `column:${status}`,
     data: { type: 'column', status },
@@ -53,6 +60,7 @@ export function OrderKanbanColumn({ status, title, orders, onOpenDetail }: Reado
                 key={order.id}
                 order={order}
                 onOpenDetail={onOpenDetail}
+                tableLabelById={tableLabelById}
               />
             ))
           )}

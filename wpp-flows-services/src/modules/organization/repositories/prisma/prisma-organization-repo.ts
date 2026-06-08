@@ -30,6 +30,10 @@ const toOrganization = (row: any): Organization => ({
     workingStartTime: row.workingStartTime ?? null,
     workingEndTime: row.workingEndTime ?? null,
     outOfHoursMessage: row.outOfHoursMessage ?? null,
+    localWorkingDaysOfWeek: (row.localWorkingDaysOfWeek ?? []) as number[],
+    localWorkingStartTime: row.localWorkingStartTime ?? null,
+    localWorkingEndTime: row.localWorkingEndTime ?? null,
+    localOutOfHoursMessage: row.localOutOfHoursMessage ?? null,
     botCooldownMinutes:
         typeof row.botCooldownMinutes === "number" ? row.botCooldownMinutes : 60,
     createdAt: row.createdAt,

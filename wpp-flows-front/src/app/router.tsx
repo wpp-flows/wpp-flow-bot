@@ -81,6 +81,36 @@ const AdminInvitationsPage = lazy(() =>
     default: m.InvitationsPage,
   })),
 );
+const LocalTablesPage = lazy(() =>
+  import('@/pages/local/LocalTablesPage').then((m) => ({
+    default: m.LocalTablesPage,
+  })),
+);
+const LocalTableDetailPage = lazy(() =>
+  import('@/pages/local/LocalTableDetailPage').then((m) => ({
+    default: m.LocalTableDetailPage,
+  })),
+);
+const LocalOrdersPage = lazy(() =>
+  import('@/pages/local/LocalOrdersPage').then((m) => ({
+    default: m.LocalOrdersPage,
+  })),
+);
+const LocalWalletPage = lazy(() =>
+  import('@/pages/local/LocalWalletPage').then((m) => ({
+    default: m.LocalWalletPage,
+  })),
+);
+const LocalSettingsPage = lazy(() =>
+  import('@/pages/local/LocalSettingsPage').then((m) => ({
+    default: m.LocalSettingsPage,
+  })),
+);
+const PublicTableMenuPage = lazy(() =>
+  import('@/pages/public-menu/PublicTableMenuPage').then((m) => ({
+    default: m.PublicTableMenuPage,
+  })),
+);
 
 function PageFallback() {
   return (
@@ -97,6 +127,7 @@ export function AppRouter() {
         <Route path={ROUTES.privacy} element={<PrivacyPage />} />
         <Route path={ROUTES.terms} element={<TermsPage />} />
 
+        <Route path="/r/mesa/:token" element={<PublicTableMenuPage />} />
         <Route path="/r/:slug" element={<PublicMenuPage />} />
         <Route path="/r/:slug/carrinho" element={<PublicCartPage />} />
         <Route path="/r/:slug/checkout" element={<PublicCheckoutPage />} />
@@ -146,6 +177,22 @@ export function AppRouter() {
               <Route path={ROUTES.messages} element={<MessagesPage />} />
               <Route path={ROUTES.notifications} element={<NotificationsPage />} />
               <Route path={ROUTES.settings} element={<SettingsPage />} />
+
+              <Route
+                path={ROUTES.local}
+                element={<Navigate to={ROUTES.localTables} replace />}
+              />
+              <Route path={ROUTES.localTables} element={<LocalTablesPage />} />
+              <Route
+                path={ROUTES.localTableDetail()}
+                element={<LocalTableDetailPage />}
+              />
+              <Route path={ROUTES.localOrders} element={<LocalOrdersPage />} />
+              <Route path={ROUTES.localWallet} element={<LocalWalletPage />} />
+              <Route
+                path={ROUTES.localSettings}
+                element={<LocalSettingsPage />}
+              />
             </Route>
           </Route>
         </Route>

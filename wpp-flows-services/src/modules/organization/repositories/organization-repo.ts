@@ -35,6 +35,10 @@ export interface Organization {
     workingStartTime: string | null;
     workingEndTime: string | null;
     outOfHoursMessage: string | null;
+    localWorkingDaysOfWeek: number[];
+    localWorkingStartTime: string | null;
+    localWorkingEndTime: string | null;
+    localOutOfHoursMessage: string | null;
     botCooldownMinutes: number;
     createdAt: Date;
     updatedAt: Date;
@@ -65,6 +69,10 @@ export interface OrganizationRepository {
             workingStartTime: string | null;
             workingEndTime: string | null;
             outOfHoursMessage: string | null;
+            localWorkingDaysOfWeek: number[];
+            localWorkingStartTime: string | null;
+            localWorkingEndTime: string | null;
+            localOutOfHoursMessage: string | null;
             botCooldownMinutes: number;
         }>,
     ): Promise<Organization>;

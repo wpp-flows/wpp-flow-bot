@@ -37,6 +37,13 @@ export const ROUTES = {
   terms: '/termos',
   admin: '/admin',
   adminInvitations: '/admin/invitations',
+  local: '/local',
+  localTables: '/local/tables',
+  localTableDetail: (id = ':id') => `/local/tables/${id}`,
+  localOrders: '/local/orders',
+  localWallet: '/local/wallet',
+  localSettings: '/local/settings',
+  publicTable: (token = ':token') => `/r/mesa/${token}`,
 } as const;
 
 export const API_LATENCY_MS = 600;

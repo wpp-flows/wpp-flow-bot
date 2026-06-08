@@ -9,8 +9,14 @@ import type {
 } from '@/types/publicMenu';
 
 export const publicMenuService = {
-  getMenu(slug: string): Promise<PublicMenuResponse> {
-    return apiCall<PublicMenuResponse>({ endpoint: `/api/public/menu/${slug}` });
+  getMenu(
+    slug: string,
+    options: { serviceType?: 'DELIVERY' | 'LOCAL' } = {},
+  ): Promise<PublicMenuResponse> {
+    const qs = options.serviceType ? `?serviceType=${options.serviceType}` : '';
+    return apiCall<PublicMenuResponse>({
+      endpoint: `/api/public/menu/${slug}${qs}`,
+    });
   },
 
   createOrder(

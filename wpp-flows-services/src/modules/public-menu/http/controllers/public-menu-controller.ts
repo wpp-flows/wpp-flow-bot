@@ -2,6 +2,7 @@ import { Route } from "@/infrastructure/http/decorators/route-decorator";
 import {
     buildOutOfHoursMessage,
     isWithinWorkingHours,
+    workingHoursFor,
 } from "@/modules/organization/working-hours";
 import { categoryRepo, itemRepo } from "@/modules/menu/usecases/factories";
 import { organizationRepo } from "@/modules/organization/usecases/factories";
@@ -14,6 +15,9 @@ export class PublicMenuController {
     @Route("GET", "/api/public/menu/:slug")
     async getMenu(request: FastifyRequest, reply: FastifyReply) {
         const { slug } = request.params as { slug: string };
+        const query = (request.query ?? {}) as { serviceType?: string };
+        const serviceType =
+            query.serviceType === "LOCAL" ? "LOCAL" : "DELIVERY";
         const org = await organizationRepo.findBySlug(slug);
         if (!org) throw new NotFoundError("Restaurant");
 
@@ -26,12 +30,18 @@ export class PublicMenuController {
         ]);
 
         const today = new Date().getDay();
-        const visibleItems = items.filter(
-            (it) =>
-                it.available &&
-                (it.availableDaysOfWeek.length === 0 ||
-                    it.availableDaysOfWeek.includes(today)),
-        );
+        const visibleItems = items.filter((it) => {
+            if (!it.available) return false;
+            if (
+                it.availableDaysOfWeek.length > 0 &&
+                !it.availableDaysOfWeek.includes(today)
+            ) {
+                return false;
+            }
+
+            if (serviceType === "LOCAL") return it.availableForLocal;
+            return it.availableForDelivery;
+        });
 
         const visiblePromotions = promotions.filter((p) => {
             if (p.kind !== "DAILY_MESSAGE") return true;
@@ -40,8 +50,9 @@ export class PublicMenuController {
 
         const onlineBot = bots.find((b) => b.status === "ONLINE") ?? bots[0] ?? null;
 
-        const isOpen = isWithinWorkingHours(org);
-        const closedMessage = isOpen ? null : buildOutOfHoursMessage(org);
+        const hours = workingHoursFor(org, serviceType);
+        const isOpen = isWithinWorkingHours(hours);
+        const closedMessage = isOpen ? null : buildOutOfHoursMessage(hours);
 
         return reply.send({
             organization: {

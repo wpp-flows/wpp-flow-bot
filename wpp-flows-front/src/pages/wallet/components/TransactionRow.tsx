@@ -1,4 +1,6 @@
+import { Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import type { WalletTransaction } from '@/types';
 import {
   TX_KIND_LABEL,
@@ -10,10 +12,17 @@ import {
 
 interface Props {
   tx: WalletTransaction;
+  onReprintBill?: (billId: string) => void;
+  reprintPending?: boolean;
 }
 
-export function TransactionRow({ tx }: Readonly<Props>) {
+export function TransactionRow({
+  tx,
+  onReprintBill,
+  reprintPending = false,
+}: Readonly<Props>) {
   const sign = tx.kind === 'CREDIT' ? '+' : '−';
+  const canReprint = !!tx.billId && !!onReprintBill;
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
       <div className="min-w-0 flex-1">
@@ -35,6 +44,17 @@ export function TransactionRow({ tx }: Readonly<Props>) {
       >
         {sign} {formatBRL(tx.amount)}
       </p>
+      {canReprint ? (
+        <Button
+          size="sm"
+          variant="outline"
+          leftIcon={<Printer />}
+          loading={reprintPending}
+          onClick={() => onReprintBill?.(tx.billId!)}
+        >
+          Reimprimir conta
+        </Button>
+      ) : null}
     </div>
   );
 }

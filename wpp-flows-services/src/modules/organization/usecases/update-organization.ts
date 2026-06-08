@@ -25,6 +25,10 @@ export interface UpdateOrganizationInput {
     workingStartTime?: string | null;
     workingEndTime?: string | null;
     outOfHoursMessage?: string | null;
+    localWorkingDaysOfWeek?: number[];
+    localWorkingStartTime?: string | null;
+    localWorkingEndTime?: string | null;
+    localOutOfHoursMessage?: string | null;
     botCooldownMinutes?: number;
 }
 
@@ -58,6 +62,10 @@ export class UpdateOrganizationUseCase {
             workingStartTime: input.workingStartTime,
             workingEndTime: input.workingEndTime,
             outOfHoursMessage: input.outOfHoursMessage,
+            localWorkingDaysOfWeek: input.localWorkingDaysOfWeek,
+            localWorkingStartTime: input.localWorkingStartTime,
+            localWorkingEndTime: input.localWorkingEndTime,
+            localOutOfHoursMessage: input.localOutOfHoursMessage,
             botCooldownMinutes: input.botCooldownMinutes,
         });
     }

@@ -45,6 +45,21 @@ export const updateOrganizationSchema = z.object({
         .nullable()
         .optional(),
     outOfHoursMessage: z.string().max(800).nullable().optional(),
+    localWorkingDaysOfWeek: z
+        .array(z.number().int().min(0).max(6))
+        .max(7)
+        .optional(),
+    localWorkingStartTime: z
+        .string()
+        .regex(TIME_REGEX, "Use o formato HH:MM (24h).")
+        .nullable()
+        .optional(),
+    localWorkingEndTime: z
+        .string()
+        .regex(TIME_REGEX, "Use o formato HH:MM (24h).")
+        .nullable()
+        .optional(),
+    localOutOfHoursMessage: z.string().max(800).nullable().optional(),
     botCooldownMinutes: z.number().int().min(0).max(1440).optional(),
 });
 

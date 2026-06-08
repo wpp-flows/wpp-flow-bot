@@ -30,6 +30,8 @@ export const createItemSchema = z.object({
     imageUrl: z.url().optional(),
     available: z.boolean().optional(),
     availableDaysOfWeek: daysOfWeekSchema.optional(),
+    availableForDelivery: z.boolean().optional(),
+    availableForLocal: z.boolean().optional(),
     additionals: z.array(additionalSchema).max(50).optional(),
 });
 
@@ -41,6 +43,8 @@ export const updateItemSchema = z.object({
     imageUrl: z.url().nullable().optional(),
     available: z.boolean().optional(),
     availableDaysOfWeek: daysOfWeekSchema.optional(),
+    availableForDelivery: z.boolean().optional(),
+    availableForLocal: z.boolean().optional(),
     additionals: z.array(additionalSchema).max(50).optional(),
 });
 

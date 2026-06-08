@@ -51,6 +51,23 @@ export const queryKeys = {
   reports: {
     daily: ['reports', 'daily'] as const,
     dailyDetail: (date: string) => ['reports', 'daily', date] as const,
+    dailyByService: (serviceType: 'DELIVERY' | 'LOCAL') =>
+      ['reports', 'daily', 'service', serviceType] as const,
+  },
+  localTables: {
+    all: ['local', 'tables'] as const,
+    detail: (id: string) => ['local', 'tables', id] as const,
+  },
+  localBills: {
+    all: ['local', 'bills'] as const,
+  },
+  localOrders: {
+    all: ['local', 'orders'] as const,
+    byTable: (tableId: string) => ['local', 'orders', 'table', tableId] as const,
+  },
+  localWallet: {
+    summary: ['local', 'wallet'] as const,
+    transactions: ['local', 'wallet', 'transactions'] as const,
   },
   wallet: {
     me: ['wallet'] as const,

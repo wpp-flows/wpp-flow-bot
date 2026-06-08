@@ -21,14 +21,15 @@ export function WalletPage() {
     queryKey: queryKeys.wallet.me,
     queryFn: walletService.get,
   });
+
   const txQ = useQuery({
     queryKey: queryKeys.wallet.transactions,
-    queryFn: walletService.listTransactions,
+    queryFn: () => walletService.listTransactions({ serviceType: 'DELIVERY' }),
   });
-  
+
   const reportsQ = useQuery({
     queryKey: queryKeys.reports.daily,
-    queryFn: reportService.listDaily,
+    queryFn: () => reportService.listDaily({ serviceType: 'DELIVERY' }),
   });
 
   const balance = walletQ.data?.balance ?? '0';

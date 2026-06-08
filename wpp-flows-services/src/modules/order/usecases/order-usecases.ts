@@ -6,6 +6,7 @@ import type {
     OrderItem,
     OrderRepository,
     OrderStatus,
+    ServiceType,
 } from "../repositories/order-repo";
 import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
 import type { NotifyCustomerOrderStatusChangeUseCase } from "./notify-customer-status-change";
@@ -102,6 +103,8 @@ export class CreateOrderFromCartUseCase {
         couponDiscount?: number | null;
         paymentProvider?: string | null;
         cashChangeFor?: number | null;
+        serviceType?: ServiceType;
+        tableId?: string | null;
     }): Promise<Order> {
         if (input.items.length === 0) {
             throw new ValidationError("Pedido vazio — adicione itens antes de confirmar.");
@@ -135,6 +138,8 @@ export class CreateOrderFromCartUseCase {
                 input.cashChangeFor && input.cashChangeFor > 0
                     ? input.cashChangeFor.toFixed(2)
                     : null,
+            serviceType: input.serviceType ?? "DELIVERY",
+            tableId: input.tableId ?? null,
             appliedPromotionIds: input.appliedPromotionIds ?? null,
         });
         await this.customerRepo.incrementOrderCount(input.customerId);
