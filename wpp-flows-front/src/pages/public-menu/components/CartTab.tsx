@@ -109,7 +109,7 @@ export function CartTab({ slug, items: menuItems, onBrowseMenu, onCheckout }: Re
           <p className="font-semibold">{formatBrl(cart.subtotal)}</p>
         </div>
         <Button size="lg" onClick={onCheckout}>
-          Ir para checkout
+          Finalizar Pedido
         </Button>
       </div>
     </div>

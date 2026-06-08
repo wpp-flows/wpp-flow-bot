@@ -1,39 +1,46 @@
-import { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/services/authService';
-import { toast } from '@/stores/uiStore';
-import type { Organization } from '@/types';
-import { TemplateEditor } from './components/TemplateEditor';
+import { useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { useAuth } from "@/hooks/useAuth";
+import { authService } from "@/services/authService";
+import { toast } from "@/stores/uiStore";
+import type { Organization } from "@/types";
+import { TemplateEditor } from "../../components/messaging/TemplateEditor";
 
-const CANCEL_PLACEHOLDER = 'Que pena, {{customer_name}}! Seu pedido foi cancelado.';
+const CANCEL_PLACEHOLDER =
+  "Que pena, {{customer_name}}! Seu pedido foi cancelado.";
 const TIMEOUT_PLACEHOLDER =
-  'O tempo para pagamento expirou e seu pedido foi cancelado automaticamente.';
+  "O tempo para pagamento expirou e seu pedido foi cancelado automaticamente.";
 const RECEIVED_PLACEHOLDER =
-  '✅ Pedido {{order_number}} confirmado, {{customer_name}}! Logo seu pedido estará em preparo.';
+  "✅ Pedido {{order_number}} confirmado, {{customer_name}}! Logo seu pedido estará em preparo.";
 const OUT_OF_HOURS_PLACEHOLDER =
-  'Estamos fora do horário de atendimento. Trabalhamos {{days_of_work}} das {{from}} até as {{to}}.';
+  "Estamos fora do horário de atendimento. Trabalhamos {{days_of_work}} das {{from}} até as {{to}}.";
 
 const OUT_OF_HOURS_VARIABLES = [
   {
-    key: 'days_of_work',
-    label: 'Dias de atendimento',
+    key: "days_of_work",
+    label: "Dias de atendimento",
     description: 'Dias da semana formatados (ex.: "de segunda a sexta").',
   },
   {
-    key: 'from',
-    label: 'Abre às',
-    description: 'Horário de abertura (HH:MM).',
+    key: "from",
+    label: "Abre às",
+    description: "Horário de abertura (HH:MM).",
   },
   {
-    key: 'to',
-    label: 'Fecha às',
-    description: 'Horário de fechamento (HH:MM).',
+    key: "to",
+    label: "Fecha às",
+    description: "Horário de fechamento (HH:MM).",
   },
 ];
 
@@ -60,7 +67,9 @@ export function MessagesPage() {
       const cooldownMinutes = Number.parseInt(form.botCooldownMinutes, 10);
       return authService.updateOrganization({
         paymentTimeoutMinutes:
-          Number.isFinite(timeoutMinutes) && timeoutMinutes > 0 ? timeoutMinutes : undefined,
+          Number.isFinite(timeoutMinutes) && timeoutMinutes > 0
+            ? timeoutMinutes
+            : undefined,
         botCooldownMinutes:
           Number.isFinite(cooldownMinutes) && cooldownMinutes >= 0
             ? cooldownMinutes
@@ -73,10 +82,13 @@ export function MessagesPage() {
     },
     onSuccess: async () => {
       await refreshOrganization();
-      toast.success('Mensagens salvas');
+      toast.success("Mensagens salvas");
     },
     onError: (err) =>
-      toast.error('Falha ao salvar', err instanceof Error ? err.message : undefined),
+      toast.error(
+        "Falha ao salvar",
+        err instanceof Error ? err.message : undefined,
+      ),
   });
 
   return (
@@ -158,7 +170,9 @@ export function MessagesPage() {
             hint="Em branco usa um texto padrão construído a partir dos dias e horários."
             placeholder={OUT_OF_HOURS_PLACEHOLDER}
             value={form.outOfHoursMessage}
-            onChange={(next) => setForm((f) => ({ ...f, outOfHoursMessage: next }))}
+            onChange={(next) =>
+              setForm((f) => ({ ...f, outOfHoursMessage: next }))
+            }
             variables={OUT_OF_HOURS_VARIABLES}
           />
         </CardContent>
@@ -168,8 +182,8 @@ export function MessagesPage() {
         <CardHeader>
           <CardTitle>Pagamento confirmado</CardTitle>
           <CardDescription>
-            Enviada quando o cliente toca em "Abrir conversa no WhatsApp" após
-            o pagamento aprovado.
+            Enviada quando o cliente toca em "Abrir conversa no WhatsApp" após o
+            pagamento aprovado.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -212,7 +226,8 @@ export function MessagesPage() {
         <CardHeader>
           <CardTitle>Pagamento expirou</CardTitle>
           <CardDescription>
-            Enviada quando o pedido é cancelado por exceder o tempo limite acima.
+            Enviada quando o pedido é cancelado por exceder o tempo limite
+            acima.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -245,14 +260,14 @@ export function MessagesPage() {
 function buildState(org: Organization | null): FormState {
   return {
     paymentTimeoutMinutes: String(org?.paymentTimeoutMinutes ?? 15),
-    paymentCancelMessage: org?.paymentCancelMessage ?? '',
-    paymentTimeoutMessage: org?.paymentTimeoutMessage ?? '',
-    paymentReceivedMessage: org?.paymentReceivedMessage ?? '',
-    outOfHoursMessage: org?.outOfHoursMessage ?? '',
+    paymentCancelMessage: org?.paymentCancelMessage ?? "",
+    paymentTimeoutMessage: org?.paymentTimeoutMessage ?? "",
+    paymentReceivedMessage: org?.paymentReceivedMessage ?? "",
+    outOfHoursMessage: org?.outOfHoursMessage ?? "",
     botCooldownMinutes: String(org?.botCooldownMinutes ?? 60),
   };
 }
 
 function nullIfBlank(value: string): string | null {
-  return value.trim() === '' ? null : value.trim();
+  return value.trim() === "" ? null : value.trim();
 }
