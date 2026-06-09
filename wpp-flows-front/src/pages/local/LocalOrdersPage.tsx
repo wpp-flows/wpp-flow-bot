@@ -38,7 +38,6 @@ export function LocalOrdersPage() {
     queryKey: queryKeys.localOrders.all,
     queryFn: () =>
       orderService.list({ serviceType: 'LOCAL', unbilledOnly: true }),
-    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });

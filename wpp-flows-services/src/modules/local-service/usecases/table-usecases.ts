@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import type {
     RestaurantTable,
@@ -41,7 +42,7 @@ export class CreateTableUseCase {
         const label = input.label.trim();
         if (label.length < 1) throw new ValidationError("Informe um nome para a mesa.");
         if (label.length > 60) throw new ValidationError("Nome muito longo.");
-        return this.repo.create({
+        const created = await this.repo.create({
             organizationId: input.organizationId,
             label,
             qrToken: newQrToken(),
@@ -49,6 +50,11 @@ export class CreateTableUseCase {
             seats: input.seats ?? null,
             notes: input.notes?.trim() ?? null,
         });
+        orgEventBus.emit(input.organizationId, {
+            kind: "table.updated",
+            tableId: created.id,
+        });
+        return created;
     }
 }
 
@@ -64,7 +70,7 @@ export class UpdateTableUseCase {
     }): Promise<RestaurantTable> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!t) throw new NotFoundError("Mesa");
-        return this.repo.update(input.id, {
+        const updated = await this.repo.update(input.id, {
             ...(input.label !== undefined ? { label: input.label.trim() } : {}),
             ...(input.position !== undefined ? { position: input.position } : {}),
             ...(input.seats !== undefined ? { seats: input.seats } : {}),
@@ -72,6 +78,11 @@ export class UpdateTableUseCase {
                 ? { notes: input.notes === null ? null : input.notes.trim() }
                 : {}),
         });
+        orgEventBus.emit(input.organizationId, {
+            kind: "table.updated",
+            tableId: updated.id,
+        });
+        return updated;
     }
 }
 
@@ -83,7 +94,12 @@ export class RegenerateQrTokenUseCase {
     }): Promise<RestaurantTable> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!t) throw new NotFoundError("Mesa");
-        return this.repo.update(input.id, { qrToken: newQrToken() });
+        const updated = await this.repo.update(input.id, { qrToken: newQrToken() });
+        orgEventBus.emit(input.organizationId, {
+            kind: "table.updated",
+            tableId: updated.id,
+        });
+        return updated;
     }
 }
 
@@ -106,6 +122,10 @@ export class DeleteTableUseCase {
             );
         }
         await this.repo.delete(input.id);
+        orgEventBus.emit(input.organizationId, {
+            kind: "table.deleted",
+            tableId: input.id,
+        });
     }
 }
 
@@ -115,9 +135,14 @@ export class RequestBillUseCase {
         const t = await this.repo.findByToken(token);
         if (!t) throw new NotFoundError("Mesa");
         if (t.billRequestedAt) return t;
-        return this.repo.update(t.id, {
+        const updated = await this.repo.update(t.id, {
             billRequestedAt: new Date(),
             status: "BILL_REQUESTED",
         });
+        orgEventBus.emit(updated.organizationId, {
+            kind: "table.updated",
+            tableId: updated.id,
+        });
+        return updated;
     }
 }

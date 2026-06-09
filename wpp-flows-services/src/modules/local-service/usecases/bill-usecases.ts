@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type {
     Order,
     OrderRepository,
@@ -88,6 +89,16 @@ export class CloseBillUseCase {
         await this.tables.update(input.tableId, {
             status: "EMPTY",
             billRequestedAt: null,
+        });
+
+        orgEventBus.emit(input.organizationId, {
+            kind: "bill.closed",
+            tableId: input.tableId,
+            billId: bill.id,
+        });
+        orgEventBus.emit(input.organizationId, {
+            kind: "table.updated",
+            tableId: input.tableId,
         });
 
         return { bill, orders: billable };

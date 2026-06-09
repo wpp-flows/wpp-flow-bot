@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type {
     DeliveryMode,
     Order,
@@ -44,7 +45,16 @@ export class MarkOrderPaidUseCase {
         const order = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!order) throw new NotFoundError("Order");
         if (order.paymentStatus === "PAID") return order;
-        return this.repo.updatePayment(input.id, { paymentStatus: "PAID" });
+        const updated = await this.repo.updatePayment(input.id, {
+            paymentStatus: "PAID",
+        });
+        orgEventBus.emit(input.organizationId, {
+            kind: "order.updated",
+            orderId: updated.id,
+            tableId: updated.tableId,
+            serviceType: updated.serviceType,
+        });
+        return updated;
     }
 }
 
@@ -70,6 +80,12 @@ export class UpdateOrderStatusUseCase {
             );
         }
         const updated = await this.repo.updateStatus(input.id, input.status);
+        orgEventBus.emit(input.organizationId, {
+            kind: "order.updated",
+            orderId: updated.id,
+            tableId: updated.tableId,
+            serviceType: updated.serviceType,
+        });
         if (input.notifyCustomer !== false) {
             void this.notifyCustomer.execute(updated, input.status);
         }

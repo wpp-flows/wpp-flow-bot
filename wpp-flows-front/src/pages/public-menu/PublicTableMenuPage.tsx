@@ -32,6 +32,7 @@ import {
 import { usePublicCart, cartLineTotal } from "./hooks/usePublicCart";
 import { formatBrl } from "@/helpers/public-menu-helpers";
 import { useClientOrders } from "./hooks/useClientOrders";
+import { usePublicTableRealtime } from "./hooks/usePublicTableRealtime";
 
 export function PublicTableMenuPage() {
   const { token = "" } = useParams<{ token: string }>();
@@ -39,6 +40,7 @@ export function PublicTableMenuPage() {
   const [openItem, setOpenItem] = useState<PublicMenuItem | null>(null);
 
   const { orders, isLoadingOrders, refetchOrders } = useClientOrders(token);
+  usePublicTableRealtime(token);
 
   const nameStorageKey = `mesa.public-customer-name.${token}`;
   const [diner, setDiner] = useState<string>(() => {
