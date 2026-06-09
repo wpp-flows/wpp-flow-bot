@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Bell,
   CheckCircle2,
@@ -13,34 +13,40 @@ import {
   Utensils,
   UtensilsCrossed,
   XCircle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { publicMenuService } from '@/services/publicMenuService';
-import { publicTableService } from '@/services/publicTableService';
-import { queryKeys } from '@/lib/queryClient';
-import { toast } from '@/stores/uiStore';
-import { ApiError } from '@/instances/api';
-import type { PublicMenuItem } from '@/types/publicMenu';
-import type { PublicTableOrder } from '@/types';
-import { cn } from '@/lib/utils';
-import { CatalogTab } from './components/CatalogTab';
-import { ProductDetailSheet } from './components/ProductDetailSheet';
-import { PublicBottomTabs, type PublicTab } from './components/PublicBottomTabs';
-import { usePublicCart, cartLineTotal } from './hooks/usePublicCart';
-import { formatBrl } from '@/helpers/public-menu-helpers';
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { publicMenuService } from "@/services/publicMenuService";
+import { publicTableService } from "@/services/publicTableService";
+import { queryKeys } from "@/lib/queryClient";
+import { toast } from "@/stores/uiStore";
+import { ApiError } from "@/instances/api";
+import type { PublicMenuItem } from "@/types/publicMenu";
+import type { PublicTableOrder } from "@/types";
+import { cn } from "@/lib/utils";
+import { CatalogTab } from "./components/CatalogTab";
+import { ProductDetailSheet } from "./components/ProductDetailSheet";
+import {
+  PublicBottomTabs,
+  type PublicTab,
+} from "./components/PublicBottomTabs";
+import { usePublicCart, cartLineTotal } from "./hooks/usePublicCart";
+import { formatBrl } from "@/helpers/public-menu-helpers";
+import { useClientOrders } from "./hooks/useClientOrders";
 
 export function PublicTableMenuPage() {
-  const { token = '' } = useParams<{ token: string }>();
-  const [activeTab, setActiveTab] = useState<PublicTab>('catalog');
+  const { token = "" } = useParams<{ token: string }>();
+  const [activeTab, setActiveTab] = useState<PublicTab>("catalog");
   const [openItem, setOpenItem] = useState<PublicMenuItem | null>(null);
+
+  const { orders, isLoadingOrders, refetchOrders } = useClientOrders(token);
 
   const nameStorageKey = `mesa.public-customer-name.${token}`;
   const [diner, setDiner] = useState<string>(() => {
-    if (typeof globalThis.window === 'undefined') return '';
-    return globalThis.window.localStorage.getItem(nameStorageKey) ?? '';
+    if (typeof globalThis.window === "undefined") return "";
+    return globalThis.window.localStorage.getItem(nameStorageKey) ?? "";
   });
   useEffect(() => {
-    if (typeof globalThis.window === 'undefined') return;
+    if (typeof globalThis.window === "undefined") return;
     if (diner.trim()) {
       globalThis.window.localStorage.setItem(nameStorageKey, diner.trim());
     } else {
@@ -49,40 +55,31 @@ export function PublicTableMenuPage() {
   }, [diner, nameStorageKey]);
 
   const tableQ = useQuery({
-    queryKey: ['public-table', token],
+    queryKey: ["public-table", token],
     queryFn: () => publicTableService.resolve(token),
     enabled: !!token,
   });
 
-  const slug = tableQ.data?.slug ?? '';
+  const slug = tableQ.data?.slug ?? "";
 
   const cartSlug = `mesa-${token}`;
   const cart = usePublicCart(cartSlug);
 
   const menuQ = useQuery({
-    queryKey: [...queryKeys.publicMenu.detail(slug), 'LOCAL'] as const,
-    queryFn: () => publicMenuService.getMenu(slug, { serviceType: 'LOCAL' }),
+    queryKey: [...queryKeys.publicMenu.detail(slug), "LOCAL"] as const,
+    queryFn: () => publicMenuService.getMenu(slug, { serviceType: "LOCAL" }),
     enabled: !!slug,
     refetchOnWindowFocus: true,
-    refetchOnMount: 'always',
-    staleTime: 0,
-  });
-
-  const ordersStatusQ = useQuery({
-    queryKey: ['public-table-orders', token],
-    queryFn: () => publicTableService.listOrders(token),
-    enabled: !!token,
-    refetchInterval: 6_000,
-    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
     staleTime: 0,
   });
 
   useEffect(() => {
-    const name = tableQ.data?.organizationName ?? 'Mesa';
-    const label = tableQ.data?.tableLabel ?? '';
+    const name = tableQ.data?.organizationName ?? "Mesa";
+    const label = tableQ.data?.tableLabel ?? "";
     document.title = label ? `${name} | ${label}` : name;
     return () => {
-      document.title = 'Mesa';
+      document.title = "Mesa";
     };
   }, [tableQ.data?.organizationName, tableQ.data?.tableLabel]);
 
@@ -114,17 +111,17 @@ export function PublicTableMenuPage() {
           additionals: it.additionals.map((a) => ({
             id: a.id,
             name: a.name,
-            price: Number.parseFloat(a.price || '0'),
+            price: Number.parseFloat(a.price || "0"),
           })),
           bundle: it.bundle
             ? {
-              bundleId: it.bundle.bundleId,
-              picks: it.bundle.picks.map((p) => ({
-                componentId: p.componentId,
-                itemId: p.itemId,
-              })),
-              answers: it.bundle.answers,
-            }
+                bundleId: it.bundle.bundleId,
+                picks: it.bundle.picks.map((p) => ({
+                  componentId: p.componentId,
+                  itemId: p.itemId,
+                })),
+                answers: it.bundle.answers,
+              }
             : null,
         })),
         tableToken: token,
@@ -132,27 +129,25 @@ export function PublicTableMenuPage() {
       }),
     onSuccess: () => {
       cart.clear();
-      toast.success(
-        'Pedido enviado',
-        'A cozinha já recebeu. Bom apetite!',
-      );
-      setActiveTab('catalog');
+      toast.success("Pedido enviado", "A cozinha já recebeu. Bom apetite!");
+      void refetchOrders();
+      setActiveTab("status");
     },
     onError: (err) =>
       toast.error(
-        err instanceof ApiError ? err.message : 'Falha ao enviar pedido',
+        err instanceof ApiError ? err.message : "Falha ao enviar pedido",
       ),
   });
 
   const requestBill = useMutation({
     mutationFn: () => publicTableService.requestBill(token),
     onSuccess: () => {
-      toast.success('Pedido de conta enviado', 'O garçom virá em breve.');
+      toast.success("Pedido de conta enviado", "O garçom virá em breve.");
       void tableQ.refetch();
     },
     onError: (err) =>
       toast.error(
-        err instanceof ApiError ? err.message : 'Falha ao pedir a conta',
+        err instanceof ApiError ? err.message : "Falha ao pedir a conta",
       ),
   });
 
@@ -209,22 +204,23 @@ export function PublicTableMenuPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        {activeTab === 'catalog' ? (
+        {activeTab === "catalog" ? (
           <CatalogTab menu={menu} onItemSelect={setOpenItem} />
-        ) : activeTab === 'status' ? (
+        ) : activeTab === "status" ? (
           <TableOrdersStatusTab
-            orders={ordersStatusQ.data?.orders ?? []}
-            isLoading={ordersStatusQ.isLoading}
+            orders={orders ?? []}
+            isLoading={isLoadingOrders}
           />
         ) : (
           <TableCartTab
             items={cart.items}
+            token={token}
             menuItems={menu.items}
             dinerName={diner}
             onDinerNameChange={setDiner}
             onRemove={cart.remove}
             onUpdateQty={cart.updateQty}
-            onBrowseMenu={() => setActiveTab('catalog')}
+            onBrowseMenu={() => setActiveTab("catalog")}
             onSend={() => placeOrder.mutate()}
             onRequestBill={() => requestBill.mutate()}
             sending={placeOrder.isPending}
@@ -235,11 +231,11 @@ export function PublicTableMenuPage() {
         )}
       </main>
 
-      {activeTab === 'catalog' && cart.totalItems > 0 ? (
+      {activeTab === "catalog" && cart.totalItems > 0 ? (
         <FloatingCartPill
           totalItems={cart.totalItems}
           subtotal={cart.subtotal}
-          onOpen={() => setActiveTab('orders')}
+          onOpen={() => setActiveTab("orders")}
         />
       ) : null}
 
@@ -247,20 +243,20 @@ export function PublicTableMenuPage() {
         active={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: 'catalog', label: 'Cardápio', icon: <UtensilsCrossed /> },
+          { id: "catalog", label: "Cardápio", icon: <UtensilsCrossed /> },
           {
-            id: 'orders',
-            label: 'Pedido',
+            id: "orders",
+            label: "Pedido",
             icon: <ClipboardList />,
             badge: cart.totalItems > 0 ? cart.totalItems : null,
           },
           {
-            id: 'status',
-            label: 'Status',
+            id: "status",
+            label: "Status",
             icon: <ListChecks />,
             badge:
-              ordersStatusQ.data?.orders.filter(
-                (o) => o.status !== 'DELIVERED' && o.status !== 'CANCELED',
+              orders.filter(
+                (o) => o.status !== "DELIVERED" && o.status !== "CANCELED",
               ).length ?? null,
           },
         ]}
@@ -288,6 +284,7 @@ export function PublicTableMenuPage() {
 }
 
 function TableCartTab({
+  token,
   items,
   menuItems,
   dinerName,
@@ -302,7 +299,8 @@ function TableCartTab({
   requestingBill,
   subtotal,
 }: {
-  items: ReturnType<typeof usePublicCart>['items'];
+  token: string;
+  items: ReturnType<typeof usePublicCart>["items"];
   /** Used to look up the imageUrl for each cart line — cart entries
    *  don't carry the image themselves so we resolve from the menu. */
   menuItems: PublicMenuItem[];
@@ -330,6 +328,7 @@ function TableCartTab({
     () => items.reduce((sum, it) => sum + it.qty, 0),
     [items],
   );
+  const { orders } = useClientOrders(token);
 
   if (items.length === 0) {
     return (
@@ -347,10 +346,10 @@ function TableCartTab({
           className="w-full"
           leftIcon={<Bell />}
           loading={requestingBill}
-          disabled={billRequested}
+          disabled={billRequested || orders.length === 0}
           onClick={onRequestBill}
         >
-          {billRequested ? 'Conta solicitada' : 'Pedir a conta'}
+          {billRequested ? "Conta solicitada" : "Pedir a conta"}
         </Button>
       </div>
     );
@@ -379,7 +378,7 @@ function TableCartTab({
                     </p>
                     {it.additionals.length > 0 ? (
                       <p className="mt-1 line-clamp-2 text-2xs text-muted-foreground">
-                        {it.additionals.map((a) => a.name).join(' · ')}
+                        {it.additionals.map((a) => a.name).join(" · ")}
                       </p>
                     ) : null}
                     {it.notes ? (
@@ -455,7 +454,7 @@ function TableCartTab({
       <section className="rounded-lg border border-border bg-card p-4 shadow-soft-sm">
         <div className="flex items-baseline justify-between">
           <span className="text-sm text-muted-foreground">
-            Subtotal · {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+            Subtotal · {totalItems} {totalItems === 1 ? "item" : "itens"}
           </span>
           <span className="font-mono text-lg font-semibold tabular-nums">
             {formatBrl(subtotal)}
@@ -481,10 +480,10 @@ function TableCartTab({
           className="w-full"
           leftIcon={<Bell />}
           loading={requestingBill}
-          disabled={billRequested}
+          disabled={billRequested || orders.length === 0}
           onClick={onRequestBill}
         >
-          {billRequested ? 'Conta solicitada' : 'Pedir a conta'}
+          {billRequested ? "Conta solicitada" : "Pedir a conta"}
         </Button>
       </div>
     </div>
@@ -512,16 +511,14 @@ function TableOrdersStatusTab({
         <ListChecks className="h-8 w-8 text-muted-foreground" />
         <h2 className="font-medium">Nada por enquanto</h2>
         <p className="text-sm text-muted-foreground">
-          Os pedidos que você enviar aparecem aqui com o status em tempo
-          real.
+          Os pedidos que você enviar aparecem aqui com o status em tempo real.
         </p>
       </div>
     );
   }
 
   const sorted = [...orders].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   return (
@@ -534,55 +531,54 @@ function TableOrdersStatusTab({
 }
 
 const STATUS_META: Record<
-  PublicTableOrder['status'],
+  PublicTableOrder["status"],
   { label: string; tone: string; icon: ReactNode }
 > = {
   RECEIVED: {
-    label: 'Recebido',
-    tone: 'bg-info-soft text-info ring-info/30',
+    label: "Recebido",
+    tone: "bg-info-soft text-info ring-info/30",
     icon: <CircleDashed className="h-3.5 w-3.5" />,
   },
   PREPARING: {
-    label: 'Preparando',
-    tone: 'bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-500/30',
+    label: "Preparando",
+    tone: "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-500/30",
     icon: <ChefHat className="h-3.5 w-3.5" />,
   },
   OUT_FOR_DELIVERY: {
-    label: 'Pronto para servir',
-    tone: 'bg-primary/15 text-primary ring-primary/30',
+    label: "Pronto para servir",
+    tone: "bg-primary/15 text-primary ring-primary/30",
     icon: <ChefHat className="h-3.5 w-3.5" />,
   },
   DELIVERED: {
-    label: 'Servido',
-    tone: 'bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-500/30',
+    label: "Servido",
+    tone: "bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-500/30",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
   },
   CANCELED: {
-    label: 'Cancelado',
-    tone: 'bg-zinc-100 text-zinc-600 ring-zinc-200 dark:bg-zinc-700/40 dark:text-zinc-300 dark:ring-zinc-600/30',
+    label: "Cancelado",
+    tone: "bg-zinc-100 text-zinc-600 ring-zinc-200 dark:bg-zinc-700/40 dark:text-zinc-300 dark:ring-zinc-600/30",
     icon: <XCircle className="h-3.5 w-3.5" />,
   },
 };
 
 function StatusCard({ order }: { order: PublicTableOrder }) {
   const meta = STATUS_META[order.status];
-  const isCanceled = order.status === 'CANCELED';
-  const placedAt = new Date(order.createdAt).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const isCanceled = order.status === "CANCELED";
+  const placedAt = new Date(order.createdAt).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
-  const orderNumber = `#${String(order.sequence).padStart(4, '0')}`;
+  const orderNumber = `#${String(order.sequence).padStart(4, "0")}`;
   const dinerName =
-    order.customerName &&
-      !order.customerName.toLowerCase().startsWith('mesa ')
+    order.customerName && !order.customerName.toLowerCase().startsWith("mesa ")
       ? order.customerName
       : null;
 
   return (
     <li
       className={cn(
-        'rounded-xl border border-border bg-card p-4 shadow-soft-sm',
-        isCanceled && 'opacity-60',
+        "rounded-xl border border-border bg-card p-4 shadow-soft-sm",
+        isCanceled && "opacity-60",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -601,7 +597,7 @@ function StatusCard({ order }: { order: PublicTableOrder }) {
         </div>
         <span
           className={cn(
-            'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset',
+            "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset",
             meta.tone,
           )}
         >
@@ -665,7 +661,7 @@ function FloatingCartPill({
         >
           <span className="flex items-center gap-2 text-sm font-medium">
             <ShoppingCart className="h-4 w-4" />
-            {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+            {totalItems} {totalItems === 1 ? "item" : "itens"}
           </span>
           <span className="font-mono text-sm font-semibold tabular-nums">
             {formatBrl(subtotal)}

@@ -44,9 +44,7 @@ export function LocalTablesPage() {
   const tablesQ = useQuery({
     queryKey: queryKeys.localTables.all,
     queryFn: tableService.list,
-    refetchInterval: 5_000,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    gcTime: 60 * 1000 * 0.5,
   });
 
   const ordersQ = useQuery({

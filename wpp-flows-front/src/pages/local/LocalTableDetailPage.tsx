@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
@@ -300,8 +301,18 @@ export function LocalTableDetailPage() {
   );
 }
 
+function tableQrUrl(table: RestaurantTable): string {
+  return `${globalThis.location.origin}/r/mesa/${encodeURIComponent(table.qrToken)}`;
+}
+
+function tableQrSvg(url: string, size: number): string {
+  return renderToStaticMarkup(
+    <QRCodeSVG value={url} size={size} includeMargin />,
+  );
+}
+
 function QRPreview({ table }: { table: RestaurantTable }) {
-  const url = `${window.location.origin}/r/mesa/${encodeURIComponent(table.qrToken)}`;
+  const url = tableQrUrl(table);
   return (
     <div className="flex flex-col items-center gap-3 rounded-md border border-border bg-muted/30 p-4">
       <div className="rounded-md bg-white p-3">
@@ -332,7 +343,8 @@ function BillRequestedNotice({ table }: { table: RestaurantTable }) {
 }
 
 function printQrLabel(table: RestaurantTable, restaurantName: string) {
-  const url = `${window.location.origin}/r/mesa/${encodeURIComponent(table.qrToken)}`;
+  const url = tableQrUrl(table);
+  const qrSvg = tableQrSvg(url, 280);
   const win = globalThis.open('', '_blank', 'width=420,height=600');
   if (!win) {
     toast.error('Não foi possível abrir a impressão');
@@ -347,20 +359,22 @@ function printQrLabel(table: RestaurantTable, restaurantName: string) {
     body { margin: 0; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; text-align: center; }
     h1 { font-size: 24px; margin: 0 0 4px; }
     p.sub { color: #64748b; font-size: 13px; margin: 0 0 24px; }
-    .qr-wrap { display: inline-block; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .qr-wrap { display: inline-block; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+    .qr-wrap svg { display: block; width: 280px; height: 280px; }
     p.footer { color: #94a3b8; font-size: 11px; margin-top: 16px; word-break: break-all; }
-    @media print { body { padding: 12mm; } }
+    @media print {
+      body { padding: 12mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
   </style>
 </head>
 <body>
   <h1>${escapeHtml(table.label)}</h1>
   <p class="sub">${escapeHtml(restaurantName)} · cardápio do salão</p>
-  <div class="qr-wrap" id="qr"></div>
+  <div class="qr-wrap">${qrSvg}</div>
   <p class="footer">${escapeHtml(url)}</p>
-  <script src="https://unpkg.com/qrcode/build/qrcode.min.js"></script>
   <script>
-    QRCode.toCanvas(document.getElementById('qr').appendChild(document.createElement('canvas')), ${JSON.stringify(url)}, { width: 280, margin: 1 }, function () {
-      setTimeout(function(){ window.print(); }, 200);
+    window.addEventListener('load', function () {
+      setTimeout(function () { window.print(); }, 150);
     });
   </script>
 </body>

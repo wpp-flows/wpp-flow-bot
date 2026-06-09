@@ -139,7 +139,7 @@ export function PublicMenuPage() {
         <FloatingCartPill
           totalItems={cart.totalItems}
           subtotal={cart.subtotal}
-          onOpen={() => changeTab("checkout")}
+          onOpen={() => changeTab("orders")}
         />
       ) : null}
 
