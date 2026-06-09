@@ -14,6 +14,13 @@ function openStream(
     request: FastifyRequest,
     reply: FastifyReply,
 ): { send: (event: RealtimeEvent | { kind: "ping" }) => void; close: () => void } {
+
+    for (const [key, value] of Object.entries(reply.getHeaders())) {
+        if (value !== undefined && value !== null) {
+            reply.raw.setHeader(key, value as string | string[] | number);
+        }
+    }
+
     reply.raw.setHeader("Content-Type", "text/event-stream");
     reply.raw.setHeader("Cache-Control", "no-cache, no-transform");
     reply.raw.setHeader("Connection", "keep-alive");
