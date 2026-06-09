@@ -21,6 +21,7 @@ import type { NotificationEmitter } from "@/modules/notification/usecases/notifi
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import { env } from "@/infrastructure/config/env";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type { TableRepository } from "@/modules/local-service/repositories/table-repo";
 
 export interface PublicOrderItemAdditionalInput {
@@ -313,6 +314,19 @@ export class CreatePublicOrderUseCase {
                 { organizationId: org.id, orderId: order.id },
                 timeoutMs,
             );
+        }
+
+        orgEventBus.emit(org.id, {
+            kind: "order.created",
+            orderId: order.id,
+            tableId: table?.id ?? null,
+            serviceType: isLocal ? "LOCAL" : "DELIVERY",
+        });
+        if (isLocal && table) {
+            orgEventBus.emit(org.id, {
+                kind: "table.updated",
+                tableId: table.id,
+            });
         }
 
         const sideLabel = isLocal ? " (mesa)" : isCash ? " (dinheiro)" : "";

@@ -2,8 +2,12 @@ import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export function AppShell() {
+  const { organization } = useAuth();
+  useRealtimeSync(!!organization);
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <Sidebar />

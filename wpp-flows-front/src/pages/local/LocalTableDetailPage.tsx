@@ -46,7 +46,6 @@ export function LocalTableDetailPage() {
     queryKey: queryKeys.localTables.detail(id),
     queryFn: () => tableService.get(id),
     enabled: !!id,
-    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
@@ -59,7 +58,6 @@ export function LocalTableDetailPage() {
         unbilledOnly: true,
       }),
     enabled: !!id,
-    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });

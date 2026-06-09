@@ -42,7 +42,6 @@ export function OrdersPage() {
   const ordersQ = useQuery({
     queryKey: queryKeys.orders.today,
     queryFn: () => orderService.list({ serviceType: 'DELIVERY', date: 'today' }),
-    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });

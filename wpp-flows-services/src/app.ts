@@ -20,6 +20,7 @@ import { promotionRoutes } from "./modules/promotion/http/routes";
 import { localServiceRoutes } from "./modules/local-service/http/routes";
 import { publicMenuRoutes } from "./modules/public-menu/http/routes";
 import { publicOrdersRoutes } from "./modules/public-orders/http/routes";
+import { realtimeRoutes } from "./modules/realtime/http/routes";
 import { reportRoutes } from "./modules/reports/http/routes";
 import { uploadRoutes } from "./modules/uploads/http/routes";
 import { webhookRoutes } from "./modules/webhook/http/routes";
@@ -74,6 +75,7 @@ registerRoutes(app, [
   ...publicMenuRoutes,
   ...publicOrdersRoutes,
   ...localServiceRoutes,
+  ...realtimeRoutes,
   ...reportRoutes,
   ...uploadRoutes,
   ...notificationRoutes,
