@@ -44,8 +44,7 @@ export function LocalTablesPage() {
   const tablesQ = useQuery({
     queryKey: queryKeys.localTables.all,
     queryFn: tableService.list,
-    staleTime: 60 * 1000 * 3,
-    gcTime: 60 * 1000 * 5,
+    gcTime: 60 * 1000 * 0.5,
   });
 
   const ordersQ = useQuery({

@@ -45,7 +45,7 @@ export function LocalOrdersPage() {
   const tablesQ = useQuery({
     queryKey: queryKeys.localTables.all,
     queryFn: tableService.list,
-    gcTime: 60 * 1000 * 3,
+    gcTime: 60 * 1000 * 0.5,
   });
 
   const openOrder = (id: string) => {
