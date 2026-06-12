@@ -1,3 +1,4 @@
+import { notificationEmitter } from "@/modules/notification/usecases/factories";
 import { PrismaBotRepository } from "../../repositories/prisma/prisma-bot-repo";
 import {
     ConnectBotUseCase,
@@ -9,6 +10,7 @@ import {
     ListBotsUseCase,
     UpdateBotUseCase,
 } from "../bot-usecases";
+import { BotMonitor } from "../bot-monitor";
 
 const repo = new PrismaBotRepository();
 
@@ -21,5 +23,7 @@ export const makeConnectBot = () => new ConnectBotUseCase(repo);
 export const makeDisconnectBot = () => new DisconnectBotUseCase(repo);
 export const makeGetBotConnectionState = () =>
     new GetBotConnectionStateUseCase(repo);
+
+export const botMonitor = new BotMonitor(repo, notificationEmitter);
 
 export { repo as botRepo };

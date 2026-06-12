@@ -181,21 +181,30 @@ enum BotStatus {
   ERROR
 }
 
+enum BotDesiredState {
+  CONNECTED
+  DISCONNECTED
+}
+
 model Bot {
-  id                    String       @id @default(uuid())
-  organizationId        String
-  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  name                  String
-  evolutionInstanceName String       @unique
-  phoneNumber           String?
-  status                BotStatus    @default(CONNECTING)
-  qrCode                String?
-  webhookUrl            String?
-  flowId                String?
-  flow                  Flow?        @relation(fields: [flowId], references: [id], onDelete: SetNull)
-  lastConnectedAt       DateTime?    @db.Timestamptz
-  createdAt             DateTime     @default(now()) @db.Timestamptz
-  updatedAt             DateTime     @updatedAt @db.Timestamptz
+  id                       String          @id @default(uuid())
+  organizationId           String
+  organization             Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                     String
+  evolutionInstanceName    String          @unique
+  phoneNumber              String?
+  status                   BotStatus       @default(CONNECTING)
+  desiredState             BotDesiredState @default(CONNECTED)
+  qrCode                   String?
+  webhookUrl               String?
+  flowId                   String?
+  flow                     Flow?           @relation(fields: [flowId], references: [id], onDelete: SetNull)
+  lastConnectedAt          DateTime?       @db.Timestamptz
+  recoveryAttempts         Int             @default(0)
+  lastRecoveryAt           DateTime?       @db.Timestamptz
+  lastDisconnectNotifiedAt DateTime?       @db.Timestamptz
+  createdAt                DateTime        @default(now()) @db.Timestamptz
+  updatedAt                DateTime        @updatedAt @db.Timestamptz
 
   conversations Conversation[]
 

@@ -127,6 +127,10 @@ export class ConnectBotUseCase {
 
         const patch: Parameters<BotRepository["update"]>[1] = {
             status: "CONNECTING",
+            desiredState: "CONNECTED",
+            recoveryAttempts: 0,
+            lastRecoveryAt: null,
+            lastDisconnectNotifiedAt: null,
         };
         if (qrCode) patch.qrCode = qrCode;
 
@@ -148,7 +152,11 @@ export class DisconnectBotUseCase {
 
         return this.repo.update(bot.id, {
             status: "OFFLINE",
+            desiredState: "DISCONNECTED",
             qrCode: null,
+            recoveryAttempts: 0,
+            lastRecoveryAt: null,
+            lastDisconnectNotifiedAt: null,
         });
     }
 }
