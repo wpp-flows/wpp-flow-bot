@@ -138,6 +138,13 @@ class EvolutionApi {
         );
     }
 
+    async restartInstance(instanceName: string): Promise<unknown> {
+        return this.request<unknown>(
+            `/instance/restart/${encodeURIComponent(instanceName)}`,
+            { method: "PUT" }
+        );
+    }
+
     async deleteInstance(instanceName: string): Promise<unknown> {
         return this.request<unknown>(
             `/instance/delete/${encodeURIComponent(instanceName)}`,

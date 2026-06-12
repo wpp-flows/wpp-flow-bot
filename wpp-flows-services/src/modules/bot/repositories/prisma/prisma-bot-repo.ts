@@ -1,5 +1,10 @@
 import { prisma } from "@/infrastructure/database/client";
-import type { Bot, BotRepository, BotStatus } from "../bot-repo";
+import type {
+    Bot,
+    BotDesiredState,
+    BotRepository,
+    BotStatus,
+} from "../bot-repo";
 
 const toBot = (row: any): Bot => ({
     id: row.id,
@@ -8,10 +13,14 @@ const toBot = (row: any): Bot => ({
     evolutionInstanceName: row.evolutionInstanceName,
     phoneNumber: row.phoneNumber,
     status: row.status as BotStatus,
+    desiredState: row.desiredState as BotDesiredState,
     qrCode: row.qrCode,
     webhookUrl: row.webhookUrl,
     flowId: row.flowId,
     lastConnectedAt: row.lastConnectedAt,
+    recoveryAttempts: row.recoveryAttempts,
+    lastRecoveryAt: row.lastRecoveryAt,
+    lastDisconnectNotifiedAt: row.lastDisconnectNotifiedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
@@ -20,6 +29,13 @@ export class PrismaBotRepository implements BotRepository {
     async listByOrg(organizationId: string): Promise<Bot[]> {
         const rows = await prisma.bot.findMany({
             where: { organizationId },
+            orderBy: { createdAt: "desc" },
+        });
+        return rows.map(toBot);
+    }
+
+    async listAll(): Promise<Bot[]> {
+        const rows = await prisma.bot.findMany({
             orderBy: { createdAt: "desc" },
         });
         return rows.map(toBot);
@@ -64,8 +80,12 @@ export class PrismaBotRepository implements BotRepository {
             webhookUrl: string | null;
             flowId: string | null;
             status: BotStatus;
+            desiredState: BotDesiredState;
             qrCode: string | null;
             lastConnectedAt: Date | null;
+            recoveryAttempts: number;
+            lastRecoveryAt: Date | null;
+            lastDisconnectNotifiedAt: Date | null;
         }>
     ): Promise<Bot> {
         const row = await prisma.bot.update({ where: { id }, data });

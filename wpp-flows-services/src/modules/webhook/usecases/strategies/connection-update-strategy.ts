@@ -27,26 +27,11 @@ export class ConnectionUpdateStrategy implements WebhookEventStrategy {
         if (status === "ONLINE") {
             patch.qrCode = null;
             patch.lastConnectedAt = new Date();
+            patch.recoveryAttempts = 0;
+            patch.lastRecoveryAt = null;
+            patch.lastDisconnectNotifiedAt = null;
         }
 
         await ctx.botRepo.update(ctx.bot.id, patch);
-
-        // Only emit when we transition into a non-online state — being already
-        // OFFLINE and seeing another "close" event shouldn't spam the bell.
-        const wentOffline =
-            status !== "ONLINE" && ctx.bot.status !== status;
-        if (wentOffline && (status === "OFFLINE" || status === "ERROR")) {
-            void ctx.notificationEmitter.emit({
-                organizationId: ctx.bot.organizationId,
-                type: "BOT_OFFLINE",
-                title:
-                    status === "OFFLINE"
-                        ? `Bot ${ctx.bot.name} ficou offline`
-                        : `Bot ${ctx.bot.name} reportou erro`,
-                body: 'Reconecte pelo painel de Bots para continuar atendendo.',
-                link: "/bots",
-                requirePreference: "botDisconnects",
-            });
-        }
     }
 }
