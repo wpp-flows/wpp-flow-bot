@@ -23,20 +23,20 @@ interface Props {
 export function KpiCard(props: Props) {
   const positive = (props.delta ?? 0) >= 0;
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="truncate text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
             {props.label}
           </p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-semibold tracking-tight text-foreground">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               {props.value}
             </span>
             {props.delta != null ? (
               <span
                 className={cn(
-                  'inline-flex items-center gap-0.5 text-2xs font-medium',
+                  'inline-flex items-center gap-0.5 whitespace-nowrap text-2xs font-medium',
                   positive ? 'text-success' : 'text-destructive',
                 )}
               >
@@ -50,12 +50,14 @@ export function KpiCard(props: Props) {
             ) : null}
           </div>
           {props.hint ? (
-            <p className="text-xs text-muted-foreground">{props.hint}</p>
+            <p className="truncate text-xs text-muted-foreground" title={props.hint}>
+              {props.hint}
+            </p>
           ) : null}
         </div>
         <span
           className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-lg [&_svg]:h-4.5 [&_svg]:w-4.5',
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-4.5 sm:[&_svg]:w-4.5',
             ICON_TONES[props.tone],
           )}
         >

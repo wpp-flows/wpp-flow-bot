@@ -15,7 +15,10 @@ import { menuService } from '@/services/menuService';
 import { uploadService } from '@/services/uploadService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
+import { downscaleImage } from '@/helpers/image-helpers';
 import type { MenuCategory, MenuItem } from '@/types';
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
 
@@ -65,7 +68,10 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useMutation({
-    mutationFn: (file: File) => uploadService.menuItemImage(file),
+    mutationFn: async (file: File) => {
+      const prepared = await downscaleImage(file);
+      return uploadService.menuItemImage(prepared);
+    },
     onSuccess: (res) => {
       setValue('imageUrl', res.url, { shouldDirty: true });
       toast.success('Imagem enviada');
@@ -73,6 +79,25 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
     onError: (err) =>
       toast.error('Falha no upload', err instanceof Error ? err.message : undefined),
   });
+
+  const handleFilePicked = (file: File) => {
+    if (file.size > MAX_UPLOAD_BYTES * 4) {
+      toast.error(
+        'Imagem muito grande',
+        'Envie uma foto de até ~20 MB. Tente reduzir antes.',
+      );
+      return;
+    }
+    try {
+      uploadImage.mutate(file);
+    } catch (err) {
+      console.error('Upload mutate threw synchronously:', err);
+      toast.error(
+        'Falha no upload',
+        err instanceof Error ? err.message : undefined,
+      );
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -243,8 +268,8 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) uploadImage.mutate(file);
               e.target.value = '';
+              if (file) handleFilePicked(file);
             }}
           />
           <div className="flex items-center gap-3">
@@ -252,6 +277,10 @@ export function ItemFormModal({ open, onClose, categories, defaultCategoryId, it
               <img
                 src={imageUrl}
                 alt="Pré-visualização"
+                width={64}
+                height={64}
+                loading="lazy"
+                decoding="async"
                 className="h-16 w-16 shrink-0 rounded-md border border-border object-cover"
               />
             ) : (
