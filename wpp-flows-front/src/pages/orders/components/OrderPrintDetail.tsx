@@ -210,6 +210,10 @@ export function buildReceiptHtml({
       
       <section>
         <p class="order-no">Pedido ${orderNumber(order.sequence)}</p>
+        ${order.customerName?.trim()
+      ? `<div class="muted">Cliente: ${escapeHtml(order.customerName.trim())}</div>`
+      : ""
+    }
         <div class="muted">Realizado em: ${generatedAt}</div>
       </section>
 

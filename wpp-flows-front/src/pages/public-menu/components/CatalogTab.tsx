@@ -148,7 +148,7 @@ function CategoriesSection({
                     <div className="min-w-0 flex-1">
                       <h3 className="truncate font-medium text-foreground">{item.name}</h3>
                       {item.description ? (
-                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        <p className="mt-1 line-clamp-2 whitespace-pre-line break-words text-xs text-muted-foreground">
                           {item.description}
                         </p>
                       ) : null}

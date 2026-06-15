@@ -212,7 +212,9 @@ function ItemHeader({ item }: { item: PublicMenuItem }) {
       <ItemImage url={item.imageUrl} alt={item.name} />
       <div>
         {item.description ? (
-          <p className="text-sm text-muted-foreground">{item.description}</p>
+          <p className="whitespace-pre-line break-words text-sm text-muted-foreground">
+            {item.description}
+          </p>
         ) : null}
         <p className="mt-2 text-base font-semibold">{formatBrl(item.price)}</p>
       </div>

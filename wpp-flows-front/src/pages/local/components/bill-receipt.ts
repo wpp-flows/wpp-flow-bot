@@ -29,6 +29,8 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
     minute: '2-digit',
   });
 
+  const fallbackName = `Mesa ${input.table.label}`;
+
   const ordersHtml = input.orders
     .sort((a, b) => a.sequence - b.sequence)
     .map((order) => {
@@ -42,12 +44,18 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
           return `<div class="row"><span>${it.qty}× ${escapeHtml(it.name)}</span><span>${formatBRL(lineTotal)}</span></div>`;
         })
         .join('');
+      const diner = order.customerName?.trim();
+      const dinerHtml =
+        diner && diner !== fallbackName
+          ? `<div class="row muted"><span>Cliente</span><span>${escapeHtml(diner)}</span></div>`
+          : '';
       return `
         <section class="order">
           <div class="row strong">
             <span>Pedido ${orderNumber(order.sequence)}</span>
             <span>${time}</span>
           </div>
+          ${dinerHtml}
           ${items}
           <div class="row sub"><span>Subtotal</span><span>${formatBRL(order.total)}</span></div>
         </section>
