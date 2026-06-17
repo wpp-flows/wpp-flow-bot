@@ -110,11 +110,7 @@ export function PublicTableMenuPage() {
           itemId: it.itemId,
           qty: it.qty,
           notes: it.notes ?? null,
-          additionals: it.additionals.map((a) => ({
-            id: a.id,
-            name: a.name,
-            price: Number.parseFloat(a.price || "0"),
-          })),
+          additionals: it.additionals.map((a) => ({ id: a.id })),
           bundle: it.bundle
             ? {
                 bundleId: it.bundle.bundleId,

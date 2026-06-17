@@ -1,14 +1,61 @@
 import { env } from "@/infrastructure/config/env";
 import {
     MercadoPagoClient,
+    type MpPreferenceItem,
     verifyMercadoPagoSignature,
 } from "@/infrastructure/mercadopago/client";
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
-import type { OrderRepository } from "@/modules/order/repositories/order-repo";
+import type { Order, OrderRepository } from "@/modules/order/repositories/order-repo";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import type { WalletRepository } from "../repositories/wallet-repo";
+
+const round2 = (v: number) => Math.round(v * 100) / 100;
+
+function buildPreferenceItems(order: Order): MpPreferenceItem[] {
+    const subtotal = Number.parseFloat(order.subtotal || "0");
+    const discount = Number.parseFloat(order.discount ?? "0");
+    const deliveryFee = Number.parseFloat(order.deliveryFee || "0");
+    const goodsAmount = Math.max(0, subtotal - discount);
+
+    let items: MpPreferenceItem[];
+    if (discount > 0) {
+        items = [
+            {
+                title: `Pedido #${String(order.sequence).padStart(4, "0")}`,
+                quantity: 1,
+                unit_price: round2(goodsAmount),
+                currency_id: "BRL",
+            },
+        ];
+    } else {
+        items = order.items.map((it) => {
+            const base = Number.parseFloat(it.price || "0");
+            const extras = (it.additionals ?? []).reduce(
+                (sum, a) => sum + Number.parseFloat(a.price || "0"),
+                0,
+            );
+            return {
+                title: it.name,
+                quantity: it.qty,
+                unit_price: round2(base + extras),
+                currency_id: "BRL",
+            };
+        });
+    }
+
+    if (deliveryFee > 0) {
+        items.push({
+            title: "Taxa de entrega",
+            quantity: 1,
+            unit_price: round2(deliveryFee),
+            currency_id: "BRL",
+        });
+    }
+
+    return items;
+}
 
 /**
  * Builds the public URL Mercado Pago will hit on payment events. Resolved from
@@ -52,12 +99,7 @@ export class CreatePaymentLinkUseCase {
         const client = new MercadoPagoClient(org.mercadoPagoAccessToken);
         const preference = await client.createPreference({
             external_reference: order.id,
-            items: order.items.map((it) => ({
-                title: it.name,
-                quantity: it.qty,
-                unit_price: Number.parseFloat(it.price),
-                currency_id: "BRL",
-            })),
+            items: buildPreferenceItems(order),
             notification_url: notificationUrl(input.organizationId),
             statement_descriptor: org.name.slice(0, 22),
         });

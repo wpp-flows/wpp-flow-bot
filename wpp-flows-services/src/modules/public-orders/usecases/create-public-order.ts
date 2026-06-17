@@ -26,8 +26,6 @@ import type { TableRepository } from "@/modules/local-service/repositories/table
 
 export interface PublicOrderItemAdditionalInput {
     id: string;
-    name: string;
-    price: number;
 }
 
 export interface PublicOrderItemInput {
@@ -273,8 +271,8 @@ export class CreatePublicOrderUseCase {
             address: isLocal
                 ? null
                 : deliveryModeForOrder === "DELIVERY"
-                  ? input.address ?? null
-                  : null,
+                    ? input.address ?? null
+                    : null,
             discount: discount > 0 ? discount : null,
             appliedPromotionIds: appliedPromotionIds.length
                 ? appliedPromotionIds

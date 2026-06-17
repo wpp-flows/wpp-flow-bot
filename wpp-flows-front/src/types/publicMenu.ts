@@ -118,7 +118,7 @@ export interface CreatePublicOrderPayload {
     itemId: string;
     qty: number;
     notes?: string | null;
-    additionals?: { id: string; name: string; price: number }[];
+    additionals?: { id: string }[];
     bundle?: {
       bundleId: string;
       picks: { componentId: string; itemId: string }[];

@@ -13,8 +13,6 @@ const bundlePickSchema = z.object({
 
 const additionalSchema = z.object({
     id: z.string().min(1).max(64),
-    name: z.string().min(1).max(120),
-    price: z.number().nonnegative(),
 });
 
 const cartItemSchema = z.object({
