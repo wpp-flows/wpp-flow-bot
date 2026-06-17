@@ -19,7 +19,8 @@ export type LocalPaymentMethod = "CASH" | "CARD" | "PIX" | "OTHER";
 export interface TableBill {
   id: string;
   organizationId: string;
-  tableId: string;
+  tableId: string | null;
+  tableLabel: string | null;
   total: string;
   paymentMethod: LocalPaymentMethod;
   notes: string | null;

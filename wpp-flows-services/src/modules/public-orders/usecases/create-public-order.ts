@@ -285,6 +285,7 @@ export class CreatePublicOrderUseCase {
             cashChangeFor: isCash ? input.cashChangeFor ?? null : null,
             serviceType: isLocal ? "LOCAL" : "DELIVERY",
             tableId: isLocal && table ? table.id : null,
+            tableLabel: isLocal && table ? table.label : null,
         });
 
         if (isLocal && table) {

@@ -416,16 +416,17 @@ model RestaurantTable {
 }
 
 model TableBill {
-  id             String          @id @default(uuid())
+  id             String           @id @default(uuid())
   organizationId String
-  tableId        String
-  table          RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  total          Decimal         @db.Decimal(10, 2)
+  tableId        String?
+  table          RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableLabel     String?
+  total          Decimal          @db.Decimal(10, 2)
   paymentMethod  String
   notes          String?
-  closedAt       DateTime        @default(now()) @db.Timestamptz
+  closedAt       DateTime         @default(now()) @db.Timestamptz
   closedById     String
-  createdAt      DateTime        @default(now()) @db.Timestamptz
+  createdAt      DateTime         @default(now()) @db.Timestamptz
 
   orders Order[]
 
@@ -472,6 +473,7 @@ model Order {
   serviceType         ServiceType      @default(DELIVERY)
   tableId             String?
   table               RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableLabel          String?
   billId              String?
   bill                TableBill?       @relation(fields: [billId], references: [id], onDelete: SetNull)
   createdAt           DateTime         @default(now()) @db.Timestamptz

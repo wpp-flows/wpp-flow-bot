@@ -70,6 +70,7 @@ export interface Order {
     cashChangeFor: string | null;
     serviceType: ServiceType;
     tableId: string | null;
+    tableLabel: string | null;
     billId: string | null;
     customerName: string | null;
     appliedPromotionIds: string[] | null;
@@ -123,6 +124,7 @@ export interface OrderRepository {
         cashChangeFor?: number | string | null;
         serviceType?: ServiceType;
         tableId?: string | null;
+        tableLabel?: string | null;
         appliedPromotionIds?: string[] | null;
     }): Promise<Order>;
     updateStatus(id: string, status: OrderStatus): Promise<Order>;

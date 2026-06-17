@@ -121,6 +121,7 @@ export class CreateOrderFromCartUseCase {
         cashChangeFor?: number | null;
         serviceType?: ServiceType;
         tableId?: string | null;
+        tableLabel?: string | null;
     }): Promise<Order> {
         if (input.items.length === 0) {
             throw new ValidationError("Pedido vazio — adicione itens antes de confirmar.");
@@ -156,6 +157,7 @@ export class CreateOrderFromCartUseCase {
                     : null,
             serviceType: input.serviceType ?? "DELIVERY",
             tableId: input.tableId ?? null,
+            tableLabel: input.tableLabel ?? null,
             appliedPromotionIds: input.appliedPromotionIds ?? null,
         });
         await this.customerRepo.incrementOrderCount(input.customerId);

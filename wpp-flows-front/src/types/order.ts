@@ -66,6 +66,7 @@ export interface Order {
   cashChangeFor: string | null;
   serviceType: ServiceType;
   tableId: string | null;
+  tableLabel: string | null;
   billId: string | null;
   customerName: string | null;
   appliedPromotionIds: string[] | null;

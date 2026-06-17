@@ -8,7 +8,7 @@ import { formatBRL, orderNumber } from '../../../helpers/order-helpers';
 
 interface BillReceiptInput {
   restaurantName: string;
-  table: RestaurantTable;
+  table?: RestaurantTable | null;
   bill: TableBill;
   orders: Order[];
 }
@@ -29,7 +29,8 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
     minute: '2-digit',
   });
 
-  const fallbackName = `Mesa ${input.table.label}`;
+  const tableLabel = input.bill.tableLabel ?? input.table?.label ?? 'Mesa';
+  const fallbackName = `Mesa ${tableLabel}`;
 
   const ordersHtml = input.orders
     .sort((a, b) => a.sequence - b.sequence)
@@ -67,7 +68,7 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Conta · ${escapeHtml(input.table.label)} · ${escapeHtml(input.restaurantName)}</title>
+  <title>Conta · ${escapeHtml(tableLabel)} · ${escapeHtml(input.restaurantName)}</title>
   <style>
     * { box-sizing: border-box; }
     @page { size: 80mm auto; margin: 4mm; }
@@ -90,7 +91,7 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
   <main class="receipt">
     <header class="center">
       <h1>${escapeHtml(input.restaurantName)}</h1>
-      <p class="muted">${escapeHtml(input.table.label)} · ${closedAt}</p>
+      <p class="muted">${escapeHtml(tableLabel)} · ${closedAt}</p>
     </header>
 
     <section class="section">

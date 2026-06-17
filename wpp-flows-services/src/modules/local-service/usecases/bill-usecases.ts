@@ -63,6 +63,7 @@ export class CloseBillUseCase {
         const bill = await this.bills.create({
             organizationId: input.organizationId,
             tableId: input.tableId,
+            tableLabel: table.label,
             total: total.toFixed(2),
             paymentMethod: input.paymentMethod,
             notes: input.notes?.trim() || null,

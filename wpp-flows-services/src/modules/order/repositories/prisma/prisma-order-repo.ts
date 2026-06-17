@@ -36,6 +36,7 @@ const toOrder = (row: any): Order => ({
     cashChangeFor: row.cashChangeFor == null ? null : String(row.cashChangeFor),
     serviceType: (row.serviceType ?? "DELIVERY") as ServiceType,
     tableId: row.tableId ?? null,
+    tableLabel: row.tableLabel ?? null,
     billId: row.billId ?? null,
     customerName: row.customer?.name ?? null,
     appliedPromotionIds: (row.appliedPromotionIds as string[] | null) ?? null,
@@ -128,6 +129,7 @@ export class PrismaOrderRepository implements OrderRepository {
         cashChangeFor?: number | string | null;
         serviceType?: ServiceType;
         tableId?: string | null;
+        tableLabel?: string | null;
         appliedPromotionIds?: string[] | null;
     }): Promise<Order> {
         // Reserve a new per-org sequence inside a transaction so concurrent
@@ -161,6 +163,7 @@ export class PrismaOrderRepository implements OrderRepository {
                     cashChangeFor: data.cashChangeFor ?? null,
                     serviceType: data.serviceType ?? "DELIVERY",
                     tableId: data.tableId ?? null,
+                    tableLabel: data.tableLabel ?? null,
                     appliedPromotionIds:
                         data.appliedPromotionIds && data.appliedPromotionIds.length > 0
                             ? (data.appliedPromotionIds as any)

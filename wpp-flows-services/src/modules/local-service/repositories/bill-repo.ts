@@ -1,7 +1,8 @@
 export interface TableBill {
     id: string;
     organizationId: string;
-    tableId: string;
+    tableId: string | null;
+    tableLabel: string | null;
     total: string;
     paymentMethod: string;
     notes: string | null;
@@ -17,6 +18,7 @@ export interface BillRepository {
     create(data: {
         organizationId: string;
         tableId: string;
+        tableLabel: string;
         total: number | string;
         paymentMethod: string;
         notes?: string | null;

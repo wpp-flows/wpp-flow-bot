@@ -156,6 +156,7 @@ function toOrderShape(row: any): Order {
             | "DELIVERY"
             | "LOCAL",
         tableId: row.tableId ?? null,
+        tableLabel: row.tableLabel ?? null,
         billId: row.billId ?? null,
         customerName: row.customer?.name ?? null,
         appliedPromotionIds: (row.appliedPromotionIds as string[] | null) ?? null,

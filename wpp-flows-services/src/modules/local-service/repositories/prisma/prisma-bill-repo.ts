@@ -5,7 +5,8 @@ function toBill(row: any): TableBill {
     return {
         id: row.id,
         organizationId: row.organizationId,
-        tableId: row.tableId,
+        tableId: row.tableId ?? null,
+        tableLabel: row.tableLabel ?? null,
         total: String(row.total),
         paymentMethod: row.paymentMethod,
         notes: row.notes ?? null,
@@ -40,6 +41,7 @@ export class PrismaBillRepository implements BillRepository {
     async create(data: {
         organizationId: string;
         tableId: string;
+        tableLabel: string;
         total: number | string;
         paymentMethod: string;
         notes?: string | null;
@@ -49,6 +51,7 @@ export class PrismaBillRepository implements BillRepository {
             data: {
                 organizationId: data.organizationId,
                 tableId: data.tableId,
+                tableLabel: data.tableLabel,
                 total: data.total,
                 paymentMethod: data.paymentMethod,
                 notes: data.notes ?? null,

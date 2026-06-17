@@ -60,26 +60,15 @@ export function LocalWalletPage() {
   const reprintBill = useMutation({
     mutationFn: async (billId: string) => {
       const detail = await billService.get(billId);
-      const table = await tableService.get(detail.bill.tableId).catch(() => null);
+      const table = detail.bill.tableId
+        ? await tableService.get(detail.bill.tableId).catch(() => null)
+        : null;
       return { detail, table };
     },
     onSuccess: ({ detail, table }) => {
       const html = buildBillReceiptHtml({
         restaurantName: organization?.name ?? '—',
-        table:
-          table ?? {
-            id: detail.bill.tableId,
-            organizationId: detail.bill.organizationId,
-            label: 'Mesa',
-            qrToken: '',
-            position: 0,
-            seats: null,
-            notes: null,
-            status: 'EMPTY',
-            billRequestedAt: null,
-            createdAt: detail.bill.createdAt,
-            updatedAt: detail.bill.createdAt,
-          },
+        table,
         bill: detail.bill,
         orders: detail.orders,
       });
