@@ -77,11 +77,11 @@ export function PublicTableMenuPage() {
   });
 
   useEffect(() => {
-    const name = tableQ.data?.organizationName ?? "Mesa";
+    const name = tableQ.data?.organizationName ?? "Conecta";
     const label = tableQ.data?.tableLabel ?? "";
     document.title = label ? `${name} | ${label}` : name;
     return () => {
-      document.title = "Mesa";
+      document.title = "Conecta";
     };
   }, [tableQ.data?.organizationName, tableQ.data?.tableLabel]);
 
@@ -156,7 +156,7 @@ export function PublicTableMenuPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center">
         <div>
-          <h1 className="text-xl font-semibold">Mesa não encontrada</h1>
+          <h1 className="text-xl font-semibold">Conectanão encontrada</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Peça ao restaurante para gerar um novo QR.
           </p>

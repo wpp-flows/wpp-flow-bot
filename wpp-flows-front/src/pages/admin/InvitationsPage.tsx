@@ -1,28 +1,40 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Check, Copy, Mail, MoreHorizontal, Plus, Search, X } from 'lucide-react';
-import { invitationService } from '@/services/invitationService';
-import { toast } from '@/stores/uiStore';
-import { ApiError } from '@/instances/api';
-import { cn } from '@/lib/utils';
-import type { Invitation } from '@/types';
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Check,
+  Copy,
+  Mail,
+  MoreHorizontal,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
+import { invitationService } from "@/services/invitationService";
+import { toast } from "@/stores/uiStore";
+import { ApiError } from "@/instances/api";
+import { cn } from "@/lib/utils";
+import type { Invitation } from "@/types";
 
-const queryKey = ['admin', 'invitations'] as const;
+const queryKey = ["admin", "invitations"] as const;
 
 const inviteSchema = z.object({
-  email: z.string().trim().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Informe o e-mail.")
+    .email("E-mail inválido."),
 });
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
 export function InvitationsPage() {
   const qc = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<Invitation['status'] | 'ALL'>(
-    'ALL',
-  );
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    Invitation["status"] | "ALL"
+  >("ALL");
 
   const invitesQ = useQuery({
     queryKey,
@@ -31,32 +43,32 @@ export function InvitationsPage() {
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: "" },
   });
 
   const createInvite = useMutation({
     mutationFn: (values: InviteFormValues) =>
       invitationService.createAdmin(values.email),
     onSuccess: (invite) => {
-      toast.success('Convite enviado', `Enviamos o link para ${invite.email}.`);
-      form.reset({ email: '' });
+      toast.success("Convite enviado", `Enviamos o link para ${invite.email}.`);
+      form.reset({ email: "" });
       void qc.invalidateQueries({ queryKey });
     },
     onError: (err) => {
       const msg =
-        err instanceof ApiError ? err.message : 'Falha ao enviar convite.';
-      toast.error('Falha ao convidar', msg);
+        err instanceof ApiError ? err.message : "Falha ao enviar convite.";
+      toast.error("Falha ao convidar", msg);
     },
   });
 
   const revoke = useMutation({
     mutationFn: (id: string) => invitationService.revokeAdmin(id),
     onSuccess: () => {
-      toast.success('Convite revogado');
+      toast.success("Convite revogado");
       void qc.invalidateQueries({ queryKey });
     },
     onError: (err) => {
-      toast.error(err instanceof ApiError ? err.message : 'Falha ao revogar');
+      toast.error(err instanceof ApiError ? err.message : "Falha ao revogar");
     },
   });
 
@@ -64,14 +76,20 @@ export function InvitationsPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return invites.filter((inv) => {
-      if (statusFilter !== 'ALL' && inv.status !== statusFilter) return false;
+      if (statusFilter !== "ALL" && inv.status !== statusFilter) return false;
       if (!q) return true;
       return inv.email.toLowerCase().includes(q);
     });
   }, [invites, search, statusFilter]);
 
   const counts = useMemo(() => {
-    const acc = { ALL: invites.length, PENDING: 0, ACCEPTED: 0, REVOKED: 0, EXPIRED: 0 };
+    const acc = {
+      ALL: invites.length,
+      PENDING: 0,
+      ACCEPTED: 0,
+      REVOKED: 0,
+      EXPIRED: 0,
+    };
     for (const inv of invites) acc[inv.status] += 1;
     return acc;
   }, [invites]);
@@ -83,7 +101,7 @@ export function InvitationsPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Convites</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Convide novos operadores para criar uma conta no Mesa. Cada link é
+          Convide novos operadores para criar uma conta no Conecta. Cada link é
           de uso único e expira em 7 dias.
         </p>
       </header>
@@ -110,7 +128,7 @@ export function InvitationsPage() {
                 placeholder="ana@restaurante.com"
                 autoComplete="email"
                 className="h-10 w-full bg-transparent text-sm placeholder:text-zinc-400 focus:outline-none"
-                {...form.register('email')}
+                {...form.register("email")}
               />
             </div>
             {form.formState.errors.email ? (
@@ -125,7 +143,7 @@ export function InvitationsPage() {
             className="inline-flex h-10 items-center justify-center gap-1.5 self-end rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
-            {createInvite.isPending ? 'Enviando…' : 'Enviar convite'}
+            {createInvite.isPending ? "Enviando…" : "Enviar convite"}
           </button>
         </form>
       </section>
@@ -136,26 +154,26 @@ export function InvitationsPage() {
             <FilterChip
               label="Todos"
               count={counts.ALL}
-              active={statusFilter === 'ALL'}
-              onClick={() => setStatusFilter('ALL')}
+              active={statusFilter === "ALL"}
+              onClick={() => setStatusFilter("ALL")}
             />
             <FilterChip
               label="Pendentes"
               count={counts.PENDING}
-              active={statusFilter === 'PENDING'}
-              onClick={() => setStatusFilter('PENDING')}
+              active={statusFilter === "PENDING"}
+              onClick={() => setStatusFilter("PENDING")}
             />
             <FilterChip
               label="Aceitos"
               count={counts.ACCEPTED}
-              active={statusFilter === 'ACCEPTED'}
-              onClick={() => setStatusFilter('ACCEPTED')}
+              active={statusFilter === "ACCEPTED"}
+              onClick={() => setStatusFilter("ACCEPTED")}
             />
             <FilterChip
               label="Revogados"
               count={counts.REVOKED}
-              active={statusFilter === 'REVOKED'}
-              onClick={() => setStatusFilter('REVOKED')}
+              active={statusFilter === "REVOKED"}
+              onClick={() => setStatusFilter("REVOKED")}
             />
           </div>
           <div className="flex items-center gap-2 rounded-md border border-zinc-300 px-3 sm:w-72">
@@ -174,26 +192,40 @@ export function InvitationsPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50/60">
               <tr>
-                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">E-mail</th>
-                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">Status</th>
-                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">Convidado por</th>
-                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">Expira</th>
+                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">
+                  E-mail
+                </th>
+                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">
+                  Status
+                </th>
+                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">
+                  Convidado por
+                </th>
+                <th className="px-4 py-2.5 text-left font-medium text-zinc-600">
+                  Expira
+                </th>
                 <th className="w-px px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
               {invitesQ.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-zinc-500">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-sm text-zinc-500"
+                  >
                     Carregando…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-zinc-500">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-12 text-center text-sm text-zinc-500"
+                  >
                     {invites.length === 0
-                      ? 'Nenhum convite enviado ainda. Envie o primeiro acima.'
-                      : 'Nenhum convite corresponde ao filtro.'}
+                      ? "Nenhum convite enviado ainda. Envie o primeiro acima."
+                      : "Nenhum convite corresponde ao filtro."}
                   </td>
                 </tr>
               ) : (
@@ -230,17 +262,17 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
         active
-          ? 'border-zinc-900 bg-zinc-900 text-white'
-          : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900',
+          ? "border-zinc-900 bg-zinc-900 text-white"
+          : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900",
       )}
     >
       {label}
       <span
         className={cn(
-          'rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums',
-          active ? 'bg-white/15 text-white' : 'bg-zinc-100 text-zinc-600',
+          "rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums",
+          active ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-600",
         )}
       >
         {count}
@@ -261,16 +293,16 @@ function InvitationRow({
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const expiresLabel = new Date(invitation.expiresAt).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  const expiresLabel = new Date(invitation.expiresAt).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   const inviteUrl =
-    typeof window !== 'undefined'
+    typeof window !== "undefined"
       ? `${window.location.origin}/sign-up?token=${encodeURIComponent(invitation.token)}`
       : `/sign-up?token=${encodeURIComponent(invitation.token)}`;
 
@@ -278,22 +310,24 @@ function InvitationRow({
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
-      toast.success('Link copiado');
+      toast.success("Link copiado");
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Não foi possível copiar');
+      toast.error("Não foi possível copiar");
     }
     setMenuOpen(false);
   };
 
   return (
     <tr className="border-b border-zinc-100 last:border-b-0">
-      <td className="px-4 py-3 font-medium text-zinc-900">{invitation.email}</td>
+      <td className="px-4 py-3 font-medium text-zinc-900">
+        {invitation.email}
+      </td>
       <td className="px-4 py-3">
         <StatusBadge status={invitation.status} />
       </td>
       <td className="px-4 py-3 text-zinc-600">
-        {invitation.invitedByName ?? '—'}
+        {invitation.invitedByName ?? "—"}
       </td>
       <td className="px-4 py-3 text-zinc-600 tabular-nums">{expiresLabel}</td>
       <td className="px-4 py-3 text-right">
@@ -309,8 +343,8 @@ function InvitationRow({
           </button>
           <div
             className={cn(
-              'absolute right-0 top-full z-50 mt-1 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg transition-all',
-              menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+              "absolute right-0 top-full z-50 mt-1 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg transition-all",
+              menuOpen ? "opacity-100" : "pointer-events-none opacity-0",
             )}
           >
             <button
@@ -325,7 +359,7 @@ function InvitationRow({
               )}
               Copiar link
             </button>
-            {invitation.status === 'PENDING' ? (
+            {invitation.status === "PENDING" ? (
               <button
                 type="button"
                 disabled={revoking}
@@ -336,7 +370,7 @@ function InvitationRow({
                 className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 disabled:opacity-50"
               >
                 <X className="h-3.5 w-3.5" />
-                {revoking ? 'Revogando…' : 'Revogar convite'}
+                {revoking ? "Revogando…" : "Revogar convite"}
               </button>
             ) : null}
           </div>
@@ -346,23 +380,23 @@ function InvitationRow({
   );
 }
 
-function StatusBadge({ status }: { status: Invitation['status'] }) {
-  const styles: Record<Invitation['status'], string> = {
-    PENDING: 'bg-amber-50 text-amber-700 ring-amber-200',
-    ACCEPTED: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    REVOKED: 'bg-zinc-100 text-zinc-600 ring-zinc-200',
-    EXPIRED: 'bg-rose-50 text-rose-700 ring-rose-200',
+function StatusBadge({ status }: { status: Invitation["status"] }) {
+  const styles: Record<Invitation["status"], string> = {
+    PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
+    ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    REVOKED: "bg-zinc-100 text-zinc-600 ring-zinc-200",
+    EXPIRED: "bg-rose-50 text-rose-700 ring-rose-200",
   };
-  const labels: Record<Invitation['status'], string> = {
-    PENDING: 'Pendente',
-    ACCEPTED: 'Aceito',
-    REVOKED: 'Revogado',
-    EXPIRED: 'Expirado',
+  const labels: Record<Invitation["status"], string> = {
+    PENDING: "Pendente",
+    ACCEPTED: "Aceito",
+    REVOKED: "Revogado",
+    EXPIRED: "Expirado",
   };
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
         styles[status],
       )}
     >

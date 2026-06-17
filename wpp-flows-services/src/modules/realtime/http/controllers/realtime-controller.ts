@@ -74,7 +74,7 @@ export class RealtimeController {
     async tableStream(request: FastifyRequest, reply: FastifyReply) {
         const { token } = request.params as { token: string };
         const table = await tableRepo.findByToken(token);
-        if (!table) throw new NotFoundError("Mesa");
+        if (!table) throw new NotFoundError("Conecta IA");
 
         const stream = openStream(request, reply);
         const unsubscribe = orgEventBus.subscribe(

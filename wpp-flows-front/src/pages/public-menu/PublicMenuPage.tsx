@@ -57,10 +57,10 @@ export function PublicMenuPage() {
   });
 
   useEffect(() => {
-    const restaurantName = menuQ.data?.organization.name ?? "Mesa";
+    const restaurantName = menuQ.data?.organization.name ?? "Conecta";
     document.title = `${restaurantName} | ${TAB_LABELS[activeTab]}`;
     return () => {
-      document.title = "Mesa";
+      document.title = "Conecta";
     };
   }, [activeTab, menuQ.data?.organization.name]);
 

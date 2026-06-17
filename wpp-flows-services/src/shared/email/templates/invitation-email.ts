@@ -22,7 +22,7 @@ export function buildInvitationEmail(input: InvitationEmailInput): {
         minute: "2-digit",
     });
 
-    const subject = `${input.inviterName} convidou você para o Mesa`;
+    const subject = `${input.inviterName} convidou você para o Conecta IA`;
 
     const html = `<!doctype html>
 <html lang="pt-BR">
@@ -38,18 +38,18 @@ export function buildInvitationEmail(input: InvitationEmailInput): {
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
           <tr>
             <td style="padding:32px 40px 8px 40px;">
-              <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Mesa</p>
+              <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Conecta IA</p>
             </td>
           </tr>
           <tr>
             <td style="padding:8px 40px 0 40px;">
-              <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:600;color:#0f172a;">Você foi convidado(a) para o Mesa</h1>
+              <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:600;color:#0f172a;">Você foi convidado(a) para o Conecta IA</h1>
             </td>
           </tr>
           <tr>
             <td style="padding:16px 40px 0 40px;">
               <p style="margin:0;font-size:15px;line-height:1.55;color:#334155;">
-                <strong style="color:#0f172a;">${escapeHtml(input.inviterName)}</strong> convidou você para criar uma conta no Mesa usando o e-mail
+                <strong style="color:#0f172a;">${escapeHtml(input.inviterName)}</strong> convidou você para criar uma conta no Conecta IA usando o e-mail
                 <strong style="color:#0f172a;">${escapeHtml(input.inviteeEmail)}</strong>. Toque no botão abaixo para definir sua senha e começar.
               </p>
             </td>
@@ -80,7 +80,7 @@ export function buildInvitationEmail(input: InvitationEmailInput): {
             <td style="padding:32px 40px 32px 40px;">
               <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px 0;" />
               <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">
-                Mesa · plataforma de chatbot de WhatsApp para restaurantes.
+                Conecta IA · plataforma de chatbot de WhatsApp para restaurantes.
               </p>
             </td>
           </tr>

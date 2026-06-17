@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { QRCodeSVG } from 'qrcode.react';
+import { useMemo, useState } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft,
   Bell,
@@ -12,28 +12,28 @@ import {
   RefreshCw,
   Trash2,
   Wallet,
-} from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Modal } from '@/components/ui/Modal';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { tableService } from '@/services/tableService';
-import { orderService } from '@/services/orderService';
-import { ROUTES } from '@/constants/app';
-import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
-import { toast } from '@/stores/uiStore';
-import { ApiError } from '@/instances/api';
-import { useAuth } from '@/hooks/useAuth';
-import type { Order, RestaurantTable } from '@/types';
-import { OrderKanban } from '../orders/components/OrderKanban';
-import { OrderDetail } from '../orders/components/OrderDetail';
-import { CloseBillModal } from './components/CloseBillModal';
-import { formatBRL, orderNumber } from '@/helpers/order-helpers';
+} from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Modal } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { tableService } from "@/services/tableService";
+import { orderService } from "@/services/orderService";
+import { ROUTES } from "@/constants/app";
+import { invalidateQueriesByFilters, queryKeys } from "@/lib/queryClient";
+import { toast } from "@/stores/uiStore";
+import { ApiError } from "@/instances/api";
+import { useAuth } from "@/hooks/useAuth";
+import type { Order, RestaurantTable } from "@/types";
+import { OrderKanban } from "../orders/components/OrderKanban";
+import { OrderDetail } from "../orders/components/OrderDetail";
+import { CloseBillModal } from "./components/CloseBillModal";
+import { formatBRL, orderNumber } from "@/helpers/order-helpers";
 
 export function LocalTableDetailPage() {
-  const { id = '' } = useParams<{ id: string }>();
+  const { id = "" } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { organization } = useAuth();
@@ -53,7 +53,7 @@ export function LocalTableDetailPage() {
     queryKey: queryKeys.localOrders.byTable(id),
     queryFn: () =>
       orderService.list({
-        serviceType: 'LOCAL',
+        serviceType: "LOCAL",
         tableId: id,
         unbilledOnly: true,
       }),
@@ -65,18 +65,23 @@ export function LocalTableDetailPage() {
   const table = tableQ.data;
   const orders = ordersQ.data ?? [];
   const billable = useMemo(
-    () => orders.filter((o) => o.status !== 'CANCELED'),
+    () => orders.filter((o) => o.status !== "CANCELED"),
     [orders],
   );
   const runningTotal = useMemo(
     () =>
-      billable.reduce((sum, o) => sum + Number.parseFloat(o.total || '0'), 0),
+      billable.reduce((sum, o) => sum + Number.parseFloat(o.total || "0"), 0),
     [billable],
   );
 
   const advanceStatus = useMutation({
-    mutationFn: ({ id: orderId, status }: { id: string; status: Order['status'] }) =>
-      orderService.updateStatus(orderId, status, { notifyCustomer: false }),
+    mutationFn: ({
+      id: orderId,
+      status,
+    }: {
+      id: string;
+      status: Order["status"];
+    }) => orderService.updateStatus(orderId, status, { notifyCustomer: false }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [
         { queryKey: queryKeys.localOrders.byTable(id) },
@@ -84,38 +89,42 @@ export function LocalTableDetailPage() {
         { queryKey: queryKeys.localTables.all },
         { queryKey: queryKeys.orders.all },
       ]);
-      toast.success('Status atualizado');
+      toast.success("Status atualizado");
     },
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status'),
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao atualizar status",
+      ),
   });
 
   const regenerateQr = useMutation({
     mutationFn: () => tableService.regenerateQr(id),
     onSuccess: () => {
-      toast.success('Novo QR gerado', 'Reimprima e cole na mesa.');
+      toast.success("Novo QR gerado", "Reimprima e cole na mesa.");
       void qc.invalidateQueries({ queryKey: queryKeys.localTables.detail(id) });
     },
     onError: (err) =>
-      toast.error(err instanceof ApiError ? err.message : 'Falha ao gerar novo QR'),
+      toast.error(
+        err instanceof ApiError ? err.message : "Falha ao gerar novo QR",
+      ),
   });
 
   const removeTable = useMutation({
     mutationFn: () => tableService.remove(id),
     onSuccess: () => {
-      toast.success('Mesa excluída');
+      toast.success("Conectaexcluída");
       setConfirmDelete(false);
       void qc.invalidateQueries({ queryKey: queryKeys.localTables.all });
       navigate(ROUTES.localTables, { replace: true });
     },
     onError: (err) =>
-      toast.error(err instanceof ApiError ? err.message : 'Falha ao excluir'),
+      toast.error(err instanceof ApiError ? err.message : "Falha ao excluir"),
   });
 
   const selected = useMemo(
     () =>
       selectedOrderId
-        ? orders.find((o) => o.id === selectedOrderId) ?? null
+        ? (orders.find((o) => o.id === selectedOrderId) ?? null)
         : null,
     [orders, selectedOrderId],
   );
@@ -148,8 +157,8 @@ export function LocalTableDetailPage() {
         title={table.label}
         description={
           table.seats
-            ? `${table.seats} lugares${table.notes ? ` · ${table.notes}` : ''}`
-            : table.notes ?? 'Mesa de salão'
+            ? `${table.seats} lugares${table.notes ? ` · ${table.notes}` : ""}`
+            : (table.notes ?? "Conectade salão")
         }
         actions={
           <>
@@ -182,7 +191,7 @@ export function LocalTableDetailPage() {
           ) : orders.length === 0 ? (
             <EmptyState
               icon={<Receipt />}
-              title="Mesa livre"
+              title="Conectalivre"
               description="Quando o cliente fizer um pedido pelo QR, aparece aqui."
             />
           ) : (
@@ -199,9 +208,7 @@ export function LocalTableDetailPage() {
         </section>
 
         <aside className="space-y-3 lg:sticky lg:top-6 lg:self-start">
-          <h2 className="text-sm font-semibold tracking-tight">
-            QR da mesa
-          </h2>
+          <h2 className="text-sm font-semibold tracking-tight">QR da mesa</h2>
           <Card className="space-y-3 p-5">
             <QRPreview table={table} />
             <div className="flex flex-col gap-2">
@@ -209,7 +216,7 @@ export function LocalTableDetailPage() {
                 variant="outline"
                 size="sm"
                 leftIcon={<Printer />}
-                onClick={() => printQrLabel(table, organization?.name ?? '—')}
+                onClick={() => printQrLabel(table, organization?.name ?? "—")}
               >
                 Imprimir QR
               </Button>
@@ -224,8 +231,8 @@ export function LocalTableDetailPage() {
               </Button>
             </div>
             <p className="text-2xs text-muted-foreground">
-              Gerar um novo código invalida o QR anterior. Use quando o
-              QR for fotografado ou trocar de mesa.
+              Gerar um novo código invalida o QR anterior. Use quando o QR for
+              fotografado ou trocar de mesa.
             </p>
           </Card>
         </aside>
@@ -234,13 +241,13 @@ export function LocalTableDetailPage() {
       <Modal
         open={detailOpen && !!selected}
         onClose={() => setDetailOpen(false)}
-        title={selected ? `Pedido ${orderNumber(selected.sequence)}` : 'Pedido'}
+        title={selected ? `Pedido ${orderNumber(selected.sequence)}` : "Pedido"}
         size="xl"
       >
         {selected ? (
           <OrderDetail
             order={selected}
-            restaurantName={organization?.name ?? 'Restaurante'}
+            restaurantName={organization?.name ?? "Restaurante"}
             onAdvance={(status) => {
               advanceStatus.mutate(
                 { id: selected.id, status },
@@ -282,8 +289,8 @@ export function LocalTableDetailPage() {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Não é possível excluir uma mesa com pedidos em aberto. Feche a
-          conta antes.
+          Não é possível excluir uma mesa com pedidos em aberto. Feche a conta
+          antes.
         </p>
       </Modal>
 
@@ -325,15 +332,15 @@ function QRPreview({ table }: { table: RestaurantTable }) {
 
 function BillRequestedNotice({ table }: { table: RestaurantTable }) {
   if (!table.billRequestedAt) return null;
-  const at = new Date(table.billRequestedAt).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const at = new Date(table.billRequestedAt).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
   return (
     <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
       <Bell className="mt-0.5 h-4 w-4 shrink-0" />
       <p>
-        Cliente pediu a conta às <strong>{at}</strong>. Toque em{' '}
+        Cliente pediu a conta às <strong>{at}</strong>. Toque em{" "}
         <strong>Fechar conta</strong> quando estiver pronto.
       </p>
     </div>
@@ -343,9 +350,9 @@ function BillRequestedNotice({ table }: { table: RestaurantTable }) {
 function printQrLabel(table: RestaurantTable, restaurantName: string) {
   const url = tableQrUrl(table);
   const qrSvg = tableQrSvg(url, 280);
-  const win = globalThis.open('', '_blank', 'width=420,height=600');
+  const win = globalThis.open("", "_blank", "width=420,height=600");
   if (!win) {
-    toast.error('Não foi possível abrir a impressão');
+    toast.error("Não foi possível abrir a impressão");
     return;
   }
   win.document.write(`<!doctype html>
@@ -382,9 +389,9 @@ function printQrLabel(table: RestaurantTable, restaurantName: string) {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

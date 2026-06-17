@@ -22,7 +22,7 @@ import { prisma } from "../src/infrastructure/database/client";
  */
 
 const ADMIN = {
-  name: "Mesa Admin",
+  name: "Conecta Admin",
   email: process.env.ADMIN_USER!,
   password: process.env.ADMIN_PASSWORD!,
 };
