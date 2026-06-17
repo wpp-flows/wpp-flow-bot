@@ -6,7 +6,8 @@ import { NotFoundError } from "@/shared/exceptions/http";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
     cancelPublicOrder,
-    createPublicOrder,
+    createDeliveryOrder,
+    createLocalOrder,
     getCustomerContext,
     validatePublicCoupon,
 } from "../../usecases/factories";
@@ -21,7 +22,26 @@ export class PublicOrdersController {
     async create(request: FastifyRequest, reply: FastifyReply) {
         const { slug } = request.params as { slug: string };
         const body = createPublicOrderSchema.parse(request.body);
-        const result = await createPublicOrder.execute({
+
+        if (body.tableToken) {
+            const result = await createLocalOrder.execute({
+                slug,
+                tableToken: body.tableToken,
+                items: body.items,
+                observation: body.observation ?? null,
+                couponCode: body.couponCode ?? null,
+                customerName: body.customerName ?? null,
+            });
+            return reply.status(201).send(result);
+        }
+
+        if (!body.customer) {
+            return reply
+                .status(400)
+                .send({ error: "Dados do cliente são obrigatórios." });
+        }
+
+        const result = await createDeliveryOrder.execute({
             slug,
             customer: body.customer,
             items: body.items,
@@ -31,8 +51,6 @@ export class PublicOrdersController {
             couponCode: body.couponCode ?? null,
             paymentMethod: body.paymentMethod,
             cashChangeFor: body.cashChangeFor ?? null,
-            tableToken: body.tableToken ?? null,
-            customerName: body.customerName ?? null,
         });
         return reply.status(201).send(result);
     }

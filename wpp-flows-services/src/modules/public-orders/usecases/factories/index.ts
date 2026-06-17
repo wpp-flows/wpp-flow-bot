@@ -12,7 +12,8 @@ import { promotionRepo } from "@/modules/promotion/usecases/factories";
 import { tableRepo } from "@/modules/local-service/usecases/factories";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { CancelPublicOrderUseCase } from "../cancel-public-order";
-import { CreatePublicOrderUseCase } from "../create-public-order";
+import { CreateDeliveryOrderUseCase } from "../create-delivery-order";
+import { CreateLocalOrderUseCase } from "../create-local-order";
 import { GetCustomerContextUseCase } from "../get-customer-context";
 import { NotifyPaymentConfirmedUseCase } from "../notify-payment-confirmed";
 import { OrderCustomerNotifier } from "../order-customer-notifier";
@@ -27,19 +28,28 @@ const customerNotifier = new OrderCustomerNotifier(
 
 const createOrderFromCart = new CreateOrderFromCartUseCase(orderRepo, customerRepo);
 
-export const createPublicOrder = new CreatePublicOrderUseCase(
+export const createDeliveryOrder = new CreateDeliveryOrderUseCase(
     organizationRepo,
     botRepo,
     itemRepo,
     promotionRepo,
     couponRepo,
     customerRepo,
-    orderRepo,
     conversationRepo,
     createOrderFromCart,
     createPaymentLink,
     notificationEmitter,
+);
+
+export const createLocalOrder = new CreateLocalOrderUseCase(
+    organizationRepo,
+    itemRepo,
+    promotionRepo,
+    couponRepo,
+    customerRepo,
     tableRepo,
+    createOrderFromCart,
+    notificationEmitter,
 );
 
 export const cancelPublicOrder = new CancelPublicOrderUseCase(
