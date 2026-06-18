@@ -40,4 +40,9 @@ export interface ReportRepository {
         organizationId: string,
         filters?: { serviceType?: ServiceType },
     ): Promise<Report[]>;
+    deleteOne(
+        organizationId: string,
+        serviceType: ServiceType,
+        reportDate: string,
+    ): Promise<void>;
 }

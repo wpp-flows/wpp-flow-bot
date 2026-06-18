@@ -96,4 +96,18 @@ export class PrismaReportRepository implements ReportRepository {
         });
         return rows.map(toReport);
     }
+
+    async deleteOne(
+        organizationId: string,
+        serviceType: ServiceType,
+        reportDate: string,
+    ): Promise<void> {
+        await prisma.report.deleteMany({
+            where: {
+                organizationId,
+                serviceType,
+                reportDate: reportDateToPrisma(reportDate),
+            },
+        });
+    }
 }

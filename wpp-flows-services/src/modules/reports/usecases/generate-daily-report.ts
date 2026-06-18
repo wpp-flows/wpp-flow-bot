@@ -57,7 +57,14 @@ export class GenerateDailyReportUseCase {
             snapshotRows.push(row);
         }
 
-        if (totalOrders === 0 && canceledCount === 0) return null;
+        if (totalOrders === 0 && canceledCount === 0) {
+            await this.repo.deleteOne(
+                input.organizationId,
+                input.serviceType,
+                input.date,
+            );
+            return null;
+        }
 
         const orders: Order[] = snapshotRows.map(toOrderShape);
 
