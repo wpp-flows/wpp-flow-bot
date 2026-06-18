@@ -42,7 +42,7 @@ export function openDailyReport({
   win.addEventListener('pagehide', () => URL.revokeObjectURL(url));
 }
 
-function buildDailyReportHtml({
+export function buildDailyReportHtml({
   organizationName,
   report,
 }: DailyReportInput): string {

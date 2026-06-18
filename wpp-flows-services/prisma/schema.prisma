@@ -170,6 +170,7 @@ model Organization {
   notifications Notification[]
   coupons       Coupon[]
   tables        RestaurantTable[]
+  reports       Report[]
 
   @@map("organization")
 }
@@ -687,4 +688,26 @@ model Notification {
   @@index([organizationId, createdAt])
   @@index([organizationId, readAt])
   @@map("notification")
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceType    ServiceType
+  reportDate     DateTime     @db.Date
+  totalOrders    Int          @default(0)
+  canceledCount  Int          @default(0)
+  cashCount      Int          @default(0)
+  revenue        Decimal      @default(0) @db.Decimal(10, 2)
+  paidRevenue    Decimal      @default(0) @db.Decimal(10, 2)
+  orders         Json         @default("[]")
+  generatedAt    DateTime     @default(now()) @db.Timestamptz
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
+
+  @@unique([organizationId, serviceType, reportDate])
+  @@index([organizationId])
+  @@index([organizationId, reportDate])
+  @@map("report")
 }

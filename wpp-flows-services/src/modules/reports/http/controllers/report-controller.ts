@@ -1,16 +1,19 @@
 import { Route } from "@/infrastructure/http/decorators/route-decorator";
 import { requireOrganization } from "@/infrastructure/http/middlewares/auth";
 import { NotFoundError } from "@/shared/exceptions/http";
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
+    generateDailyReport,
     makeGetDailyReport,
     makeListDailyReports,
 } from "../../usecases/factories";
-import { dailyReportDateParamSchema } from "../schema";
+import {
+    dailyReportDateParamSchema,
+    regenerateReportBodySchema,
+} from "../schema";
 
-function parseServiceType(
-    raw: unknown,
-): "DELIVERY" | "LOCAL" | undefined {
+function parseServiceType(raw: unknown): ServiceType | undefined {
     return raw === "DELIVERY" || raw === "LOCAL" ? raw : undefined;
 }
 
@@ -38,5 +41,26 @@ export class ReportController {
         });
         if (!result) throw new NotFoundError("Relatório");
         return reply.send(result);
+    }
+
+    @Route("POST", "/api/reports/regenerate", {
+        middlewares: [requireOrganization],
+    })
+    async regenerate(request: FastifyRequest, reply: FastifyReply) {
+        const body = regenerateReportBodySchema.parse(request.body);
+        const services: ServiceType[] = body.serviceType
+            ? [body.serviceType]
+            : ["DELIVERY", "LOCAL"];
+
+        const results = await Promise.all(
+            services.map((s) =>
+                generateDailyReport.execute({
+                    organizationId: request.organizationId,
+                    serviceType: s,
+                    date: body.date,
+                }),
+            ),
+        );
+        return reply.send({ generated: results.length, date: body.date });
     }
 }

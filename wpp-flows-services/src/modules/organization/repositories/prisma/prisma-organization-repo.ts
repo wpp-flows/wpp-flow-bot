@@ -56,6 +56,13 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
         return row ? toOrganization(row) : null;
     }
 
+    async listAll(): Promise<Organization[]> {
+        const rows = await prisma.organization.findMany({
+            orderBy: { createdAt: "asc" },
+        });
+        return rows.map(toOrganization);
+    }
+
     async create(data: {
         name: string;
         slug: string;
