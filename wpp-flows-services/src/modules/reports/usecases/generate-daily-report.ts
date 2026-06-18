@@ -13,7 +13,7 @@ export interface GenerateDailyReportInput {
 }
 
 export class GenerateDailyReportUseCase {
-    constructor(private readonly repo: ReportRepository) {}
+    constructor(private readonly repo: ReportRepository) { }
 
     async execute(input: GenerateDailyReportInput): Promise<Report | null> {
         const range = parseDayRange(input.date);
@@ -57,7 +57,7 @@ export class GenerateDailyReportUseCase {
             snapshotRows.push(row);
         }
 
-        if (totalOrders === 0 && canceledCount === 0) {
+        if (totalOrders === 0) {
             await this.repo.deleteOne(
                 input.organizationId,
                 input.serviceType,
