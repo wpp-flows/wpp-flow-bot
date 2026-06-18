@@ -15,17 +15,6 @@ export interface GenerateDailyReportInput {
 export class GenerateDailyReportUseCase {
     constructor(private readonly repo: ReportRepository) {}
 
-    /**
-     * Computes a single daily report from the `order` table and upserts it
-     * into `report`. Idempotent — calling twice for the same key just
-     * overwrites with fresh totals.
-     *
-     * Returns `null` for days with zero orders. We deliberately do NOT write
-     * a row for empty days — they'd clutter the wallet list with
-     * "0 pedidos · R$0" lines for every day the restaurant didn't sell on
-     * that side. Callers (scheduler, backfill, GET endpoint) treat null as
-     * "skip — nothing to show".
-     */
     async execute(input: GenerateDailyReportInput): Promise<Report | null> {
         const range = parseDayRange(input.date);
         if (!range) {
