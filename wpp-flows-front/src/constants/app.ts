@@ -42,6 +42,7 @@ export const ROUTES = {
   localTableDetail: (id = ':id') => `/local/tables/${id}`,
   localOrders: '/local/orders',
   localWallet: '/local/wallet',
+  localMenu: '/local/menu',
   localSettings: '/local/settings',
   publicTable: (token = ':token') => `/r/mesa/${token}`,
 } as const;

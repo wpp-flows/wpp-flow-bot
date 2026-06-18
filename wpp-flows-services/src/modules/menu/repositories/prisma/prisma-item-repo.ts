@@ -1,4 +1,5 @@
 import { prisma } from "@/infrastructure/database/client";
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
 import type {
     ItemRepository,
     MenuItem,
@@ -20,16 +21,32 @@ function toAdditionals(raw: unknown): MenuItemAdditional[] {
 }
 
 const toModel = (row: any): MenuItem => ({
-    ...row,
+    id: row.id,
+    organizationId: row.organizationId,
+    categoryId: row.categoryId,
+    serviceType: row.serviceType as ServiceType,
+    name: row.name,
+    description: row.description,
     price: row.price.toString(),
+    imageUrl: row.imageUrl,
+    available: row.available,
     availableDaysOfWeek: (row.availableDaysOfWeek as number[] | null) ?? [],
+    position: row.position,
     additionals: toAdditionals(row.additionals),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
 });
 
 export class PrismaItemRepository implements ItemRepository {
-    async listByOrg(organizationId: string): Promise<MenuItem[]> {
+    async listByOrg(
+        organizationId: string,
+        filters: { serviceType?: ServiceType } = {},
+    ): Promise<MenuItem[]> {
         const rows = await prisma.menuItem.findMany({
-            where: { organizationId },
+            where: {
+                organizationId,
+                ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
+            },
             orderBy: [{ categoryId: "asc" }, { position: "asc" }],
         });
         return rows.map(toModel);
@@ -56,14 +73,13 @@ export class PrismaItemRepository implements ItemRepository {
     async create(data: {
         organizationId: string;
         categoryId: string;
+        serviceType: ServiceType;
         name: string;
         description: string;
         price: number | string;
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
-        availableForDelivery?: boolean;
-        availableForLocal?: boolean;
         position: number;
         additionals?: MenuItemAdditional[];
     }): Promise<MenuItem> {
@@ -82,14 +98,13 @@ export class PrismaItemRepository implements ItemRepository {
         id: string,
         data: {
             categoryId?: string;
+            serviceType?: ServiceType;
             name?: string;
             description?: string;
             price?: number | string;
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
-            availableForDelivery?: boolean;
-            availableForLocal?: boolean;
             position?: number;
             additionals?: MenuItemAdditional[];
         }

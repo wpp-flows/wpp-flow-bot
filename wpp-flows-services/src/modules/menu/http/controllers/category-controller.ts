@@ -10,6 +10,7 @@ import {
 } from "../../usecases/factories";
 import {
     createCategorySchema,
+    listMenuQuerySchema,
     reorderCategoriesSchema,
     updateCategorySchema,
 } from "../schema";
@@ -17,8 +18,11 @@ import {
 export class CategoryController {
     @Route("GET", "/api/menu/categories", { middlewares: [requireOrganization] })
     async list(request: FastifyRequest, reply: FastifyReply) {
+        const query = listMenuQuerySchema.parse(request.query ?? {});
         const useCase = makeListCategories();
-        const result = await useCase.execute(request.organizationId);
+        const result = await useCase.execute(request.organizationId, {
+            serviceType: query.serviceType,
+        });
         return reply.send(result);
     }
 
@@ -41,6 +45,7 @@ export class CategoryController {
         const useCase = makeReorderCategories();
         const list = await useCase.execute({
             organizationId: request.organizationId,
+            serviceType: body.serviceType,
             orderedIds: body.orderedIds,
         });
         return reply.send(list);

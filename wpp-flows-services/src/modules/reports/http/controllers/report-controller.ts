@@ -61,6 +61,12 @@ export class ReportController {
                 }),
             ),
         );
-        return reply.send({ generated: results.length, date: body.date });
+
+        const generated = results.filter((r) => r != null).length;
+        return reply.send({
+            generated,
+            skipped: results.length - generated,
+            date: body.date,
+        });
     }
 }

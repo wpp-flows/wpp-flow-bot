@@ -61,6 +61,7 @@ export class CreateLocalOrderUseCase {
 
         const cartItems = await resolveCartItems({
             orgId: org.id,
+            serviceType: "LOCAL",
             itemRepo: this.itemRepo,
             input: input.items,
         });

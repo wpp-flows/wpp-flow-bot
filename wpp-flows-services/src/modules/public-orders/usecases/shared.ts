@@ -1,7 +1,7 @@
 import { evaluateCoupon, describeCouponRejection } from "@/modules/coupon/usecases/coupon-evaluator";
 import type { CouponRepository } from "@/modules/coupon/repositories/coupon-repo";
 import type { ItemRepository } from "@/modules/menu/repositories/menu-repo";
-import type { OrderItem } from "@/modules/order/repositories/order-repo";
+import type { OrderItem, ServiceType } from "@/modules/order/repositories/order-repo";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluator";
 import { ValidationError } from "@/shared/exceptions/http";
@@ -31,6 +31,7 @@ export interface PublicOrderResult {
 
 export async function resolveCartItems(deps: {
     orgId: string;
+    serviceType: ServiceType;
     itemRepo: ItemRepository;
     input: PublicOrderItemInput[];
 }): Promise<OrderItem[]> {
@@ -44,6 +45,11 @@ export async function resolveCartItems(deps: {
             if (!item || !item.available) {
                 throw new ValidationError(
                     `Item ${entry.itemId} não está mais disponível.`,
+                );
+            }
+            if (item.serviceType !== deps.serviceType) {
+                throw new ValidationError(
+                    `Item ${entry.itemId} não pertence a este menu.`,
                 );
             }
             const catalogAdditionals = new Map(

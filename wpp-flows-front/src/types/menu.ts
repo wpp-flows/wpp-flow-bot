@@ -1,6 +1,9 @@
+import type { ServiceType } from './order';
+
 export interface MenuCategory {
   id: string;
   organizationId: string;
+  serviceType: ServiceType;
   name: string;
   description?: string | null;
   position: number;
@@ -18,6 +21,7 @@ export interface MenuItem {
   id: string;
   organizationId: string;
   categoryId: string;
+  serviceType: ServiceType;
   name: string;
   description: string;
   price: string;
@@ -25,8 +29,6 @@ export interface MenuItem {
   available: boolean;
   /** 0–6 (Sunday..Saturday). Empty = available every day. */
   availableDaysOfWeek: number[];
-  availableForDelivery: boolean;
-  availableForLocal: boolean;
   position: number;
   additionals: MenuItemAdditional[];
   createdAt: string;
@@ -34,6 +36,7 @@ export interface MenuItem {
 }
 
 export interface CreateCategoryPayload {
+  serviceType: ServiceType;
   name: string;
   description?: string;
 }
@@ -58,8 +61,6 @@ export interface CreateItemPayload {
   imageUrl?: string;
   available?: boolean;
   availableDaysOfWeek?: number[];
-  availableForDelivery?: boolean;
-  availableForLocal?: boolean;
   additionals?: AdditionalPayload[];
 }
 
@@ -72,7 +73,5 @@ export interface UpdateItemPayload {
   imageUrl?: string | null;
   available?: boolean;
   availableDaysOfWeek?: number[];
-  availableForDelivery?: boolean;
-  availableForLocal?: boolean;
   additionals?: AdditionalPayload[];
 }

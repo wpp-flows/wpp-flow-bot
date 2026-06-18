@@ -73,6 +73,7 @@ export class CreateDeliveryOrderUseCase {
 
         const cartItems = await resolveCartItems({
             orgId: org.id,
+            serviceType: "DELIVERY",
             itemRepo: this.itemRepo,
             input: input.items,
         });

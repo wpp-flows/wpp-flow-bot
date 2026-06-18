@@ -39,8 +39,8 @@ export function CategoryRow({
     mutationFn: () => menuService.removeCategory(category.id),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [
-        { queryKey: queryKeys.menu.categories },
-        { queryKey: queryKeys.menu.items },
+        { queryKey: queryKeys.menu.categories(category.serviceType) },
+        { queryKey: queryKeys.menu.items(category.serviceType) },
       ]);
       toast.success('Categoria excluida');
       setConfirmDelete(false);
@@ -50,7 +50,9 @@ export function CategoryRow({
   const removeItem = useMutation({
     mutationFn: (id: string) => menuService.removeItem(id),
     onSuccess: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.items }]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.menu.items(category.serviceType) },
+      ]);
       toast.success('Item excluido');
     },
   });

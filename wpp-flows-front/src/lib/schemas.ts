@@ -83,8 +83,6 @@ export const menuItemSchema = z.object({
     .array(z.number().int().min(0).max(6))
     .optional()
     .default([]),
-  availableForDelivery: z.boolean().optional().default(true),
-  availableForLocal: z.boolean().optional().default(true),
   additionals: z.array(additionalSchema).max(50).optional().default([]),
 });
 export type MenuItemFormValues = z.infer<typeof menuItemSchema>;

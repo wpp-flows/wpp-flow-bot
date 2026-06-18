@@ -56,7 +56,7 @@ export function ReportPreviewModal({
             onClick={handlePrint}
             disabled={!html}
           >
-            Salvar PDF
+            Imprimir PDF
           </Button>
         </>
       }

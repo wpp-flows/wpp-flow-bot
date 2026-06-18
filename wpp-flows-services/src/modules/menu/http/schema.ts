@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+const serviceTypeSchema = z.enum(["DELIVERY", "LOCAL"]);
+
 export const createCategorySchema = z.object({
+    serviceType: serviceTypeSchema,
     name: z.string().min(1).max(120),
     description: z.string().max(500).optional(),
 });
@@ -11,6 +14,7 @@ export const updateCategorySchema = z.object({
 });
 
 export const reorderCategoriesSchema = z.object({
+    serviceType: serviceTypeSchema,
     orderedIds: z.array(z.uuid()).min(1),
 });
 
@@ -30,8 +34,6 @@ export const createItemSchema = z.object({
     imageUrl: z.url().optional(),
     available: z.boolean().optional(),
     availableDaysOfWeek: daysOfWeekSchema.optional(),
-    availableForDelivery: z.boolean().optional(),
-    availableForLocal: z.boolean().optional(),
     additionals: z.array(additionalSchema).max(50).optional(),
 });
 
@@ -43,12 +45,14 @@ export const updateItemSchema = z.object({
     imageUrl: z.url().nullable().optional(),
     available: z.boolean().optional(),
     availableDaysOfWeek: daysOfWeekSchema.optional(),
-    availableForDelivery: z.boolean().optional(),
-    availableForLocal: z.boolean().optional(),
     additionals: z.array(additionalSchema).max(50).optional(),
 });
 
 export const reorderItemsSchema = z.object({
     categoryId: z.uuid(),
     orderedIds: z.array(z.uuid()).min(1),
+});
+
+export const listMenuQuerySchema = z.object({
+    serviceType: serviceTypeSchema.optional(),
 });

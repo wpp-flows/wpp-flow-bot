@@ -8,18 +8,44 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { menuService } from '@/services/menuService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
-import type { MenuCategory, MenuItem } from '@/types';
+import type { MenuCategory, MenuItem, ServiceType } from '@/types';
 import { CategoryFormModal } from './components/CategoryFormModal';
 import { ItemFormModal } from './components/ItemFormModal';
 import { CategoryRow } from './components/CategoryRow';
 
-export function MenuPage() {
+interface Props {
+  serviceType: ServiceType;
+}
+
+const SIDE_COPY: Record<ServiceType, { title: string; description: string; empty: string }> = {
+  DELIVERY: {
+    title: 'Menu · Delivery',
+    description:
+      'Organize os pratos que o bot vai oferecer aos clientes no delivery. Arraste para reordenar como as categorias aparecem no fluxo.',
+    empty:
+      'Agrupe seus pratos do delivery em categorias — Pizzas, Bebidas, Sobremesas. Os clientes veem nessa ordem.',
+  },
+  LOCAL: {
+    title: 'Menu · Salão',
+    description:
+      'Organize o cardápio do salão. Os clientes veem este menu ao escanear o QR da mesa.',
+    empty:
+      'Agrupe os pratos do salão em categorias. Esse menu é totalmente independente do delivery.',
+  },
+};
+
+export function MenuPage({ serviceType }: Readonly<Props>) {
   const qc = useQueryClient();
+  const copy = SIDE_COPY[serviceType];
+
   const categoriesQ = useQuery({
-    queryKey: queryKeys.menu.categories,
-    queryFn: menuService.listCategories,
+    queryKey: queryKeys.menu.categories(serviceType),
+    queryFn: () => menuService.listCategories({ serviceType }),
   });
-  const itemsQ = useQuery({ queryKey: queryKeys.menu.items, queryFn: menuService.listItems });
+  const itemsQ = useQuery({
+    queryKey: queryKeys.menu.items(serviceType),
+    queryFn: () => menuService.listItems({ serviceType }),
+  });
 
   const [catModalOpen, setCatModalOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<MenuCategory | null>(null);
@@ -41,9 +67,12 @@ export function MenuPage() {
   }, [itemsQ.data]);
 
   const reorder = useMutation({
-    mutationFn: (orderedIds: string[]) => menuService.reorderCategories(orderedIds),
+    mutationFn: (orderedIds: string[]) =>
+      menuService.reorderCategories(serviceType, orderedIds),
     onSuccess: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.menu.categories(serviceType) },
+      ]);
       toast.success('Ordem salva');
     },
   });
@@ -71,8 +100,8 @@ export function MenuPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Menu"
-        description="Organize os pratos que o bot vai oferecer aos seus clientes. Arraste para reordenar como as categorias aparecem no fluxo."
+        title={copy.title}
+        description={copy.description}
         actions={
           <>
             <Button
@@ -110,7 +139,7 @@ export function MenuPage() {
         <EmptyState
           icon={<UtensilsCrossed />}
           title="Nenhuma categoria ainda"
-          description="Agrupe seus pratos em categorias - Pizzas, Bebidas, Sobremesas. Os clientes veem nessa ordem."
+          description={copy.empty}
           action={
             <Button
               leftIcon={<Plus />}
@@ -170,6 +199,7 @@ export function MenuPage() {
         open={catModalOpen}
         onClose={() => setCatModalOpen(false)}
         category={editCategory}
+        serviceType={serviceType}
       />
       <ItemFormModal
         open={itemModalOpen}
@@ -177,6 +207,7 @@ export function MenuPage() {
         categories={categoriesQ.data ?? []}
         defaultCategoryId={defaultCategoryId}
         item={editItem}
+        serviceType={serviceType}
       />
     </div>
   );

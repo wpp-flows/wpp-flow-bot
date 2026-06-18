@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
 import type {
     CategoryRepository,
     ItemRepository,
@@ -25,8 +26,11 @@ function normalizeAdditionals(
 
 export class ListItemsUseCase {
     constructor(private readonly repo: ItemRepository) {}
-    execute(organizationId: string): Promise<MenuItem[]> {
-        return this.repo.listByOrg(organizationId);
+    execute(
+        organizationId: string,
+        filters: { serviceType?: ServiceType } = {},
+    ): Promise<MenuItem[]> {
+        return this.repo.listByOrg(organizationId, filters);
     }
 }
 
@@ -45,8 +49,6 @@ export class CreateItemUseCase {
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
-        availableForDelivery?: boolean;
-        availableForLocal?: boolean;
         additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const category = await this.categoryRepo.findByIdInOrg(
@@ -58,6 +60,7 @@ export class CreateItemUseCase {
         const position = await this.itemRepo.countByCategory(input.categoryId);
         return this.itemRepo.create({
             ...input,
+            serviceType: category.serviceType,
             position,
             additionals: normalizeAdditionals(input.additionals),
         });
@@ -80,8 +83,6 @@ export class UpdateItemUseCase {
         imageUrl?: string | null;
         available?: boolean;
         availableDaysOfWeek?: number[];
-        availableForDelivery?: boolean;
-        availableForLocal?: boolean;
         additionals?: AdditionalInput[];
     }): Promise<MenuItem> {
         const existing = await this.itemRepo.findByIdInOrg(
@@ -90,24 +91,28 @@ export class UpdateItemUseCase {
         );
         if (!existing) throw new NotFoundError("Item");
 
+        let serviceType: ServiceType | undefined;
         if (input.categoryId && input.categoryId !== existing.categoryId) {
             const category = await this.categoryRepo.findByIdInOrg(
                 input.organizationId,
                 input.categoryId
             );
             if (!category) throw new NotFoundError("Category");
+
+            if (category.serviceType !== existing.serviceType) {
+                serviceType = category.serviceType;
+            }
         }
 
         return this.itemRepo.update(input.id, {
             categoryId: input.categoryId,
+            serviceType,
             name: input.name,
             description: input.description,
             price: input.price,
             imageUrl: input.imageUrl,
             available: input.available,
             availableDaysOfWeek: input.availableDaysOfWeek,
-            availableForDelivery: input.availableForDelivery,
-            availableForLocal: input.availableForLocal,
             additionals: normalizeAdditionals(input.additionals),
         });
     }

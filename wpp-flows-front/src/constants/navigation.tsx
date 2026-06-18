@@ -67,7 +67,7 @@ const LOCAL_NAV: NavGroup[] = [
   {
     title: 'Configuração',
     items: [
-      { label: 'Menu', to: ROUTES.menu, icon: UtensilsCrossed },
+      { label: 'Menu', to: ROUTES.localMenu, icon: UtensilsCrossed },
       { label: 'Configurações', to: ROUTES.localSettings, icon: Settings },
     ],
   },

@@ -1,10 +1,14 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
 import type { CategoryRepository, MenuCategory } from "../repositories/menu-repo";
 
 export class ListCategoriesUseCase {
     constructor(private readonly repo: CategoryRepository) {}
-    execute(organizationId: string): Promise<MenuCategory[]> {
-        return this.repo.listByOrg(organizationId);
+    execute(
+        organizationId: string,
+        filters: { serviceType?: ServiceType } = {},
+    ): Promise<MenuCategory[]> {
+        return this.repo.listByOrg(organizationId, filters);
     }
 }
 
@@ -12,10 +16,13 @@ export class CreateCategoryUseCase {
     constructor(private readonly repo: CategoryRepository) {}
     async execute(input: {
         organizationId: string;
+        serviceType: ServiceType;
         name: string;
         description?: string;
     }): Promise<MenuCategory> {
-        const position = await this.repo.countByOrg(input.organizationId);
+        const position = await this.repo.countByOrg(input.organizationId, {
+            serviceType: input.serviceType,
+        });
         return this.repo.create({ ...input, position });
     }
 }
@@ -50,9 +57,15 @@ export class ReorderCategoriesUseCase {
     constructor(private readonly repo: CategoryRepository) {}
     async execute(input: {
         organizationId: string;
+        serviceType: ServiceType;
         orderedIds: string[];
     }): Promise<MenuCategory[]> {
-        const all = await this.repo.listByOrg(input.organizationId);
+        // Scope the reorder to one side — a payload mixing IDs from both sides
+        // would silently reshuffle them. Enforce that every id belongs to the
+        // requested serviceType.
+        const all = await this.repo.listByOrg(input.organizationId, {
+            serviceType: input.serviceType,
+        });
         const orgIds = new Set(all.map((c) => c.id));
         for (const id of input.orderedIds) {
             if (!orgIds.has(id)) {
@@ -65,6 +78,8 @@ export class ReorderCategoriesUseCase {
             );
         }
         await this.repo.setPositions(input.orderedIds);
-        return this.repo.listByOrg(input.organizationId);
+        return this.repo.listByOrg(input.organizationId, {
+            serviceType: input.serviceType,
+        });
     }
 }

@@ -217,6 +217,7 @@ model MenuCategory {
   id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceType    ServiceType  @default(DELIVERY)
   name           String
   description    String?
   position       Int          @default(0)
@@ -226,39 +227,40 @@ model MenuCategory {
   items MenuItem[]
 
   @@index([organizationId])
+  @@index([organizationId, serviceType])
   @@map("menu_category")
 }
 
 model MenuItem {
-  id                   String       @id @default(uuid())
-  organizationId       String
-  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  categoryId           String
-  category             MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  name                 String
-  description          String
-  price                Decimal      @db.Decimal(10, 2)
-  imageUrl             String?
-  available            Boolean      @default(true)
-  availableForDelivery Boolean      @default(true)
-  availableForLocal    Boolean      @default(true)
+  id                  String       @id @default(uuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categoryId          String
+  category            MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  serviceType         ServiceType  @default(DELIVERY)
+  name                String
+  description         String
+  price               Decimal      @db.Decimal(10, 2)
+  imageUrl            String?
+  available           Boolean      @default(true)
   /// 0–6 (Sunday..Saturday). Empty array means available every day. When set,
   /// the bot only lists this item on the matching weekdays.
-  availableDaysOfWeek  Int[]        @default([])
-  position             Int          @default(0)
+  availableDaysOfWeek Int[]        @default([])
+  position            Int          @default(0)
   /// Optional adicionais the customer can tick when ordering this item on the
   /// public menu (e.g. "Borda recheada", "Queijo extra"). Shape:
   ///   [{ id: string, name: string, price: string }]
   /// Stored as JSON because the list is small and item-scoped — querying
   /// inside it isn't needed.
-  additionals          Json?
-  createdAt            DateTime     @default(now()) @db.Timestamptz
-  updatedAt            DateTime     @updatedAt @db.Timestamptz
+  additionals         Json?
+  createdAt           DateTime     @default(now()) @db.Timestamptz
+  updatedAt           DateTime     @updatedAt @db.Timestamptz
 
   featuredInPromotions Promotion[]
 
   @@index([organizationId])
   @@index([categoryId])
+  @@index([organizationId, serviceType])
   @@map("menu_item")
 }
 

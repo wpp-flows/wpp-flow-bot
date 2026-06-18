@@ -1,6 +1,9 @@
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
+
 export interface MenuCategory {
     id: string;
     organizationId: string;
+    serviceType: ServiceType;
     name: string;
     description: string | null;
     position: number;
@@ -18,6 +21,7 @@ export interface MenuItem {
     id: string;
     organizationId: string;
     categoryId: string;
+    serviceType: ServiceType;
     name: string;
     description: string;
     price: string;
@@ -28,8 +32,6 @@ export interface MenuItem {
      * restricts the item to those weekdays in the bot's menu.
      */
     availableDaysOfWeek: number[];
-    availableForDelivery: boolean;
-    availableForLocal: boolean;
     position: number;
     additionals: MenuItemAdditional[];
     createdAt: Date;
@@ -37,10 +39,14 @@ export interface MenuItem {
 }
 
 export interface CategoryRepository {
-    listByOrg(organizationId: string): Promise<MenuCategory[]>;
+    listByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<MenuCategory[]>;
     findByIdInOrg(organizationId: string, id: string): Promise<MenuCategory | null>;
     create(data: {
         organizationId: string;
+        serviceType: ServiceType;
         name: string;
         description?: string;
         position: number;
@@ -50,25 +56,30 @@ export interface CategoryRepository {
         data: { name?: string; description?: string }
     ): Promise<MenuCategory>;
     delete(id: string): Promise<void>;
-    countByOrg(organizationId: string): Promise<number>;
+    countByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<number>;
     setPositions(orderedIds: string[]): Promise<void>;
 }
 
 export interface ItemRepository {
-    listByOrg(organizationId: string): Promise<MenuItem[]>;
+    listByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<MenuItem[]>;
     listByCategory(categoryId: string): Promise<MenuItem[]>;
     findByIdInOrg(organizationId: string, id: string): Promise<MenuItem | null>;
     create(data: {
         organizationId: string;
         categoryId: string;
+        serviceType: ServiceType;
         name: string;
         description: string;
         price: number | string;
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
-        availableForDelivery?: boolean;
-        availableForLocal?: boolean;
         position: number;
         additionals?: MenuItemAdditional[];
     }): Promise<MenuItem>;
@@ -76,14 +87,13 @@ export interface ItemRepository {
         id: string,
         data: {
             categoryId?: string;
+            serviceType?: ServiceType;
             name?: string;
             description?: string;
             price?: number | string;
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
-            availableForDelivery?: boolean;
-            availableForLocal?: boolean;
             position?: number;
             additionals?: MenuItemAdditional[];
         }

@@ -30,8 +30,8 @@ export function PromotionsPage() {
   const [form, setForm] = useState<PromotionFormState>(emptyPromotionForm);
 
   const menuItemsQ = useQuery({
-    queryKey: queryKeys.menu.items,
-    queryFn: menuService.listItems,
+    queryKey: queryKeys.menu.items('DELIVERY'),
+    queryFn: () => menuService.listItems({ serviceType: 'DELIVERY' }),
   });
 
   const invalidate = () =>
