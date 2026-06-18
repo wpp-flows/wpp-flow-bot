@@ -31,27 +31,41 @@ export class GenerateDailyReportUseCase {
             orderBy: { createdAt: "asc" },
         });
 
-        if (rows.length === 0) return null;
-
+        let totalOrders = 0;
         let revenue = 0;
         let paidRevenue = 0;
         let cashCount = 0;
         let canceledCount = 0;
+        const snapshotRows: typeof rows = [];
+
         for (const row of rows) {
+            if (row.status === "CANCELED") {
+                canceledCount += 1;
+                snapshotRows.push(row);
+                continue;
+            }
+
+            const isSettled =
+                row.paymentStatus === "PAID" || row.billId != null;
+            if (!isSettled) continue;
+
             const total = Number.parseFloat(row.total.toString());
-            if (row.status !== "CANCELED") revenue += total;
-            else canceledCount += 1;
-            if (row.paymentStatus === "PAID") paidRevenue += total;
+            totalOrders += 1;
+            revenue += total;
+            paidRevenue += total;
             if (row.paymentProvider === "CASH") cashCount += 1;
+            snapshotRows.push(row);
         }
 
-        const orders: Order[] = rows.map(toOrderShape);
+        if (totalOrders === 0 && canceledCount === 0) return null;
+
+        const orders: Order[] = snapshotRows.map(toOrderShape);
 
         return this.repo.upsert({
             organizationId: input.organizationId,
             serviceType: input.serviceType,
             reportDate: input.date,
-            totalOrders: rows.length,
+            totalOrders,
             canceledCount,
             cashCount,
             revenue: revenue.toFixed(2),

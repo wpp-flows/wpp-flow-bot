@@ -54,16 +54,22 @@ export class DailyReportScheduler {
     /**
      * Walks back `daysBack` calendar days (in SP time) and materializes any
      * missing reports. Called once on boot so a fresh deploy of this module
-     * fills in the recent history that pre-dates the Report table. Idempotent
-     * — every per-row write goes through the same SETNX path as the daily
-     * tick, so multiple nodes booting at once won't race.
+     * fills in the recent history that pre-dates the Report table.
+     *
+     * When `force` is true, EXISTING rows are recomputed and overwritten —
+     * use this when the generator's aggregation logic changed (e.g. we
+     * narrowed totalOrders to settled-only) and stale rows would otherwise
+     * never get refreshed by the fast-path skip.
+     *
+     * Either way it's safe to run concurrently across nodes: every per-row
+     * write is guarded by the same SETNX lock as the daily tick.
      *
      * Runs to completion before returning, but the caller should usually
-     * await it in the background (don't block the HTTP boot — a few hundred
-     * orgs × 30 days = thousands of small queries).
+     * await it in the background — don't block HTTP boot on Postgres.
      */
-    async backfill(daysBack: number): Promise<void> {
+    async backfill(daysBack: number, options: { force?: boolean } = {}): Promise<void> {
         if (daysBack <= 0) return;
+        const force = options.force ?? false;
         try {
             const orgs = await this.orgRepo.listAll();
 
@@ -75,6 +81,7 @@ export class DailyReportScheduler {
                             org.id,
                             serviceType,
                             date,
+                            { force },
                         ).catch((err) => {
                             console.warn(
                                 `DailyReportScheduler backfill: ${org.id}/${serviceType}/${date} failed:`,
@@ -85,7 +92,7 @@ export class DailyReportScheduler {
                 }
             }
             console.log(
-                `📊 DailyReportScheduler backfill complete (${daysBack} days, ${orgs.length} orgs).`,
+                `📊 DailyReportScheduler backfill complete (${daysBack} days, ${orgs.length} orgs, force=${force}).`,
             );
         } catch (err) {
             console.error("DailyReportScheduler backfill failed:", err);
@@ -123,13 +130,18 @@ export class DailyReportScheduler {
         organizationId: string,
         serviceType: ServiceType,
         date: string,
+        options: { force?: boolean } = {},
     ): Promise<void> {
-        const existing = await this.reportRepo.findOne(
-            organizationId,
-            serviceType,
-            date,
-        );
-        if (existing) return;
+        const force = options.force ?? false;
+
+        if (!force) {
+            const existing = await this.reportRepo.findOne(
+                organizationId,
+                serviceType,
+                date,
+            );
+            if (existing) return;
+        }
 
         const redis = getRedisClient();
         const key = `${LOCK_KEY_PREFIX}${organizationId}:${serviceType}:${date}`;
@@ -143,12 +155,14 @@ export class DailyReportScheduler {
         if (acquired !== "OK") return;
 
         try {
-            const fresh = await this.reportRepo.findOne(
-                organizationId,
-                serviceType,
-                date,
-            );
-            if (fresh) return;
+            if (!force) {
+                const fresh = await this.reportRepo.findOne(
+                    organizationId,
+                    serviceType,
+                    date,
+                );
+                if (fresh) return;
+            }
 
             await this.generator.execute({
                 organizationId,

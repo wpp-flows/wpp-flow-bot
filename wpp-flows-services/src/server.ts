@@ -14,5 +14,5 @@ console.log(`🚀 HTTP Server Running on port ${PORT}.`)
 botMonitor.start()
 dailyReportScheduler.start()
 
-// depois comentar, é só para popular relatórios antigos
-void dailyReportScheduler.backfill(30)
+// depois comentar, é só para popular relatórios antigos.
+void dailyReportScheduler.backfill(30, { force: true })
