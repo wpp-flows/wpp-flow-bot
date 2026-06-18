@@ -205,7 +205,11 @@ export class PrismaOrderRepository implements OrderRepository {
         if (orderIds.length === 0) return 0;
         const result = await prisma.order.updateMany({
             where: { id: { in: orderIds } },
-            data: { billId },
+            data: {
+                billId,
+                status: "DELIVERED",
+                paymentStatus: "PAID",
+            },
         });
         return result.count;
     }
