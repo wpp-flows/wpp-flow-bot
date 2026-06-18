@@ -15,4 +15,5 @@ botMonitor.start()
 dailyReportScheduler.start()
 
 // depois comentar, é só para popular relatórios antigos.
-void dailyReportScheduler.backfill(30, { force: true })
+// está comentado pq ja foi corrigido os relatórios antigos, então não tem mais necessidade de rodar isso.
+// void dailyReportScheduler.backfill(30, { force: true })
