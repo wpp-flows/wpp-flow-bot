@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -11,9 +11,13 @@ export function AppShell() {
   const navigate = useNavigate();
   useRealtimeSync(!!organization);
 
+  const tourKickedRef = useRef(false);
+
   useEffect(() => {
     if (!organization) return;
+    if (tourKickedRef.current) return;
     if (!shouldAutoStartTour()) return;
+    tourKickedRef.current = true;
     const t = setTimeout(() => startTour((path) => navigate(path)), 500);
     return () => clearTimeout(t);
   }, [organization, navigate]);

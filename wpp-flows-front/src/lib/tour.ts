@@ -242,7 +242,10 @@ function pickSteps(): TourStep[] {
     return mode === 'LOCAL' ? LOCAL_STEPS : DELIVERY_STEPS;
 }
 
+let activeDriver: Driver | null = null;
+
 export function startTour(navigate: (path: string) => void): void {
+    if (activeDriver) return;
     const steps = pickSteps();
     if (steps.length === 0) return;
 
@@ -296,6 +299,7 @@ export function startTour(navigate: (path: string) => void): void {
             void goToStep(activeIdx - 1, driverObj);
         },
         onDestroyed: () => {
+            activeDriver = null;
             try {
                 globalThis.localStorage.setItem(TOUR_STORAGE_KEY, '1');
             } catch {
@@ -304,6 +308,7 @@ export function startTour(navigate: (path: string) => void): void {
         },
     });
 
+    activeDriver = driverObj;
     void goToStep(0, driverObj);
 }
 
