@@ -23,6 +23,7 @@ export interface NavItem {
   to: string;
   icon: LucideIcon;
   badge?: string;
+  tourId?: string;
 }
 
 export interface NavGroup {
@@ -34,23 +35,23 @@ const DELIVERY_NAV: NavGroup[] = [
   {
     title: 'Delivery',
     items: [
-      { label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard },
-      { label: 'Bots', to: ROUTES.bots, icon: Bot },
-      { label: 'Conversas', to: ROUTES.conversations, icon: MessagesSquare },
-      { label: 'Pedidos', to: ROUTES.orders, icon: Receipt },
-      { label: 'Carteira', to: ROUTES.wallet, icon: Wallet },
+      { label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard, tourId: 'nav-dashboard' },
+      { label: 'Bots', to: ROUTES.bots, icon: Bot, tourId: 'nav-bots' },
+      { label: 'Conversas', to: ROUTES.conversations, icon: MessagesSquare, tourId: 'nav-chats' },
+      { label: 'Pedidos', to: ROUTES.orders, icon: Receipt, tourId: 'nav-orders' },
+      { label: 'Carteira', to: ROUTES.wallet, icon: Wallet, tourId: 'nav-wallet' },
     ],
   },
   {
     title: 'Configuração',
     items: [
-      { label: 'Menu', to: ROUTES.menu, icon: UtensilsCrossed },
-      { label: 'Visualizar cardápio', to: ROUTES.menuPreview, icon: Smartphone },
-      { label: 'Promoções', to: ROUTES.promotions, icon: TicketPercent },
-      { label: 'Cupons', to: ROUTES.coupons, icon: BadgePercent },
-      { label: 'Mensagens', to: ROUTES.messages, icon: MessageSquareText },
-      { label: 'Flow Builder', to: ROUTES.flows, icon: Workflow },
-      { label: 'Configurações', to: ROUTES.settings, icon: Settings },
+      { label: 'Menu', to: ROUTES.menu, icon: UtensilsCrossed, tourId: 'nav-menu' },
+      { label: 'Visualizar cardápio', to: ROUTES.menuPreview, icon: Smartphone, tourId: 'nav-menu-preview' },
+      { label: 'Promoções', to: ROUTES.promotions, icon: TicketPercent, tourId: 'nav-promotions' },
+      { label: 'Cupons', to: ROUTES.coupons, icon: BadgePercent, tourId: 'nav-coupons' },
+      { label: 'Mensagens', to: ROUTES.messages, icon: MessageSquareText, tourId: 'nav-messages' },
+      { label: 'Flow Builder', to: ROUTES.flows, icon: Workflow, tourId: 'nav-flows' },
+      { label: 'Configurações', to: ROUTES.settings, icon: Settings, tourId: 'nav-settings' },
     ],
   },
 ];
@@ -59,16 +60,16 @@ const LOCAL_NAV: NavGroup[] = [
   {
     title: 'Salão',
     items: [
-      { label: 'Mesas', to: ROUTES.localTables, icon: TableIcon },
-      { label: 'Pedidos', to: ROUTES.localOrders, icon: ClipboardList },
-      { label: 'Carteira', to: ROUTES.localWallet, icon: Wallet },
+      { label: 'Mesas', to: ROUTES.localTables, icon: TableIcon, tourId: 'nav-tables' },
+      { label: 'Pedidos', to: ROUTES.localOrders, icon: ClipboardList, tourId: 'nav-orders' },
+      { label: 'Carteira', to: ROUTES.localWallet, icon: Wallet, tourId: 'nav-wallet' },
     ],
   },
   {
     title: 'Configuração',
     items: [
-      { label: 'Menu', to: ROUTES.localMenu, icon: UtensilsCrossed },
-      { label: 'Configurações', to: ROUTES.localSettings, icon: Settings },
+      { label: 'Menu', to: ROUTES.localMenu, icon: UtensilsCrossed, tourId: 'nav-menu' },
+      { label: 'Configurações', to: ROUTES.localSettings, icon: Settings, tourId: 'nav-settings' },
     ],
   },
 ];

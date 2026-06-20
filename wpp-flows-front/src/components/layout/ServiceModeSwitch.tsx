@@ -16,7 +16,10 @@ export function ServiceModeSwitch() {
   }
 
   return (
-    <div className="mx-3 mt-3 rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-1">
+    <div
+      data-tour="service-mode"
+      className="mx-3 mt-3 rounded-lg border border-sidebar-border bg-sidebar-accent/40 p-1"
+    >
       <div className="grid grid-cols-2 gap-1">
         <ModeButton
           active={mode === 'DELIVERY'}
