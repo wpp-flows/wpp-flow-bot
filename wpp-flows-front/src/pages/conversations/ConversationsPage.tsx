@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Info, MessageCircle, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Calendar, Info, MessageCircle, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
 import { Card } from "@/components/ui/Card";
@@ -29,7 +28,6 @@ export function ConversationsPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [manualRefreshPending, setManualRefreshPending] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
 
   const debouncedSearch = useDebouncedValue(search, 200);
@@ -49,7 +47,6 @@ export function ConversationsPage() {
     queryFn: () => chatService.list(filters),
     staleTime: 0.5 * 1000 * 60,
     gcTime: 1 * 1000 * 60,
-    refetchInterval: 1 * 1000 * 30,
   });
 
   const messagesForSelection = useQuery({
@@ -135,35 +132,11 @@ export function ConversationsPage() {
       <PageHeader
         title="Conversas"
         description="Todos os atendimentos do WhatsApp que o seu bot está gerenciando. Assuma o controle, encerre ou revise um fluxo."
-        actions={
-          <Button
-            variant="outline"
-            leftIcon={
-              <RefreshCw className={manualRefreshPending ? "animate-spin" : undefined} />
-            }
-            disabled={manualRefreshPending}
-            onClick={() => {
-              setManualRefreshPending(true);
-              const filters = [
-                { predicate: isChatConversationListQuery },
-                ...(selectedId
-                  ? [{ queryKey: queryKeys.chats.messages(selectedId) }]
-                  : []),
-              ];
-              void invalidateQueriesByFilters(queryClient, filters).finally(() =>
-                setManualRefreshPending(false),
-              );
-            }}
-          >
-            Atualizar
-          </Button>
-        }
       />
 
       <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <Info className="h-3.5 w-3.5" />
-        As conversas são atualizadas automaticamente a cada 30 segundos. Clique em
-        Atualizar para ver mudanças na hora.
+        As conversas e mensagens são atualizadas em tempo real.
       </div>
 
       <Card className="flex h-[calc(100vh-270px)] min-h-[560px] w-full min-w-0 overflow-hidden p-0">

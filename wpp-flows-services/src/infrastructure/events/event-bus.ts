@@ -25,6 +25,15 @@ export type RealtimeEvent =
         kind: "bill.closed";
         tableId: string;
         billId: string;
+    }
+    | {
+        kind: "chat.message";
+        conversationId: string;
+        direction: "IN" | "OUT";
+    }
+    | {
+        kind: "chat.conversation";
+        conversationId: string;
     };
 
 class OrgEventBus {

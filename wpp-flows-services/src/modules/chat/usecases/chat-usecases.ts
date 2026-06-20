@@ -1,4 +1,5 @@
 import { evolutionApi } from "@/infrastructure/evolution/client";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import { NotFoundError } from "@/shared/exceptions/http";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
 import { jidToSendTarget } from "@/modules/webhook/usecases/strategies/shared";
@@ -97,6 +98,12 @@ export class SendMessageUseCase {
             lastMessageAt: message.createdAt,
         });
 
+        orgEventBus.emit(input.organizationId, {
+            kind: "chat.message",
+            conversationId: conv.id,
+            direction: "OUT",
+        });
+
         return message;
     }
 }
@@ -113,9 +120,14 @@ export class SetBotActiveUseCase {
             input.conversationId
         );
         if (!conv) throw new NotFoundError("Conversation");
-        return this.conversationRepo.update(conv.id, {
+        const updated = await this.conversationRepo.update(conv.id, {
             botActive: input.botActive,
         });
+        orgEventBus.emit(input.organizationId, {
+            kind: "chat.conversation",
+            conversationId: conv.id,
+        });
+        return updated;
     }
 }
 
@@ -131,7 +143,14 @@ export class UpdateConversationStatusUseCase {
             input.conversationId
         );
         if (!conv) throw new NotFoundError("Conversation");
-        return this.conversationRepo.update(conv.id, { status: input.status });
+        const updated = await this.conversationRepo.update(conv.id, {
+            status: input.status,
+        });
+        orgEventBus.emit(input.organizationId, {
+            kind: "chat.conversation",
+            conversationId: conv.id,
+        });
+        return updated;
     }
 }
 
@@ -148,6 +167,13 @@ export class MarkConversationReadUseCase {
         );
         if (!conv) throw new NotFoundError("Conversation");
         if (conv.unreadCount === 0) return conv;
-        return this.conversationRepo.update(conv.id, { unreadCount: 0 });
+        const updated = await this.conversationRepo.update(conv.id, {
+            unreadCount: 0,
+        });
+        orgEventBus.emit(input.organizationId, {
+            kind: "chat.conversation",
+            conversationId: conv.id,
+        });
+        return updated;
     }
 }
