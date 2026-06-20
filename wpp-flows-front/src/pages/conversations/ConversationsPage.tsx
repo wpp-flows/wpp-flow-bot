@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Info, MessageCircle, Search } from "lucide-react";
+import { ArrowLeft, Info, MessageCircle, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
@@ -25,8 +25,6 @@ export function ConversationsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
 
@@ -36,10 +34,8 @@ export function ConversationsPage() {
     () => ({
       search: debouncedSearch || undefined,
       status: statusFilter === "all" ? undefined : statusFilter,
-      fromDate: fromDate ? new Date(fromDate).toISOString() : undefined,
-      toDate: toDate ? new Date(toDate).toISOString() : undefined,
     }),
-    [debouncedSearch, statusFilter, fromDate, toDate],
+    [debouncedSearch, statusFilter],
   );
 
   const conversations = useQuery({
@@ -165,30 +161,6 @@ export function ConversationsPage() {
                 ]}
                 className="flex-1"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="space-y-1">
-                <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  De
-                </span>
-                <Input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  leftIcon={<Calendar />}
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Até
-                </span>
-                <Input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  leftIcon={<Calendar />}
-                />
-              </label>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin">

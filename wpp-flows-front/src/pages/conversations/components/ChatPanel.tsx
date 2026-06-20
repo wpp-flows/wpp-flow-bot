@@ -155,11 +155,6 @@ export function ChatPanel({
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content="Ligar para contato">
-            <IconButton variant="ghost" aria-label="Ligar">
-              <Phone />
-            </IconButton>
-          </Tooltip>
           <Button
             size="sm"
             variant={conversation.botActive ? "outline" : "primary"}
@@ -199,11 +194,11 @@ export function ChatPanel({
       >
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={`h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
-              />
-            ))
+            <Skeleton
+              key={i}
+              className={`h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
+            />
+          ))
           : messages?.map((m) => <MessageBubble key={m.id} message={m} />)}
       </div>
 
