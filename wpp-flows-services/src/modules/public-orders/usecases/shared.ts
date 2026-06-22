@@ -6,15 +6,16 @@ import type { PromotionRepository } from "@/modules/promotion/repositories/promo
 import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluator";
 import { ValidationError } from "@/shared/exceptions/http";
 
-export interface PublicOrderItemAdditionalInput {
-    id: string;
+export interface PublicOrderItemSelectionInput {
+    groupId: string;
+    optionIds: string[];
 }
 
 export interface PublicOrderItemInput {
     itemId: string;
     qty: number;
     notes?: string | null;
-    additionals?: PublicOrderItemAdditionalInput[];
+    selections?: PublicOrderItemSelectionInput[];
     bundle?: {
         bundleId: string;
         picks: { componentId: string; itemId: string }[];
@@ -52,17 +53,57 @@ export async function resolveCartItems(deps: {
                     `Item ${entry.itemId} não pertence a este menu.`,
                 );
             }
-            const catalogAdditionals = new Map(
-                item.additionals.map((a) => [a.id, a]),
-            );
-            const additionals = (entry.additionals ?? [])
-                .map((a) => catalogAdditionals.get(a.id))
-                .filter((a): a is NonNullable<typeof a> => a != null)
-                .map((a) => ({ id: a.id, name: a.name, price: a.price }));
+
+            const groupsById = new Map(item.optionGroups.map((g) => [g.id, g]));
+            const selectionsByGroupId = new Map<string, string[]>();
+            for (const sel of entry.selections ?? []) {
+                // Dedup option IDs the client may have sent twice.
+                selectionsByGroupId.set(sel.groupId, Array.from(new Set(sel.optionIds)));
+            }
+
+            const additionals: { id: string; name: string; price: string }[] = [];
+            for (const group of item.optionGroups) {
+                const picked = selectionsByGroupId.get(group.id) ?? [];
+                if (picked.length < group.minSelections) {
+                    throw new ValidationError(
+                        `Grupo "${group.title}" requer ${group.minSelections} opção(ões).`,
+                    );
+                }
+                if (picked.length > group.maxSelections) {
+                    throw new ValidationError(
+                        `Grupo "${group.title}" aceita no máximo ${group.maxSelections} opção(ões).`,
+                    );
+                }
+                const optionsById = new Map(group.options.map((o) => [o.id, o]));
+                for (const optionId of picked) {
+                    const opt = optionsById.get(optionId);
+                    if (!opt) {
+                        throw new ValidationError(
+                            `Opção inválida em "${group.title}".`,
+                        );
+                    }
+                    additionals.push({
+                        id: opt.id,
+                        name: opt.name,
+                        price: opt.additionalPrice,
+                    });
+                }
+            }
+
+            for (const sentGroupId of selectionsByGroupId.keys()) {
+                if (!groupsById.has(sentGroupId)) {
+                    throw new ValidationError(
+                        `Grupo de opções desconhecido para ${item.name}.`,
+                    );
+                }
+            }
+
+            const chargedPrice = item.promotionalPrice ?? item.price;
+
             return {
                 itemId: item.id,
                 name: item.name,
-                price: item.price,
+                price: chargedPrice,
                 qty: Math.max(1, Math.floor(entry.qty)),
                 notes: entry.notes?.trim() || null,
                 additionals,

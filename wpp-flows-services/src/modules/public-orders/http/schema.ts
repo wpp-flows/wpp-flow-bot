@@ -11,15 +11,16 @@ const bundlePickSchema = z.object({
     itemId: z.uuid(),
 });
 
-const additionalSchema = z.object({
-    id: z.string().min(1).max(64),
+const selectionSchema = z.object({
+    groupId: z.string().min(1).max(64),
+    optionIds: z.array(z.string().min(1).max(64)).max(50),
 });
 
 const cartItemSchema = z.object({
     itemId: z.uuid(),
     qty: z.number().int().min(1).max(100),
     notes: z.string().max(500).nullable().optional(),
-    additionals: z.array(additionalSchema).max(50).optional(),
+    selections: z.array(selectionSchema).max(20).optional(),
     bundle: z
         .object({
             bundleId: z.uuid(),

@@ -71,9 +71,11 @@ export class PublicMenuController {
                 name: it.name,
                 description: it.description,
                 price: it.price,
+                originalPrice: it.originalPrice,
+                promotionalPrice: it.promotionalPrice,
                 imageUrl: it.imageUrl,
                 position: it.position,
-                additionals: it.additionals,
+                optionGroups: it.optionGroups,
             })),
             promotions: visiblePromotions.map((p) => ({
                 id: p.id,

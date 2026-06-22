@@ -241,18 +241,30 @@ model MenuItem {
   name                String
   description         String
   price               Decimal      @db.Decimal(10, 2)
+  /// Optional "antes" price — when set and higher than the effective price
+  /// (promotionalPrice when present, otherwise `price`), the public catalog
+  /// renders this struck-through next to the active price. Just for display.
+  originalPrice       Decimal?     @db.Decimal(10, 2)
+  /// Optional discounted price. When set, this is what the customer pays;
+  /// `price` becomes the reference (and is shown struck-through unless
+  /// `originalPrice` is also set, which then wins for the strike display).
+  promotionalPrice    Decimal?     @db.Decimal(10, 2)
   imageUrl            String?
   available           Boolean      @default(true)
   /// 0–6 (Sunday..Saturday). Empty array means available every day. When set,
   /// the bot only lists this item on the matching weekdays.
   availableDaysOfWeek Int[]        @default([])
   position            Int          @default(0)
-  /// Optional adicionais the customer can tick when ordering this item on the
-  /// public menu (e.g. "Borda recheada", "Queijo extra"). Shape:
-  ///   [{ id: string, name: string, price: string }]
-  /// Stored as JSON because the list is small and item-scoped — querying
-  /// inside it isn't needed.
-  additionals         Json?
+  /// Shape:
+  ///   [{
+  ///     id: string, title: string, subtitle?: string|null,
+  ///     minSelections: number, maxSelections: number, position: number,
+  ///     options: [{ id: string, name: string, additionalPrice: string,
+  ///                 imageUrl?: string|null, position: number }]
+  ///   }]
+  /// JSON because every read fetches the whole list together and the
+  /// browse / order paths don't need to query inside it.
+  optionGroups        Json?
   createdAt           DateTime     @default(now()) @db.Timestamptz
   updatedAt           DateTime     @updatedAt @db.Timestamptz
 

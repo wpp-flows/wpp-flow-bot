@@ -1,5 +1,8 @@
 import type { ServiceType } from "@/modules/order/repositories/order-repo";
 
+export type PriceInput = number | string;
+export type NullablePriceInput = PriceInput | null;
+
 export interface MenuCategory {
     id: string;
     organizationId: string;
@@ -11,10 +14,22 @@ export interface MenuCategory {
     updatedAt: Date;
 }
 
-export interface MenuItemAdditional {
+export interface MenuItemOption {
     id: string;
     name: string;
-    price: string;
+    additionalPrice: string;
+    imageUrl: string | null;
+    position: number;
+}
+
+export interface MenuItemOptionGroup {
+    id: string;
+    title: string;
+    subtitle: string | null;
+    minSelections: number;
+    maxSelections: number;
+    position: number;
+    options: MenuItemOption[];
 }
 
 export interface MenuItem {
@@ -25,6 +40,8 @@ export interface MenuItem {
     name: string;
     description: string;
     price: string;
+    originalPrice: string | null;
+    promotionalPrice: string | null;
     imageUrl: string | null;
     available: boolean;
     /**
@@ -33,7 +50,7 @@ export interface MenuItem {
      */
     availableDaysOfWeek: number[];
     position: number;
-    additionals: MenuItemAdditional[];
+    optionGroups: MenuItemOptionGroup[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -76,12 +93,14 @@ export interface ItemRepository {
         serviceType: ServiceType;
         name: string;
         description: string;
-        price: number | string;
+        price: PriceInput;
+        originalPrice?: NullablePriceInput;
+        promotionalPrice?: NullablePriceInput;
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
         position: number;
-        additionals?: MenuItemAdditional[];
+        optionGroups?: MenuItemOptionGroup[];
     }): Promise<MenuItem>;
     update(
         id: string,
@@ -90,12 +109,14 @@ export interface ItemRepository {
             serviceType?: ServiceType;
             name?: string;
             description?: string;
-            price?: number | string;
+            price?: PriceInput;
+            originalPrice?: NullablePriceInput;
+            promotionalPrice?: NullablePriceInput;
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
             position?: number;
-            additionals?: MenuItemAdditional[];
+            optionGroups?: MenuItemOptionGroup[];
         }
     ): Promise<MenuItem>;
     delete(id: string): Promise<void>;
