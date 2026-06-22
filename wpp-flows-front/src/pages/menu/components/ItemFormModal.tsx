@@ -268,7 +268,6 @@ export function ItemFormModal({
             description="A foto é o primeiro contato do cliente — use uma imagem nítida, bem enquadrada e sem texto."
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
-              {/* Hero image picker — capped on mobile so it doesn't dominate the viewport */}
               <div className="mx-auto w-full max-w-[160px] sm:mx-0 sm:max-w-none">
                 <input
                   ref={fileInputRef}
@@ -568,9 +567,22 @@ function FormSection({
   );
 }
 
-function moneyToString(n: number | null | undefined): string | null {
-  if (n == null || !Number.isFinite(n)) return null;
-  return n.toFixed(2);
+// Form inputs registered via react-hook-form arrive as strings ("29.99") and
+// Zod only coerces on submit, so Number.isFinite(stringValue) is false. Coerce
+// explicitly here or the preview silently zeroes every price.
+function toNumber(v: unknown): number {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function moneyToString(v: unknown): string | null {
+  if (v == null || v === '') return null;
+  const n = toNumber(v);
+  return n > 0 ? n.toFixed(2) : null;
 }
 
 function buildPublicMenuItemDraft(
@@ -582,7 +594,7 @@ function buildPublicMenuItemDraft(
     categoryId: v.categoryId,
     name: v.name?.trim() || 'Sem nome ainda',
     description: v.description?.trim() ?? '',
-    price: (Number.isFinite(v.price) ? v.price : 0).toFixed(2),
+    price: toNumber(v.price).toFixed(2),
     promotionalPrice: moneyToString(v.promotionalPrice),
     imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
     position: 0,
@@ -590,16 +602,13 @@ function buildPublicMenuItemDraft(
       id: g.id,
       title: g.title?.trim() || `Grupo ${gIdx + 1}`,
       subtitle: g.subtitle?.trim() || null,
-      minSelections: g.minSelections,
-      maxSelections: g.maxSelections,
+      minSelections: Math.max(0, Math.floor(toNumber(g.minSelections))),
+      maxSelections: Math.max(1, Math.floor(toNumber(g.maxSelections))),
       position: gIdx,
       options: g.options.map((o, oIdx) => ({
         id: o.id,
         name: o.name?.trim() || `Opção ${oIdx + 1}`,
-        additionalPrice: (Number.isFinite(o.additionalPrice)
-          ? o.additionalPrice
-          : 0
-        ).toFixed(2),
+        additionalPrice: toNumber(o.additionalPrice).toFixed(2),
         imageUrl: o.imageUrl?.trim() || null,
         position: oIdx,
       })),
