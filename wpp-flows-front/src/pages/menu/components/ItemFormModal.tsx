@@ -567,9 +567,6 @@ function FormSection({
   );
 }
 
-// Form inputs registered via react-hook-form arrive as strings ("29.99") and
-// Zod only coerces on submit, so Number.isFinite(stringValue) is false. Coerce
-// explicitly here or the preview silently zeroes every price.
 function toNumber(v: unknown): number {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
   if (typeof v === 'string' && v.trim() !== '') {
