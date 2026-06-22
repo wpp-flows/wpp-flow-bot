@@ -241,13 +241,8 @@ model MenuItem {
   name                String
   description         String
   price               Decimal      @db.Decimal(10, 2)
-  /// Optional "antes" price — when set and higher than the effective price
-  /// (promotionalPrice when present, otherwise `price`), the public catalog
-  /// renders this struck-through next to the active price. Just for display.
-  originalPrice       Decimal?     @db.Decimal(10, 2)
-  /// Optional discounted price. When set, this is what the customer pays;
-  /// `price` becomes the reference (and is shown struck-through unless
-  /// `originalPrice` is also set, which then wins for the strike display).
+  /// Optional discounted price. When set, this is what the customer pays and
+  /// `price` is shown struck-through in the catalog.
   promotionalPrice    Decimal?     @db.Decimal(10, 2)
   imageUrl            String?
   available           Boolean      @default(true)
@@ -591,11 +586,6 @@ enum PromotionKind {
   NTH_ORDER_DISCOUNT
   /// Free-text "promotion of the day" message inserted before the menu.
   DAILY_MESSAGE
-  /// Orderable combo. Carries its full configuration in the `bundle` JSON
-  /// column (components/pools, fixed price, per-bundle questions). Shows up
-  /// as a virtual "Promoções" category in the menu and is picked by the
-  /// customer like any other item.
-  BUNDLE
 }
 
 enum PromotionDiscountType {
@@ -633,13 +623,6 @@ model Promotion {
   /// the customer hits the qualifying order ("🎉 5º pedido — 10% off aplicado!").
   /// Null = auto-built default.
   qualifyingMessage String?
-  /// BUNDLE: full combo configuration. Shape:
-  ///   { components: [{ id, label, itemIds, count, free }],
-  ///     price: "59.90",
-  ///     questions: [{ id, label, fieldKey }] }
-  /// Stored as JSON because the shape will evolve as we ship the orderable
-  /// promo experience and we don't query inside it.
-  bundle            Json?
   createdAt         DateTime               @default(now()) @db.Timestamptz
   updatedAt         DateTime               @updatedAt @db.Timestamptz
 

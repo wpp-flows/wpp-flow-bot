@@ -1,25 +1,5 @@
-export type PromotionKind = "NTH_ORDER_DISCOUNT" | "DAILY_MESSAGE" | "BUNDLE";
+export type PromotionKind = "NTH_ORDER_DISCOUNT" | "DAILY_MESSAGE";
 export type PromotionDiscountType = "PERCENT" | "FIXED";
-
-export interface BundleComponent {
-    id: string;
-    label: string;
-    itemIds: string[];
-    count: number;
-    free: boolean;
-}
-
-export interface BundleQuestion {
-    id: string;
-    label: string;
-    fieldKey: string;
-}
-
-export interface BundleConfig {
-    components: BundleComponent[];
-    price: string;
-    questions: BundleQuestion[];
-}
 
 export interface Promotion {
     id: string;
@@ -41,7 +21,6 @@ export interface Promotion {
     teaserOrderOffset: number | null;
     teaserMessage: string | null;
     qualifyingMessage: string | null;
-    bundle: BundleConfig | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -60,7 +39,6 @@ export interface PromotionInput {
     teaserOrderOffset?: number | null;
     teaserMessage?: string | null;
     qualifyingMessage?: string | null;
-    bundle?: BundleConfig | null;
 }
 
 export interface PromotionRepository {

@@ -71,7 +71,6 @@ const toModel = (row: any): MenuItem => ({
     name: row.name,
     description: row.description,
     price: row.price.toString(),
-    originalPrice: row.originalPrice == null ? null : row.originalPrice.toString(),
     promotionalPrice:
         row.promotionalPrice == null ? null : row.promotionalPrice.toString(),
     imageUrl: row.imageUrl,
@@ -123,7 +122,6 @@ export class PrismaItemRepository implements ItemRepository {
         name: string;
         description: string;
         price: PriceInput;
-        originalPrice?: NullablePriceInput;
         promotionalPrice?: NullablePriceInput;
         imageUrl?: string;
         available?: boolean;
@@ -131,12 +129,11 @@ export class PrismaItemRepository implements ItemRepository {
         position: number;
         optionGroups?: MenuItemOptionGroup[];
     }): Promise<MenuItem> {
-        const { optionGroups, originalPrice, promotionalPrice, ...rest } = data;
+        const { optionGroups, promotionalPrice, ...rest } = data;
         const row = await prisma.menuItem.create({
             data: {
                 ...rest,
                 price: rest.price.toString(),
-                originalPrice: priceToColumn(originalPrice),
                 promotionalPrice: priceToColumn(promotionalPrice),
                 optionGroups: (optionGroups ?? []) as any,
             },
@@ -152,7 +149,6 @@ export class PrismaItemRepository implements ItemRepository {
             name?: string;
             description?: string;
             price?: PriceInput;
-            originalPrice?: NullablePriceInput;
             promotionalPrice?: NullablePriceInput;
             imageUrl?: string | null;
             available?: boolean;
@@ -161,15 +157,12 @@ export class PrismaItemRepository implements ItemRepository {
             optionGroups?: MenuItemOptionGroup[];
         }
     ): Promise<MenuItem> {
-        const { optionGroups, originalPrice, promotionalPrice, ...rest } = data;
+        const { optionGroups, promotionalPrice, ...rest } = data;
         const row = await prisma.menuItem.update({
             where: { id },
             data: {
                 ...rest,
                 price: rest.price === undefined ? undefined : rest.price.toString(),
-                ...(originalPrice !== undefined
-                    ? { originalPrice: priceToColumn(originalPrice) }
-                    : {}),
                 ...(promotionalPrice !== undefined
                     ? { promotionalPrice: priceToColumn(promotionalPrice) }
                     : {}),

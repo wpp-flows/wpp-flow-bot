@@ -68,12 +68,7 @@ export class NotifyCustomerOrderStatusChangeUseCase {
 function buildStatusMessage(order: Order, status: OrderStatus): string | null {
     const orderNumber = `#${String(order.sequence).padStart(4, "0")}`;
     const itemsList = order.items
-        .map((it) => {
-            const head = `• ${it.qty}x ${it.name}`;
-            if (!it.bundle) return head;
-            const picks = it.bundle.picks.map((p) => `   ↳ ${p.itemName}`);
-            return [head, ...picks].join("\n");
-        })
+        .map((it) => `• ${it.qty}x ${it.name}`)
         .join("\n");
 
     switch (status) {

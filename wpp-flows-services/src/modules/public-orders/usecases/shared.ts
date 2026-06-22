@@ -16,11 +16,6 @@ export interface PublicOrderItemInput {
     qty: number;
     notes?: string | null;
     selections?: PublicOrderItemSelectionInput[];
-    bundle?: {
-        bundleId: string;
-        picks: { componentId: string; itemId: string }[];
-        answers?: Record<string, string>;
-    } | null;
 }
 
 export interface PublicOrderResult {
@@ -107,28 +102,9 @@ export async function resolveCartItems(deps: {
                 qty: Math.max(1, Math.floor(entry.qty)),
                 notes: entry.notes?.trim() || null,
                 additionals,
-                bundle: entry.bundle
-                    ? {
-                        bundleId: entry.bundle.bundleId,
-                        picks: entry.bundle.picks.map((p) => ({
-                            componentId: p.componentId,
-                            itemId: p.itemId,
-                            itemName: "",
-                        })),
-                        answers: entry.bundle.answers ?? {},
-                    }
-                    : null,
             };
         }),
     );
-
-    for (const ci of cartItems) {
-        if (!ci.bundle) continue;
-        for (const pick of ci.bundle.picks) {
-            const picked = await deps.itemRepo.findByIdInOrg(deps.orgId, pick.itemId);
-            pick.itemName = picked?.name ?? "Item";
-        }
-    }
 
     return cartItems;
 }

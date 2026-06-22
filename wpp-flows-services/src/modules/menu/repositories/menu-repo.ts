@@ -40,7 +40,6 @@ export interface MenuItem {
     name: string;
     description: string;
     price: string;
-    originalPrice: string | null;
     promotionalPrice: string | null;
     imageUrl: string | null;
     available: boolean;
@@ -94,7 +93,6 @@ export interface ItemRepository {
         name: string;
         description: string;
         price: PriceInput;
-        originalPrice?: NullablePriceInput;
         promotionalPrice?: NullablePriceInput;
         imageUrl?: string;
         available?: boolean;
@@ -110,7 +108,6 @@ export interface ItemRepository {
             name?: string;
             description?: string;
             price?: PriceInput;
-            originalPrice?: NullablePriceInput;
             promotionalPrice?: NullablePriceInput;
             imageUrl?: string | null;
             available?: boolean;

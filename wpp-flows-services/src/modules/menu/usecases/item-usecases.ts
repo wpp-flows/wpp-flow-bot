@@ -69,7 +69,6 @@ export class CreateItemUseCase {
         name: string;
         description: string;
         price: number;
-        originalPrice?: number | null;
         promotionalPrice?: number | null;
         imageUrl?: string;
         available?: boolean;
@@ -82,7 +81,7 @@ export class CreateItemUseCase {
         );
         if (!category) throw new NotFoundError("Category");
 
-        assertPromoSanity(input.price, input.originalPrice, input.promotionalPrice);
+        assertPromoSanity(input.price, input.promotionalPrice);
 
         const position = await this.itemRepo.countByCategory(input.categoryId);
         return this.itemRepo.create({
@@ -94,26 +93,13 @@ export class CreateItemUseCase {
     }
 }
 
-function parseNullableDecimal(raw: string | null): number | null {
-    if (raw == null || raw === "") return null;
-    const n = Number.parseFloat(raw);
-    return Number.isFinite(n) ? n : null;
-}
-
 function assertPromoSanity(
     price: number,
-    originalPrice: number | null | undefined,
     promotionalPrice: number | null | undefined,
 ): void {
     if (promotionalPrice != null && promotionalPrice >= price) {
         throw new ValidationError(
             "O preço promocional precisa ser menor que o preço normal.",
-        );
-    }
-    const effective = promotionalPrice ?? price;
-    if (originalPrice != null && originalPrice <= effective) {
-        throw new ValidationError(
-            "O preço original (antes) precisa ser maior que o preço atual.",
         );
     }
 }
@@ -131,7 +117,6 @@ export class UpdateItemUseCase {
         name?: string;
         description?: string;
         price?: number;
-        originalPrice?: number | null;
         promotionalPrice?: number | null;
         imageUrl?: string | null;
         available?: boolean;
@@ -158,13 +143,11 @@ export class UpdateItemUseCase {
         }
 
         const effectivePrice = input.price ?? Number.parseFloat(existing.price);
-        const existingOriginal = parseNullableDecimal(existing.originalPrice);
-        const existingPromo = parseNullableDecimal(existing.promotionalPrice);
-        const nextOriginal =
-            input.originalPrice === undefined ? existingOriginal : input.originalPrice;
+        const existingPromo =
+            existing.promotionalPrice == null ? null : Number.parseFloat(existing.promotionalPrice);
         const nextPromo =
             input.promotionalPrice === undefined ? existingPromo : input.promotionalPrice;
-        assertPromoSanity(effectivePrice, nextOriginal, nextPromo);
+        assertPromoSanity(effectivePrice, nextPromo);
 
         return this.itemRepo.update(input.id, {
             categoryId: input.categoryId,
@@ -172,7 +155,6 @@ export class UpdateItemUseCase {
             name: input.name,
             description: input.description,
             price: input.price,
-            originalPrice: input.originalPrice,
             promotionalPrice: input.promotionalPrice,
             imageUrl: input.imageUrl,
             available: input.available,

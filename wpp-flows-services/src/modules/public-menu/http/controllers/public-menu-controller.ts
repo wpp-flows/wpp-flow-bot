@@ -71,7 +71,6 @@ export class PublicMenuController {
                 name: it.name,
                 description: it.description,
                 price: it.price,
-                originalPrice: it.originalPrice,
                 promotionalPrice: it.promotionalPrice,
                 imageUrl: it.imageUrl,
                 position: it.position,
@@ -90,7 +89,6 @@ export class PublicMenuController {
                 teaserOrderOffset: p.teaserOrderOffset,
                 teaserMessage: p.teaserMessage,
                 qualifyingMessage: p.qualifyingMessage,
-                bundle: p.bundle,
             })),
             bot: onlineBot
                 ? {
