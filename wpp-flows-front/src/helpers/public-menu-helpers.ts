@@ -9,10 +9,8 @@ export function effectiveItemPrice(item: PublicMenuItem): number {
 }
 
 export function originalDisplayPrice(item: PublicMenuItem): number | null {
-  const raw =
-    item.originalPrice ?? (item.promotionalPrice ? item.price : null);
-  if (!raw) return null;
-  const n = Number.parseFloat(raw);
+  if (!item.promotionalPrice) return null;
+  const n = Number.parseFloat(item.price || '0');
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 

@@ -44,8 +44,6 @@ function summarize(promo: Promotion): string {
       return summarizeNthOrder(promo);
     case 'DAILY_MESSAGE':
       return summarizeDailyMessage(promo);
-    case 'BUNDLE':
-      return summarizeBundle(promo);
   }
 }
 
@@ -68,18 +66,4 @@ function featuredSuffix(promo: Promotion): string {
     return ` · item destacado por R$ ${promo.promotionalPrice}`;
   }
   return ' · com item destacado';
-}
-
-function summarizeBundle(promo: Promotion): string {
-  const bundle = promo.bundle;
-  if (!bundle) return '';
-  const totalSlots = bundle.components.reduce((sum, c) => sum + c.count, 0);
-  const itemsLabel = `${totalSlots} item${totalSlots === 1 ? '' : 's'}`;
-  const poolsLabel = `${bundle.components.length} pool${bundle.components.length === 1 ? '' : 's'}`;
-  return `R$ ${bundle.price} · ${itemsLabel} em ${poolsLabel}${bundleQuestionsSuffix(bundle.questions.length)}`;
-}
-
-function bundleQuestionsSuffix(count: number): string {
-  if (count === 0) return '';
-  return ` · ${count} pergunta${count === 1 ? '' : 's'}`;
 }

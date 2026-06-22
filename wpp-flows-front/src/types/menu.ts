@@ -37,8 +37,6 @@ export interface MenuItem {
   name: string;
   description: string;
   price: string;
-  /** Optional "antes" price for strikethrough display. */
-  originalPrice: string | null;
   /** Optional active promo. When set, this is what the customer pays. */
   promotionalPrice: string | null;
   imageUrl?: string | null;
@@ -84,7 +82,6 @@ export interface CreateItemPayload {
   name: string;
   description: string;
   price: number;
-  originalPrice?: number | null;
   promotionalPrice?: number | null;
   imageUrl?: string;
   available?: boolean;
@@ -98,7 +95,6 @@ export interface UpdateItemPayload {
   name?: string;
   description?: string;
   price?: number;
-  originalPrice?: number | null;
   promotionalPrice?: number | null;
   imageUrl?: string | null;
   available?: boolean;

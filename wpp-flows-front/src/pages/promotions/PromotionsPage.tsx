@@ -89,9 +89,6 @@ export function PromotionsPage() {
       teaserOrderOffset: promo.teaserOrderOffset?.toString() ?? '',
       teaserMessage: promo.teaserMessage ?? '',
       qualifyingMessage: promo.qualifyingMessage ?? '',
-      bundleComponents: promo.bundle?.components ?? [],
-      bundlePrice: promo.bundle?.price ?? '',
-      bundleQuestions: promo.bundle?.questions ?? [],
     });
     setModalOpen(true);
   };
@@ -111,7 +108,6 @@ export function PromotionsPage() {
     () => ({
       discounts: promotions.filter((p) => p.kind === 'NTH_ORDER_DISCOUNT'),
       daily: promotions.filter((p) => p.kind === 'DAILY_MESSAGE'),
-      bundles: promotions.filter((p) => p.kind === 'BUNDLE'),
     }),
     [promotions],
   );
@@ -184,25 +180,6 @@ export function PromotionsPage() {
               </div>
             )}
           </Section>
-
-          <Section title="Combos">
-            {grouped.bundles.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhum combo configurado. Crie um para vender pacotes como "2 pizzas + refri grátis".
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {grouped.bundles.map((promo) => (
-                  <PromotionRow
-                    key={promo.id}
-                    promo={promo}
-                    onEdit={() => openEdit(promo)}
-                    onDelete={() => remove.mutate(promo.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </Section>
         </div>
       )}
 
@@ -259,15 +236,12 @@ function buildPayload(form: PromotionFormState): PromotionInput {
     teaserOrderOffset: null,
     teaserMessage: null,
     qualifyingMessage: null,
-    bundle: null,
   };
   switch (form.kind) {
     case 'NTH_ORDER_DISCOUNT':
       return { ...base, ...buildNthOrderPayload(form) };
     case 'DAILY_MESSAGE':
       return { ...base, ...buildDailyMessagePayload(form) };
-    case 'BUNDLE':
-      return { ...base, ...buildBundlePayload(form) };
   }
 }
 
@@ -297,12 +271,3 @@ function buildDailyMessagePayload(form: PromotionFormState): Partial<PromotionIn
   };
 }
 
-function buildBundlePayload(form: PromotionFormState): Partial<PromotionInput> {
-  return {
-    bundle: {
-      components: form.bundleComponents,
-      price: form.bundlePrice.replace(',', '.').trim() || '0',
-      questions: form.bundleQuestions,
-    },
-  };
-}

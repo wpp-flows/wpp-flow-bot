@@ -125,7 +125,6 @@ export const menuItemSchema = z
       .union([z.string(), z.number()])
       .transform((v) => (typeof v === 'string' ? Number(v) : v))
       .pipe(z.number().min(0, 'O preço deve ser positivo').max(100_000)),
-    originalPrice: optionalMoney,
     promotionalPrice: optionalMoney,
     imageUrl: z
       .string()
@@ -144,14 +143,6 @@ export const menuItemSchema = z
         code: 'custom',
         path: ['promotionalPrice'],
         message: 'Deve ser menor que o preço normal',
-      });
-    }
-    const effective = v.promotionalPrice ?? v.price;
-    if (v.originalPrice != null && v.originalPrice <= effective) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['originalPrice'],
-        message: 'Deve ser maior que o preço atual',
       });
     }
   });

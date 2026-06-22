@@ -21,13 +21,13 @@ const WELCOME: TourStep[] = [
     {
         title: '👋 Boas-vindas ao Mesa!',
         description:
-            'Em menos de um minuto você conhece cada aba do menu lateral e o que fazer em cada uma. Use <b>Próximo</b> para avançar e <b>Anterior</b> para voltar.',
+            'Tour completo da plataforma — vamos passar por cada aba primeiro do <b>Delivery</b> e depois do <b>Salão</b>, abrindo cada uma e mostrando o que dá pra fazer. Use <b>Próximo</b> para avançar e <b>Anterior</b> para voltar.',
     },
     {
         id: 'service-mode',
         title: 'Delivery e Salão',
         description:
-            'Alterne aqui entre o lado do <b>Delivery</b> (pedidos via WhatsApp/site) e o <b>Salão</b> (mesas com QR Code). Cada lado tem seu próprio menu, pedidos e relatórios — totalmente independentes.',
+            'Aqui você alterna entre os dois lados da plataforma. <b>Delivery</b> = pedidos via WhatsApp/site. <b>Salão</b> = mesas com QR Code. Cada lado tem seu cardápio, pedidos, carteira e configurações próprias.',
         side: 'right',
         align: 'start',
     },
@@ -38,40 +38,67 @@ const CLOSING: TourStep[] = [
         id: 'notifications',
         title: 'Notificações em tempo real',
         description:
-            'O sino acende com cada <b>pedido novo</b>, <b>pagamento confirmado</b> e quando o <b>bot fica offline</b>. Tudo em tempo real, sem precisar dar F5.',
+            'O sino acende com cada <b>pedido novo</b>, <b>pagamento confirmado</b> e quando o <b>bot fica offline</b>. Tudo via SSE — sem precisar dar F5.',
         side: 'bottom',
         align: 'end',
     },
     {
         id: 'help',
-        title: '🎯 Tour completo!',
+        title: '🎯 Tour concluído!',
         description:
-            'Sempre que quiser rever este passeio, é só clicar no <b>?</b> aqui na barra superior. Bons pedidos!',
+            'Sempre que quiser rever este passeio, clique no <b>?</b> aqui na barra superior. Bons pedidos!',
         side: 'bottom',
         align: 'end',
     },
 ];
 
+const DELIVERY_INTRO: TourStep = {
+    title: '🛵 Lado do Delivery',
+    description:
+        'Começamos pelo Delivery. Vamos passar por cada aba do menu lateral, abrir e mostrar as principais ações. Use <b>Próximo</b> para avançar.',
+};
+
+const LOCAL_INTRO: TourStep = {
+    title: '🪑 Lado do Salão',
+    description:
+        'Agora vamos pro Salão. Mesmo formato — uma aba por vez, com as ações principais destacadas. Esse lado é independente do Delivery: cardápio, pedidos e relatórios separados.',
+};
+
 const DELIVERY_STEPS: TourStep[] = [
     ...WELCOME,
+    DELIVERY_INTRO,
+
+    // Dashboard
     {
         id: 'nav-dashboard',
         route: ROUTES.dashboard,
         title: 'Dashboard',
         description:
-            'Sua visão geral do dia: pedidos confirmados, faturamento da semana, conversas ativas e os itens mais pedidos. É a primeira tela após o login.',
+            'Visão geral do dia: <b>pedidos confirmados</b>, <b>faturamento da semana</b>, <b>conversas ativas</b> e os <b>itens mais pedidos</b>. É a primeira tela após o login.',
         side: 'right',
         align: 'start',
     },
+
+    // Bots
     {
         id: 'nav-bots',
         route: ROUTES.bots,
         title: 'Bots do WhatsApp',
         description:
-            'Cadastre um bot e <b>conecte ao WhatsApp escaneando um QR Code</b>. Aqui você acompanha o status (Online/Offline) e pode regenerar a conexão se cair. É o bot que atende seus clientes.',
+            'Aqui você cadastra e gerencia os bots que atendem seus clientes no WhatsApp. Cada bot conecta via <b>QR Code</b> e exibe um status: Online / Offline.',
         side: 'right',
         align: 'start',
     },
+    {
+        id: 'page-actions',
+        route: ROUTES.bots,
+        title: 'Novo bot',
+        description:
+            'Cadastre um bot informando nome e número. Depois é só escanear o <b>QR Code</b> com o WhatsApp do estabelecimento. Se a conexão cair, dá pra regenerar a partir do card.',
+        side: 'bottom',
+        align: 'end',
+    },
+
     {
         id: 'nav-chats',
         route: ROUTES.conversations,
@@ -81,6 +108,7 @@ const DELIVERY_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-orders',
         route: ROUTES.orders,
@@ -90,6 +118,7 @@ const DELIVERY_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-wallet',
         route: ROUTES.wallet,
@@ -99,15 +128,26 @@ const DELIVERY_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-menu',
         route: ROUTES.menu,
         title: 'Cardápio do Delivery',
         description:
-            'Organize as categorias e itens. Cada item tem foto, preço, descrição e adicionais opcionais. <b>Arraste categorias</b> para reordenar como elas aparecem para o cliente.',
+            'Organize categorias e itens do delivery. Cada item tem foto, preço, descrição, <b>grupos de opções</b> (estilo iFood — para combos e personalização) e suporte a <b>preço promocional</b> (riscado + valor atual).',
         side: 'right',
         align: 'start',
     },
+    {
+        id: 'page-actions',
+        route: ROUTES.menu,
+        title: 'Nova categoria / Novo item',
+        description:
+            'Use estes botões para criar categorias e itens. Dentro do item você configura <b>grupos de opções obrigatórios ou opcionais</b> (ex: "Escolha o sanduíche", "Adicionais até 3"). É assim que você monta combos sem precisar de uma promoção separada.',
+        side: 'bottom',
+        align: 'end',
+    },
+
     {
         id: 'nav-menu-preview',
         route: ROUTES.menuPreview,
@@ -117,15 +157,26 @@ const DELIVERY_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-promotions',
         route: ROUTES.promotions,
         title: 'Promoções',
         description:
-            'Regras automáticas que o bot aplica sozinho: <b>desconto no Nº pedido</b> ("10% no 5º pedido"), <b>mensagem do dia</b> e <b>combos</b> ("2 pizzas + refri grátis").',
+            'Regras automáticas que o bot aplica sozinho: <b>desconto no Nº pedido</b> ("10% no 5º pedido") e <b>mensagem do dia</b>. Para combos use os <b>grupos de opções</b> dentro de um item no cardápio.',
         side: 'right',
         align: 'start',
     },
+    {
+        id: 'page-actions',
+        route: ROUTES.promotions,
+        title: 'Nova promoção',
+        description:
+            'Crie uma promoção do tipo <b>Nº pedido</b> (com teaser opcional antes do qualificante) ou <b>Mensagem do dia</b> com item destacado e preço promocional opcional.',
+        side: 'bottom',
+        align: 'end',
+    },
+
     {
         id: 'nav-coupons',
         route: ROUTES.coupons,
@@ -136,6 +187,16 @@ const DELIVERY_STEPS: TourStep[] = [
         align: 'start',
     },
     {
+        id: 'page-actions',
+        route: ROUTES.coupons,
+        title: 'Novo cupom',
+        description:
+            'Configure código, tipo de desconto e validade. Cupons inativos ou esgotados não são aceitos no checkout.',
+        side: 'bottom',
+        align: 'end',
+    },
+
+    {
         id: 'nav-messages',
         route: ROUTES.messages,
         title: 'Mensagens automáticas',
@@ -144,6 +205,7 @@ const DELIVERY_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-flows',
         route: ROUTES.flows,
@@ -154,19 +216,30 @@ const DELIVERY_STEPS: TourStep[] = [
         align: 'start',
     },
     {
+        id: 'page-actions',
+        route: ROUTES.flows,
+        title: 'Novo fluxo',
+        description:
+            'Crie um novo fluxo do zero ou versione um existente. Cada versão fica salva — dá pra voltar pra uma anterior se precisar.',
+        side: 'bottom',
+        align: 'end',
+    },
+
+    // Settings
+    {
         id: 'nav-settings',
         route: ROUTES.settings,
         title: 'Configurações',
         description:
-            'Dados da empresa, <b>integração com o Mercado Pago</b>, horário de funcionamento, taxa de entrega e preferências de notificação ficam aqui.',
+            'Dados da empresa, <b>integração com o Mercado Pago</b>, <b>horário de funcionamento</b>, <b>taxa de entrega</b> e preferências de notificação ficam aqui.',
         side: 'right',
         align: 'start',
     },
-    ...CLOSING,
 ];
 
 const LOCAL_STEPS: TourStep[] = [
-    ...WELCOME,
+    LOCAL_INTRO,
+
     {
         id: 'nav-tables',
         route: ROUTES.localTables,
@@ -177,6 +250,16 @@ const LOCAL_STEPS: TourStep[] = [
         align: 'start',
     },
     {
+        id: 'page-actions',
+        route: ROUTES.localTables,
+        title: 'Nova mesa',
+        description:
+            'Crie uma mesa com um número/identificação. A plataforma gera o QR Code automaticamente — é só imprimir e colar na mesa.',
+        side: 'bottom',
+        align: 'end',
+    },
+
+    {
         id: 'nav-orders',
         route: ROUTES.localOrders,
         title: 'Pedidos do Salão',
@@ -185,24 +268,36 @@ const LOCAL_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-wallet',
         route: ROUTES.localWallet,
         title: 'Carteira do Salão',
         description:
-            'Faturamento do salão, contas fechadas e relatórios diários. Cada fechamento de conta vira uma linha aqui.',
+            'Faturamento do salão, contas fechadas e <b>relatórios diários</b>. Cada fechamento de conta vira uma linha aqui.',
         side: 'right',
         align: 'start',
     },
+
     {
         id: 'nav-menu',
         route: ROUTES.localMenu,
         title: 'Cardápio do Salão',
         description:
-            'Cardápio <b>independente</b> do delivery. Os pratos que aparecem para o cliente na mesa não precisam ser os mesmos do delivery — você decide.',
+            'Cardápio <b>independente</b> do delivery — os pratos do salão podem ser totalmente diferentes. Mesma estrutura: categorias, itens, grupos de opções e preço promocional.',
         side: 'right',
         align: 'start',
     },
+    {
+        id: 'page-actions',
+        route: ROUTES.localMenu,
+        title: 'Nova categoria / Novo item',
+        description:
+            'Crie categorias e itens exclusivos do salão. Os <b>grupos de opções</b> funcionam igual ao delivery — use-os para combos e personalização.',
+        side: 'bottom',
+        align: 'end',
+    },
+
     {
         id: 'nav-settings',
         route: ROUTES.localSettings,
@@ -212,8 +307,9 @@ const LOCAL_STEPS: TourStep[] = [
         side: 'right',
         align: 'start',
     },
-    ...CLOSING,
 ];
+
+const FULL_STEPS: TourStep[] = [...DELIVERY_STEPS, ...LOCAL_STEPS, ...CLOSING];
 
 function waitForElement(selector: string, timeoutMs = 3000): Promise<boolean> {
     return new Promise((resolve) => {
@@ -238,8 +334,7 @@ function waitForElement(selector: string, timeoutMs = 3000): Promise<boolean> {
 }
 
 function pickSteps(): TourStep[] {
-    const mode = useServiceModeStore.getState().mode;
-    return mode === 'LOCAL' ? LOCAL_STEPS : DELIVERY_STEPS;
+    return FULL_STEPS;
 }
 
 let activeDriver: Driver | null = null;
@@ -249,7 +344,20 @@ export function startTour(navigate: (path: string) => void): void {
     const steps = pickSteps();
     if (steps.length === 0) return;
 
+    const serviceMode = useServiceModeStore.getState();
+
     let activeIdx = 0;
+
+    const syncMode = (step: TourStep): void => {
+        const route = step.route ?? '';
+        const wantsLocal = route.startsWith('/local');
+        const currentMode = useServiceModeStore.getState().mode;
+        if (wantsLocal && currentMode !== 'LOCAL') {
+            serviceMode.setMode('LOCAL');
+        } else if (!wantsLocal && route && currentMode !== 'DELIVERY') {
+            serviceMode.setMode('DELIVERY');
+        }
+    };
 
     const goToStep = async (targetIdx: number, driverObj: Driver): Promise<void> => {
         const step = steps[targetIdx];
@@ -257,6 +365,8 @@ export function startTour(navigate: (path: string) => void): void {
             driverObj.destroy();
             return;
         }
+
+        syncMode(step);
 
         if (step.route && globalThis.location.pathname !== step.route) {
             navigate(step.route);

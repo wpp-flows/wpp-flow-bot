@@ -53,8 +53,6 @@ export type {
 export type {
   Order,
   OrderItem,
-  OrderItemBundle,
-  OrderItemBundlePick,
   OrderStatus,
   OrderFilters,
   PaymentStatus,
@@ -72,9 +70,6 @@ export type {
   PromotionInput,
   PromotionKind,
   PromotionDiscountType,
-  BundleConfig,
-  BundleComponent,
-  BundleQuestion,
 } from './promotion';
 export type {
   Notification,

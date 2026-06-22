@@ -46,7 +46,6 @@ export function cartLineTotal(item: PublicCartItem): number {
 function sameSignature(a: PublicCartItem, b: PublicCartItem): boolean {
   if (a.itemId !== b.itemId) return false;
   if ((a.notes ?? '') !== (b.notes ?? '')) return false;
-  if (a.bundle || b.bundle) return false;
   return optionsKey(a.selectedOptions) === optionsKey(b.selectedOptions);
 }
 
@@ -121,7 +120,6 @@ export function usePublicCart(slug: string) {
         qty: item.qty ?? 1,
         notes: item.notes ?? null,
         selectedOptions: item.selectedOptions ?? [],
-        bundle: item.bundle ?? null,
       };
       const current = readCart(slug);
       const existingIdx = current.findIndex((p) => sameSignature(p, candidate));

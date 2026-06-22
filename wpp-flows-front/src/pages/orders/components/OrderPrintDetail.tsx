@@ -39,19 +39,6 @@ export function buildReceiptHtml({
           `,
         )
         .join("");
-      const bundleRows = item.bundle
-        ? `
-          ${item.bundle.picks
-          .map((pick) => `<li>+ ${escapeHtml(pick.itemName)}</li>`)
-          .join("")}
-          ${Object.entries(item.bundle.answers)
-          .map(
-            ([key, value]) =>
-              `<li>+ ${escapeHtml(key)}: ${escapeHtml(value)}</li>`,
-          )
-          .join("")}
-        `
-        : "";
       const notes = item.notes?.trim()
         ? `<p class="notes">Obs: ${escapeHtml(item.notes.trim())}</p>`
         : "";
@@ -62,10 +49,7 @@ export function buildReceiptHtml({
             <span>${item.qty}x ${escapeHtml(item.name)}</span>
             <span>${formatBRL(itemTotal)}</span>
           </div>
-          ${additionalRows || bundleRows
-          ? `<ul class="details">${additionalRows}${bundleRows}</ul>`
-          : ""
-        }
+          ${additionalRows ? `<ul class="details">${additionalRows}</ul>` : ""}
           ${notes}
         </li>
       `;

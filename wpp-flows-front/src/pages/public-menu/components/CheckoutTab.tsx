@@ -151,16 +151,6 @@ export function CheckoutTab({
           qty: it.qty,
           notes: it.notes ?? null,
           selections: groupSelectionsByGroupId(it.selectedOptions),
-          bundle: it.bundle
-            ? {
-              bundleId: it.bundle.bundleId,
-              picks: it.bundle.picks.map((p) => ({
-                componentId: p.componentId,
-                itemId: p.itemId,
-              })),
-              answers: it.bundle.answers,
-            }
-            : null,
         })),
         observation: values.observation.trim() || null,
         address:

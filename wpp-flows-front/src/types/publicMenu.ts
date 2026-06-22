@@ -1,5 +1,3 @@
-import type { BundleConfig } from './promotion';
-
 export interface PublicMenuOrganization {
   id: string;
   name: string;
@@ -41,7 +39,6 @@ export interface PublicMenuItem {
   name: string;
   description: string;
   price: string;
-  originalPrice: string | null;
   promotionalPrice: string | null;
   imageUrl: string | null;
   position: number;
@@ -50,7 +47,7 @@ export interface PublicMenuItem {
 
 export interface PublicMenuPromotion {
   id: string;
-  kind: 'NTH_ORDER_DISCOUNT' | 'DAILY_MESSAGE' | 'BUNDLE';
+  kind: 'NTH_ORDER_DISCOUNT' | 'DAILY_MESSAGE';
   name: string;
   message: string | null;
   featuredItemId: string | null;
@@ -61,7 +58,6 @@ export interface PublicMenuPromotion {
   teaserOrderOffset: number | null;
   teaserMessage: string | null;
   qualifyingMessage: string | null;
-  bundle: BundleConfig | null;
 }
 
 export type CustomerContextBannerKind = 'QUALIFYING' | 'TEASER';
@@ -97,12 +93,6 @@ export interface PublicMenuResponse {
   closedMessage: string | null;
 }
 
-export interface PublicCartBundlePick {
-  componentId: string;
-  itemId: string;
-  itemName: string;
-}
-
 export interface PublicCartSelectedOption {
   groupId: string;
   optionId: string;
@@ -118,11 +108,6 @@ export interface PublicCartItem {
   qty: number;
   notes?: string | null;
   selectedOptions: PublicCartSelectedOption[];
-  bundle?: {
-    bundleId: string;
-    picks: PublicCartBundlePick[];
-    answers: Record<string, string>;
-  } | null;
 }
 
 export type PublicPaymentMethod = 'MERCADOPAGO' | 'CASH';
@@ -134,11 +119,6 @@ export interface CreatePublicOrderPayload {
     qty: number;
     notes?: string | null;
     selections?: { groupId: string; optionIds: string[] }[];
-    bundle?: {
-      bundleId: string;
-      picks: { componentId: string; itemId: string }[];
-      answers?: Record<string, string>;
-    } | null;
   }>;
   observation?: string | null;
   address?: string | null;

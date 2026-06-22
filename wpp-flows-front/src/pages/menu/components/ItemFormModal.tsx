@@ -112,7 +112,6 @@ export function ItemFormModal({
         name: item?.name ?? '',
         description: item?.description ?? '',
         price: item?.price === undefined ? 0 : Number(item.price),
-        originalPrice: item?.originalPrice ? Number(item.originalPrice) : null,
         promotionalPrice: item?.promotionalPrice ? Number(item.promotionalPrice) : null,
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
@@ -142,7 +141,6 @@ export function ItemFormModal({
         name: v.name,
         description: v.description ?? '',
         price: v.price,
-        originalPrice: v.originalPrice,
         promotionalPrice: v.promotionalPrice,
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
@@ -178,7 +176,6 @@ export function ItemFormModal({
         name: v.name,
         description: v.description ?? '',
         price: v.price,
-        originalPrice: v.originalPrice,
         promotionalPrice: v.promotionalPrice,
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
         available: v.available,
@@ -314,24 +311,6 @@ export function ItemFormModal({
             leftIcon={<DollarSign />}
             invalid={!!errors.promotionalPrice}
             {...register('promotionalPrice')}
-          />
-        </FormField>
-        <FormField
-          label="Preço antes (de)"
-          htmlFor="itm-original-price"
-          error={errors.originalPrice?.message}
-          hint="Opcional. Mostra um valor riscado acima do preço atual — útil para campanhas com 'de R$X por R$Y'."
-          className="sm:col-span-1"
-        >
-          <Input
-            id="itm-original-price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="—"
-            leftIcon={<DollarSign />}
-            invalid={!!errors.originalPrice}
-            {...register('originalPrice')}
           />
         </FormField>
         <FormField
