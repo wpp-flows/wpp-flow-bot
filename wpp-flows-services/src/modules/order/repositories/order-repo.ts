@@ -124,4 +124,10 @@ export interface OrderRepository {
         data: Partial<{ observation: string | null; address: string | null }>,
     ): Promise<Order>;
     attachToBill(orderIds: string[], billId: string): Promise<number>;
+    countByCoupon(organizationId: string, code: string): Promise<number>;
+    countByCouponAndCustomer(
+        organizationId: string,
+        customerId: string,
+        code: string,
+    ): Promise<number>;
 }

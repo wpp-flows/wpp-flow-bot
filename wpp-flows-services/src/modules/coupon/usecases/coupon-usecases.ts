@@ -25,6 +25,14 @@ function validate(input: CouponInput): void {
     if (input.validFrom && input.validUntil && input.validFrom > input.validUntil) {
         throw new ValidationError("A data de início é posterior à data de fim.");
     }
+    if (input.maxUses != null && input.maxUses <= 0) {
+        throw new ValidationError("O limite total de usos deve ser maior que zero.");
+    }
+    if (input.maxUsesPerCustomer != null && input.maxUsesPerCustomer <= 0) {
+        throw new ValidationError(
+            "O limite por cliente deve ser maior que zero.",
+        );
+    }
 }
 
 export class ListCouponsUseCase {
@@ -76,6 +84,14 @@ export class UpdateCouponUseCase {
                 input.data.validUntil !== undefined
                     ? input.data.validUntil
                     : current.validUntil,
+            maxUses:
+                input.data.maxUses === undefined
+                    ? current.maxUses
+                    : input.data.maxUses,
+            maxUsesPerCustomer:
+                input.data.maxUsesPerCustomer === undefined
+                    ? current.maxUsesPerCustomer
+                    : input.data.maxUsesPerCustomer,
             description:
                 input.data.description !== undefined
                     ? input.data.description

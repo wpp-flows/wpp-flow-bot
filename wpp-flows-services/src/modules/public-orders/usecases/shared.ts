@@ -1,7 +1,11 @@
 import { evaluateCoupon, describeCouponRejection } from "@/modules/coupon/usecases/coupon-evaluator";
 import type { CouponRepository } from "@/modules/coupon/repositories/coupon-repo";
 import type { ItemRepository } from "@/modules/menu/repositories/menu-repo";
-import type { OrderItem, ServiceType } from "@/modules/order/repositories/order-repo";
+import type {
+    OrderItem,
+    OrderRepository,
+    ServiceType,
+} from "@/modules/order/repositories/order-repo";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluator";
 import { ValidationError } from "@/shared/exceptions/http";
@@ -122,7 +126,9 @@ export async function computePricing(deps: {
     orgId: string;
     promotionRepo: PromotionRepository;
     couponRepo: CouponRepository;
+    orderRepo: OrderRepository;
     cartItems: OrderItem[];
+    customerId: string;
     customerOrderCount: number;
     rawCouponCode?: string | null;
 }): Promise<ResolvedPricing> {
@@ -152,9 +158,21 @@ export async function computePricing(deps: {
     const trimmed = deps.rawCouponCode?.trim();
     if (trimmed) {
         const coupon = await deps.couponRepo.findByCodeInOrg(deps.orgId, trimmed);
+        const [totalUsageCount, customerUsageCount] = coupon
+            ? await Promise.all([
+                deps.orderRepo.countByCoupon(deps.orgId, coupon.code),
+                deps.orderRepo.countByCouponAndCustomer(
+                    deps.orgId,
+                    deps.customerId,
+                    coupon.code,
+                ),
+            ])
+            : [0, 0];
         const evaluation = evaluateCoupon({
             coupon,
             subtotal: Math.max(0, subtotal - promoDiscount),
+            totalUsageCount,
+            customerUsageCount,
         });
         if (!evaluation.ok) {
             throw new ValidationError(describeCouponRejection(evaluation.reason));

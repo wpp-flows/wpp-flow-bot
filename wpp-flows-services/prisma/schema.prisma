@@ -521,6 +521,11 @@ model Coupon {
   /// Inclusive validity window. Both null = always valid.
   validFrom      DateTime?          @db.Timestamptz
   validUntil     DateTime?          @db.Timestamptz
+  /// Total redemptions allowed across all customers. null = unlimited.
+  maxUses           Int?
+  /// Max redemptions a single customer can make with this code. null = unlimited.
+  /// Counted by previous orders with this `couponCode` for the same customerId.
+  maxUsesPerCustomer Int?
   /// Free-text label shown to the org owner (optional).
   description    String?
   createdAt      DateTime           @default(now()) @db.Timestamptz

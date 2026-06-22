@@ -213,4 +213,36 @@ export class PrismaOrderRepository implements OrderRepository {
         });
         return result.count;
     }
+
+    async countByCoupon(
+        organizationId: string,
+        code: string,
+    ): Promise<number> {
+        const normalized = code.trim();
+        if (!normalized) return 0;
+        return prisma.order.count({
+            where: {
+                organizationId,
+                couponCode: { equals: normalized, mode: "insensitive" },
+                status: { not: "CANCELED" },
+            },
+        });
+    }
+
+    async countByCouponAndCustomer(
+        organizationId: string,
+        customerId: string,
+        code: string,
+    ): Promise<number> {
+        const normalized = code.trim();
+        if (!normalized) return 0;
+        return prisma.order.count({
+            where: {
+                organizationId,
+                customerId,
+                couponCode: { equals: normalized, mode: "insensitive" },
+                status: { not: "CANCELED" },
+            },
+        });
+    }
 }

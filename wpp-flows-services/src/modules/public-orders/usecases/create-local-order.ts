@@ -9,6 +9,7 @@ import type { CustomerRepository } from "@/modules/customer/repositories/custome
 import type { ItemRepository } from "@/modules/menu/repositories/menu-repo";
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
+import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import type { CreateOrderFromCartUseCase } from "@/modules/order/usecases/order-usecases";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import type { TableRepository } from "@/modules/local-service/repositories/table-repo";
@@ -38,6 +39,7 @@ export class CreateLocalOrderUseCase {
         private readonly promotionRepo: PromotionRepository,
         private readonly couponRepo: CouponRepository,
         private readonly customerRepo: CustomerRepository,
+        private readonly orderRepo: OrderRepository,
         private readonly tableRepo: TableRepository,
         private readonly createOrderFromCart: CreateOrderFromCartUseCase,
         private readonly notificationEmitter: NotificationEmitter,
@@ -79,7 +81,9 @@ export class CreateLocalOrderUseCase {
             orgId: org.id,
             promotionRepo: this.promotionRepo,
             couponRepo: this.couponRepo,
+            orderRepo: this.orderRepo,
             cartItems,
+            customerId: customer.id,
             customerOrderCount: customer.orderCount,
             rawCouponCode: input.couponCode,
         });

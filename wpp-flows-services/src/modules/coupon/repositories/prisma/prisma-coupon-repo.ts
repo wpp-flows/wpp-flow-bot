@@ -15,6 +15,8 @@ const toCoupon = (row: any): Coupon => ({
     isActive: row.isActive,
     validFrom: row.validFrom,
     validUntil: row.validUntil,
+    maxUses: row.maxUses ?? null,
+    maxUsesPerCustomer: row.maxUsesPerCustomer ?? null,
     description: row.description ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -28,6 +30,10 @@ function normalizeInput(data: Partial<CouponInput>) {
     if (data.isActive !== undefined) out.isActive = data.isActive;
     if (data.validFrom !== undefined) out.validFrom = data.validFrom;
     if (data.validUntil !== undefined) out.validUntil = data.validUntil;
+    if (data.maxUses !== undefined) out.maxUses = data.maxUses;
+    if (data.maxUsesPerCustomer !== undefined) {
+        out.maxUsesPerCustomer = data.maxUsesPerCustomer;
+    }
     if (data.description !== undefined) out.description = data.description;
     return out;
 }
@@ -74,6 +80,8 @@ export class PrismaCouponRepository implements CouponRepository {
                 isActive: data.isActive ?? true,
                 validFrom: data.validFrom ?? null,
                 validUntil: data.validUntil ?? null,
+                maxUses: data.maxUses ?? null,
+                maxUsesPerCustomer: data.maxUsesPerCustomer ?? null,
                 description: data.description ?? null,
             },
         });

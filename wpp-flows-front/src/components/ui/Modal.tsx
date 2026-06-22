@@ -10,7 +10,7 @@ interface ModalProps {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   closeOnOverlay?: boolean;
 }
 
@@ -19,6 +19,7 @@ const SIZES = {
   md: 'max-w-md',
   lg: 'max-w-2xl',
   xl: 'max-w-3xl',
+  '2xl': 'max-w-5xl',
 };
 
 export function Modal({
@@ -47,7 +48,7 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
       <div
         aria-hidden
         className="absolute inset-0 bg-foreground/40"
@@ -58,7 +59,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         className={cn(
-          'relative flex w-full max-h-[90vh] flex-col rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg animate-scale-in',
+          'relative flex w-full max-h-[95vh] sm:max-h-[90vh] flex-col rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg animate-scale-in',
           SIZES[size],
         )}
       >
@@ -71,7 +72,7 @@ export function Modal({
           <X className="h-4 w-4" />
         </button>
         {(title || description) && (
-          <div className="shrink-0 flex flex-col gap-0.5 px-6 pt-5 pb-3 pr-12">
+          <div className="shrink-0 flex flex-col gap-0.5 px-4 pt-4 pb-3 pr-12 sm:px-6 sm:pt-5">
             {title ? (
               <h2 id="modal-title" className="text-base font-semibold tracking-tight">
                 {title}
@@ -84,14 +85,14 @@ export function Modal({
         )}
         <div
           className={cn(
-            'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-6',
+            'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-4 sm:px-6',
             title || description ? 'pb-5' : 'pt-10 pb-5',
           )}
         >
           {children}
         </div>
         {footer ? (
-          <div className="shrink-0 flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+          <div className="shrink-0 flex items-center justify-end gap-2 border-t border-border px-4 py-3 sm:px-6 sm:py-4">
             {footer}
           </div>
         ) : null}
