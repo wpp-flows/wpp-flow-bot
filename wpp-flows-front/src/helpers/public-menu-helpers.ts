@@ -1,3 +1,38 @@
+import type { PublicMenuItem } from '@/types/publicMenu';
+
+export function effectiveItemPrice(item: PublicMenuItem): number {
+  if (item.promotionalPrice) {
+    const promo = Number.parseFloat(item.promotionalPrice);
+    if (Number.isFinite(promo) && promo > 0) return promo;
+  }
+  return Number.parseFloat(item.price || '0');
+}
+
+export function originalDisplayPrice(item: PublicMenuItem): number | null {
+  const raw =
+    item.originalPrice ?? (item.promotionalPrice ? item.price : null);
+  if (!raw) return null;
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function startingPriceFor(item: PublicMenuItem): number {
+  const base = effectiveItemPrice(item);
+  const extras = item.optionGroups.reduce((sum, g) => {
+    if (g.minSelections <= 0) return sum;
+    const prices = g.options
+      .map((o) => Number.parseFloat(o.additionalPrice || '0'))
+      .sort((a, b) => a - b);
+    const cheapest = prices.slice(0, g.minSelections);
+    return sum + cheapest.reduce((s, p) => s + p, 0);
+  }, 0);
+  return base + extras;
+}
+
+export function itemShowsStartingFrom(item: PublicMenuItem): boolean {
+  return startingPriceFor(item) > effectiveItemPrice(item);
+}
+
 export function formatBrl(value: number | string): string {
   const n = typeof value === 'string' ? Number.parseFloat(value) : value;
   if (Number.isNaN(n)) return 'R$ 0,00';

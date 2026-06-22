@@ -56,36 +56,115 @@ export const categorySchema = z.object({
 });
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 
-export const additionalSchema = z.object({
+export const optionSchema = z.object({
   id: z.string().min(1).max(64),
-  name: z.string().min(1, 'O nome é obrigatório').max(120),
-  price: z
+  name: z.string().min(1, 'Informe o nome').max(120),
+  additionalPrice: z
     .union([z.string(), z.number()])
-    .transform((v) => (typeof v === 'string' ? Number(v) : v))
-    .pipe(z.number().min(0, 'Preço deve ser positivo').max(100_000)),
-});
-export type AdditionalFormValues = z.infer<typeof additionalSchema>;
-
-export const menuItemSchema = z.object({
-  categoryId: z.string().min(1, 'A categoria é obrigatória'),
-  name: z.string().min(1, 'O nome é obrigatório').max(60),
-  description: z.string().max(280).optional().or(z.literal('')),
-  price: z
-    .union([z.string(), z.number()])
-    .transform((v) => (typeof v === 'string' ? Number(v) : v))
+    .transform((v) => (typeof v === 'string' ? Number(v || '0') : v))
     .pipe(z.number().min(0, 'O preço deve ser positivo').max(100_000)),
   imageUrl: z
     .string()
     .optional()
-    .refine((v) => !v || /^https?:\/\//.test(v), 'Deve ser uma URL válida'),
-  available: z.boolean().optional().default(true),
-  availableDaysOfWeek: z
-    .array(z.number().int().min(0).max(6))
-    .optional()
-    .default([]),
-  additionals: z.array(additionalSchema).max(50).optional().default([]),
+    .refine((v) => !v || /^https?:\/\//.test(v), 'URL inválida'),
 });
+export type OptionFormValues = z.infer<typeof optionSchema>;
+
+export const optionGroupSchema = z
+  .object({
+    id: z.string().min(1).max(64),
+    title: z.string().min(1, 'Informe o título do grupo').max(120),
+    subtitle: z.string().max(200).optional().or(z.literal('')),
+    minSelections: z
+      .union([z.string(), z.number()])
+      .transform((v) => (typeof v === 'string' ? Number(v || '0') : v))
+      .pipe(z.number().int().min(0).max(50)),
+    maxSelections: z
+      .union([z.string(), z.number()])
+      .transform((v) => (typeof v === 'string' ? Number(v || '1') : v))
+      .pipe(z.number().int().min(1).max(50)),
+    options: z
+      .array(optionSchema)
+      .min(1, 'Adicione pelo menos uma opção')
+      .max(50),
+  })
+  .superRefine((g, ctx) => {
+    if (g.maxSelections < g.minSelections) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['maxSelections'],
+        message: 'Máximo deve ser ≥ mínimo',
+      });
+    }
+    if (g.minSelections > g.options.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['minSelections'],
+        message: 'Mínimo maior que o total de opções',
+      });
+    }
+  });
+export type OptionGroupFormValues = z.infer<typeof optionGroupSchema>;
+
+const optionalMoney = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((v) => {
+    if (v === undefined || v === '' || v === null) return null;
+    const n = typeof v === 'string' ? Number(v) : v;
+    return Number.isFinite(n) ? n : null;
+  })
+  .pipe(z.number().min(0).max(100_000).nullable());
+
+export const menuItemSchema = z
+  .object({
+    categoryId: z.string().min(1, 'A categoria é obrigatória'),
+    name: z.string().min(1, 'O nome é obrigatório').max(60),
+    description: z.string().max(280).optional().or(z.literal('')),
+    price: z
+      .union([z.string(), z.number()])
+      .transform((v) => (typeof v === 'string' ? Number(v) : v))
+      .pipe(z.number().min(0, 'O preço deve ser positivo').max(100_000)),
+    originalPrice: optionalMoney,
+    promotionalPrice: optionalMoney,
+    imageUrl: z
+      .string()
+      .optional()
+      .refine((v) => !v || /^https?:\/\//.test(v), 'Deve ser uma URL válida'),
+    available: z.boolean().optional().default(true),
+    availableDaysOfWeek: z
+      .array(z.number().int().min(0).max(6))
+      .optional()
+      .default([]),
+    optionGroups: z.array(optionGroupSchema).max(20).optional().default([]),
+  })
+  .superRefine((v, ctx) => {
+    if (v.promotionalPrice != null && v.promotionalPrice >= v.price) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['promotionalPrice'],
+        message: 'Deve ser menor que o preço normal',
+      });
+    }
+    const effective = v.promotionalPrice ?? v.price;
+    if (v.originalPrice != null && v.originalPrice <= effective) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['originalPrice'],
+        message: 'Deve ser maior que o preço atual',
+      });
+    }
+  });
 export type MenuItemFormValues = z.infer<typeof menuItemSchema>;
+
+export function deriveOptionGroupHelperText(min: number, max: number): string {
+  if (max <= 1) {
+    return min === 1 ? 'Escolha 1 opção' : 'Escolha até 1 opção';
+  }
+  if (min === 0) return `Escolha até ${max} opções`;
+  if (min === max) return `Escolha ${min} opções`;
+  return `Escolha entre ${min} e ${max} opções`;
+}
 
 export const flowStepSchema = z.object({
   id: z.string().optional(),

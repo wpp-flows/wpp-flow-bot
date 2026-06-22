@@ -17,10 +17,22 @@ export interface PublicMenuCategory {
   position: number;
 }
 
-export interface PublicMenuAdditional {
+export interface PublicMenuOption {
   id: string;
   name: string;
-  price: string;
+  additionalPrice: string;
+  imageUrl: string | null;
+  position: number;
+}
+
+export interface PublicMenuOptionGroup {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  minSelections: number;
+  maxSelections: number;
+  position: number;
+  options: PublicMenuOption[];
 }
 
 export interface PublicMenuItem {
@@ -29,9 +41,11 @@ export interface PublicMenuItem {
   name: string;
   description: string;
   price: string;
+  originalPrice: string | null;
+  promotionalPrice: string | null;
   imageUrl: string | null;
   position: number;
-  additionals: PublicMenuAdditional[];
+  optionGroups: PublicMenuOptionGroup[];
 }
 
 export interface PublicMenuPromotion {
@@ -89,10 +103,11 @@ export interface PublicCartBundlePick {
   itemName: string;
 }
 
-export interface PublicCartAdditional {
-  id: string;
+export interface PublicCartSelectedOption {
+  groupId: string;
+  optionId: string;
   name: string;
-  price: string;
+  additionalPrice: string;
 }
 
 export interface PublicCartItem {
@@ -102,7 +117,7 @@ export interface PublicCartItem {
   price: string;
   qty: number;
   notes?: string | null;
-  additionals: PublicCartAdditional[];
+  selectedOptions: PublicCartSelectedOption[];
   bundle?: {
     bundleId: string;
     picks: PublicCartBundlePick[];
@@ -118,7 +133,7 @@ export interface CreatePublicOrderPayload {
     itemId: string;
     qty: number;
     notes?: string | null;
-    additionals?: { id: string }[];
+    selections?: { groupId: string; optionIds: string[] }[];
     bundle?: {
       bundleId: string;
       picks: { componentId: string; itemId: string }[];

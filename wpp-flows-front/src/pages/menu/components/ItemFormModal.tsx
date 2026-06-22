@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, ImageOff, ImagePlus, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, ImageOff, ImagePlus, Plus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +17,7 @@ import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
 import { downscaleImage } from '@/helpers/image-helpers';
 import type { MenuCategory, MenuItem, ServiceType } from '@/types';
+import { OptionGroupEditor } from './OptionGroupEditor';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -60,7 +61,7 @@ export function ItemFormModal({
       imageUrl: '',
       available: true,
       availableDaysOfWeek: [],
-      additionals: [],
+      optionGroups: [],
     },
   });
 
@@ -68,7 +69,8 @@ export function ItemFormModal({
   const availableDaysOfWeek = watch('availableDaysOfWeek') ?? [];
   const imageUrl = watch('imageUrl');
 
-  const additionals = useFieldArray({ control, name: 'additionals' });
+  const optionGroups = useFieldArray({ control, name: 'optionGroups' });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useMutation({
@@ -110,14 +112,24 @@ export function ItemFormModal({
         name: item?.name ?? '',
         description: item?.description ?? '',
         price: item?.price === undefined ? 0 : Number(item.price),
+        originalPrice: item?.originalPrice ? Number(item.originalPrice) : null,
+        promotionalPrice: item?.promotionalPrice ? Number(item.promotionalPrice) : null,
         imageUrl: item?.imageUrl ?? '',
         available: item?.available ?? true,
         availableDaysOfWeek: item?.availableDaysOfWeek ?? [],
-        additionals:
-          item?.additionals.map((a) => ({
-            id: a.id,
-            name: a.name,
-            price: Number(a.price),
+        optionGroups:
+          item?.optionGroups.map((g) => ({
+            id: g.id,
+            title: g.title,
+            subtitle: g.subtitle ?? '',
+            minSelections: g.minSelections,
+            maxSelections: g.maxSelections,
+            options: g.options.map((o) => ({
+              id: o.id,
+              name: o.name,
+              additionalPrice: Number(o.additionalPrice),
+              imageUrl: o.imageUrl ?? undefined,
+            })),
           })) ?? [],
       });
     }
@@ -130,10 +142,24 @@ export function ItemFormModal({
         name: v.name,
         description: v.description ?? '',
         price: v.price,
+        originalPrice: v.originalPrice,
+        promotionalPrice: v.promotionalPrice,
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : undefined,
         available: v.available,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
-        additionals: v.additionals ?? [],
+        optionGroups: (v.optionGroups ?? []).map((g) => ({
+          id: g.id,
+          title: g.title,
+          subtitle: g.subtitle?.trim() || null,
+          minSelections: g.minSelections,
+          maxSelections: g.maxSelections,
+          options: g.options.map((o) => ({
+            id: o.id,
+            name: o.name,
+            additionalPrice: o.additionalPrice,
+            imageUrl: o.imageUrl?.trim() || undefined,
+          })),
+        })),
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [
@@ -148,11 +174,28 @@ export function ItemFormModal({
     mutationFn: (v: MenuItemFormValues) =>
       menuService.updateItem({
         id: item!.id,
-        ...v,
+        categoryId: v.categoryId,
+        name: v.name,
         description: v.description ?? '',
+        price: v.price,
+        originalPrice: v.originalPrice,
+        promotionalPrice: v.promotionalPrice,
         imageUrl: v.imageUrl?.trim() ? v.imageUrl.trim() : null,
+        available: v.available,
         availableDaysOfWeek: v.availableDaysOfWeek ?? [],
-        additionals: v.additionals ?? [],
+        optionGroups: (v.optionGroups ?? []).map((g) => ({
+          id: g.id,
+          title: g.title,
+          subtitle: g.subtitle?.trim() || null,
+          minSelections: g.minSelections,
+          maxSelections: g.maxSelections,
+          options: g.options.map((o) => ({
+            id: o.id,
+            name: o.name,
+            additionalPrice: o.additionalPrice,
+            imageUrl: o.imageUrl?.trim() || undefined,
+          })),
+        })),
       }),
     onSuccess: () => {
       void invalidateQueriesByFilters(qc, [
@@ -239,7 +282,7 @@ export function ItemFormModal({
           />
         </FormField>
         <FormField
-          label="Preco"
+          label="Preço"
           htmlFor="itm-price"
           error={errors.price?.message}
           required
@@ -253,6 +296,42 @@ export function ItemFormModal({
             leftIcon={<DollarSign />}
             invalid={!!errors.price}
             {...register('price')}
+          />
+        </FormField>
+        <FormField
+          label="Preço promocional"
+          htmlFor="itm-promo-price"
+          error={errors.promotionalPrice?.message}
+          hint="Opcional. Quando preenchido, é o que o cliente paga; o preço normal aparece riscado no cardápio."
+          className="sm:col-span-1"
+        >
+          <Input
+            id="itm-promo-price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="—"
+            leftIcon={<DollarSign />}
+            invalid={!!errors.promotionalPrice}
+            {...register('promotionalPrice')}
+          />
+        </FormField>
+        <FormField
+          label="Preço antes (de)"
+          htmlFor="itm-original-price"
+          error={errors.originalPrice?.message}
+          hint="Opcional. Mostra um valor riscado acima do preço atual — útil para campanhas com 'de R$X por R$Y'."
+          className="sm:col-span-1"
+        >
+          <Input
+            id="itm-original-price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="—"
+            leftIcon={<DollarSign />}
+            invalid={!!errors.originalPrice}
+            {...register('originalPrice')}
           />
         </FormField>
         <FormField
@@ -364,10 +443,11 @@ export function ItemFormModal({
         <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Adicionais</p>
+              <p className="text-sm font-medium">Grupos de opções</p>
               <p className="text-2xs text-muted-foreground">
-                Extras que o cliente pode marcar ao pedir este item (ex: borda
-                recheada, queijo extra). O preço soma ao total do pedido.
+                Personalizações estilo iFood: combos, perguntas com "Escolha 1
+                opção" / "Escolha até N", adicionais com preço extra. Cada
+                grupo tem mín./máx. de seleções; obrigatório quando mín. ≥ 1.
               </p>
             </div>
             <Button
@@ -376,53 +456,49 @@ export function ItemFormModal({
               size="sm"
               leftIcon={<Plus />}
               onClick={() =>
-                additionals.append({
+                optionGroups.append({
                   id: crypto.randomUUID(),
-                  name: '',
-                  price: 0,
+                  title: '',
+                  subtitle: '',
+                  minSelections: 0,
+                  maxSelections: 1,
+                  options: [
+                    {
+                      id: crypto.randomUUID(),
+                      name: '',
+                      additionalPrice: 0,
+                    },
+                  ],
                 })
               }
             >
-              Adicionar
+              Adicionar grupo
             </Button>
           </div>
 
-          {additionals.fields.length === 0 ? (
+          {optionGroups.fields.length === 0 ? (
             <p className="mt-3 text-2xs italic text-muted-foreground">
-              Nenhum adicional configurado.
+              Nenhum grupo configurado. Itens sem grupos vão direto ao
+              carrinho pelo preço base.
             </p>
           ) : (
-            <ul className="mt-3 space-y-2">
-              {additionals.fields.map((field, idx) => (
-                <li
-                  key={field.id}
-                  className="grid grid-cols-[1fr_auto] gap-2 rounded-md border border-border bg-card p-2 sm:grid-cols-[1fr_140px_auto]"
-                >
-                  <Input
-                    placeholder="Nome (ex: Borda recheada)"
-                    invalid={!!errors.additionals?.[idx]?.name}
-                    className="col-span-2 sm:col-span-1"
-                    {...register(`additionals.${idx}.name`)}
+            <ul className="mt-3 space-y-3">
+              {optionGroups.fields.map((field, idx) => (
+                <li key={field.id}>
+                  <OptionGroupEditor
+                    groupIndex={idx}
+                    control={control}
+                    register={register}
+                    watch={watch}
+                    errors={errors}
+                    onRemoveGroup={() => optionGroups.remove(idx)}
+                    onMoveUp={idx > 0 ? () => optionGroups.move(idx, idx - 1) : null}
+                    onMoveDown={
+                      idx < optionGroups.fields.length - 1
+                        ? () => optionGroups.move(idx, idx + 1)
+                        : null
+                    }
                   />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    leftIcon={<DollarSign />}
-                    invalid={!!errors.additionals?.[idx]?.price}
-                    {...register(`additionals.${idx}.price`)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => additionals.remove(idx)}
-                    aria-label="Remover adicional"
-                    className="self-center text-destructive"
-                  >
-                    <Trash2 />
-                  </Button>
                 </li>
               ))}
             </ul>

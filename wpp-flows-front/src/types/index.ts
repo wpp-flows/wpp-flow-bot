@@ -13,13 +13,15 @@ export type {
 export type { BotInstance, BotStatus, CreateBotPayload, UpdateBotPayload } from './bot';
 export type {
   MenuItem,
-  MenuItemAdditional,
+  MenuItemOption,
+  MenuItemOptionGroup,
   MenuCategory,
   CreateCategoryPayload,
   UpdateCategoryPayload,
   CreateItemPayload,
   UpdateItemPayload,
-  AdditionalPayload,
+  OptionPayload,
+  OptionGroupPayload,
 } from './menu';
 export type {
   Flow,

@@ -20,7 +20,19 @@ import { publicTableService } from "@/services/publicTableService";
 import { queryKeys } from "@/lib/queryClient";
 import { toast } from "@/stores/uiStore";
 import { ApiError } from "@/instances/api";
-import type { PublicMenuItem } from "@/types/publicMenu";
+import type { PublicCartSelectedOption, PublicMenuItem } from "@/types/publicMenu";
+
+function groupSelectionsByGroupId(
+  selectedOptions: PublicCartSelectedOption[],
+): { groupId: string; optionIds: string[] }[] {
+  const byGroup = new Map<string, string[]>();
+  for (const o of selectedOptions) {
+    const arr = byGroup.get(o.groupId) ?? [];
+    arr.push(o.optionId);
+    byGroup.set(o.groupId, arr);
+  }
+  return Array.from(byGroup, ([groupId, optionIds]) => ({ groupId, optionIds }));
+}
 import type { PublicTableOrder } from "@/types";
 import { cn } from "@/lib/utils";
 import { CatalogTab } from "./components/CatalogTab";
@@ -90,7 +102,7 @@ export function PublicTableMenuPage() {
       item: PublicMenuItem;
       qty: number;
       notes: string;
-      additionals: { id: string; name: string; price: string }[];
+      selectedOptions: PublicCartSelectedOption[];
     }) => {
       cart.add({
         itemId: input.item.id,
@@ -98,7 +110,7 @@ export function PublicTableMenuPage() {
         price: input.item.price,
         qty: input.qty,
         notes: input.notes || null,
-        additionals: input.additionals,
+        selectedOptions: input.selectedOptions,
       });
     },
   });
@@ -110,7 +122,7 @@ export function PublicTableMenuPage() {
           itemId: it.itemId,
           qty: it.qty,
           notes: it.notes ?? null,
-          additionals: it.additionals.map((a) => ({ id: a.id })),
+          selections: groupSelectionsByGroupId(it.selectedOptions),
           bundle: it.bundle
             ? {
                 bundleId: it.bundle.bundleId,
@@ -273,7 +285,7 @@ export function PublicTableMenuPage() {
             item: openItem,
             qty: input.qty,
             notes: input.notes,
-            additionals: input.additionals,
+            selectedOptions: input.selectedOptions,
           });
         }}
       />
@@ -374,9 +386,9 @@ function TableCartTab({
                     <p className="line-clamp-2 text-sm font-medium leading-tight">
                       {it.name}
                     </p>
-                    {it.additionals.length > 0 ? (
+                    {it.selectedOptions.length > 0 ? (
                       <p className="mt-1 line-clamp-2 text-2xs text-muted-foreground">
-                        {it.additionals.map((a) => a.name).join(" · ")}
+                        {it.selectedOptions.map((o) => o.name).join(" · ")}
                       </p>
                     ) : null}
                     {it.notes ? (
