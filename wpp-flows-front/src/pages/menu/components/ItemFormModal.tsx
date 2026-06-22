@@ -445,7 +445,7 @@ export function ItemFormModal({
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">Grupos de opções</p>
               <p className="text-2xs text-muted-foreground">
-                Personalizações estilo iFood: combos, perguntas com "Escolha 1
+                Personalizações para o item: combos, perguntas com "Escolha 1
                 opção" / "Escolha até N", adicionais com preço extra. Cada
                 grupo tem mín./máx. de seleções; obrigatório quando mín. ≥ 1.
               </p>
