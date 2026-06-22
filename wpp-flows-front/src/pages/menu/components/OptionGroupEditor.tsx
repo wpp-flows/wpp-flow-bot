@@ -173,7 +173,7 @@ export function OptionGroupEditor({
                   className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_150px_auto]"
                 >
                   <Input
-                    placeholder="Nome (ex: Big Mac)"
+                    placeholder="Nome (ex: Frango, Carne, Veggie)"
                     invalid={!!optErrors?.name}
                     className="col-span-2 sm:col-span-1"
                     {...register(
