@@ -3,8 +3,8 @@ import type { Order } from "@/types";
 import {
   formatBRL,
   orderNumber,
+  receiptPaymentLabel,
 } from "../../../helpers/order-helpers";
-import { PaymentProvider } from "@/types/order";
 
 export function buildReceiptHtml({
   order,
@@ -234,10 +234,6 @@ export function buildReceiptHtml({
   </main>
 </body>
 </html>`;
-}
-
-function receiptPaymentLabel(paymentProvider: PaymentProvider | null): string {
-  return paymentProvider === "MERCADO_PAGO" ? "Plataforma" : "Pagamento na entrega";
 }
 
 /** Inline bot mark (Lucide Bot) — works in print without external assets. */

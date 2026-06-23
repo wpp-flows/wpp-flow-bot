@@ -110,7 +110,7 @@ export interface PublicCartItem {
   selectedOptions: PublicCartSelectedOption[];
 }
 
-export type PublicPaymentMethod = 'MERCADOPAGO' | 'CASH';
+export type PublicPaymentMethod = 'MERCADOPAGO' | 'CASH' | 'DELIVERY_CARD_PIX';
 
 export interface CreatePublicOrderPayload {
   customer?: { name: string; phone: string };

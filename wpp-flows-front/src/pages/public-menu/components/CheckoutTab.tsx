@@ -9,6 +9,7 @@ import {
   Sparkles,
   Store,
   Tag,
+  Wallet,
   X,
 } from 'lucide-react';
 import {
@@ -115,7 +116,12 @@ export function CheckoutTab({
     }
   }, [autofill.name, autofill.phone, getValues, setValue]);
 
-  const hasCheckoutChoices = deliveryMode !== '' && paymentMethod !== '';
+  const hasCheckoutChoices =
+    deliveryMode !== '' &&
+    paymentMethod !== '' &&
+    paymentMethod !== 'ON_DELIVERY';
+  const isOnDeliveryPayment =
+    paymentMethod === 'CASH' || paymentMethod === 'DELIVERY_CARD_PIX';
   const deliveryFee = deliveryMode === 'DELIVERY' ? orgDeliveryFee : 0;
   const couponDiscount = coupon?.discount ?? 0;
   const total = Math.max(0, cart.subtotal - couponDiscount) + deliveryFee;
@@ -145,7 +151,11 @@ export function CheckoutTab({
 
   const mutation = useMutation({
     mutationFn: (values: PublicCheckoutFormValues) => {
-      if (!values.deliveryMode || !values.paymentMethod) {
+      if (
+        !values.deliveryMode ||
+        !values.paymentMethod ||
+        values.paymentMethod === 'ON_DELIVERY'
+      ) {
         throw new Error('Selecione pagamento e entrega.');
       }
 
@@ -261,7 +271,7 @@ export function CheckoutTab({
                 ? 'Restaurante fechado'
                 : !hasCheckoutChoices
                   ? 'Complete as informações para continuar'
-                  : paymentMethod === 'CASH'
+                  : isOnDeliveryPayment
                     ? `Confirmar pedido — ${formatBrl(total)}`
                     : `Pagar — ${formatBrl(total)}`}
             </Button>
@@ -469,9 +479,14 @@ function PaymentMethodSection() {
     register,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<PublicCheckoutFormValues>();
   const paymentMethod = watch('paymentMethod');
+  const showOnDeliveryOptions =
+    paymentMethod === 'ON_DELIVERY' ||
+    paymentMethod === 'CASH' ||
+    paymentMethod === 'DELIVERY_CARD_PIX';
 
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
@@ -482,22 +497,57 @@ function PaymentMethodSection() {
         name="paymentMethod"
         control={control}
         render={({ field }) => (
-          <div className="grid grid-cols-2 gap-3">
-            <PaymentMethodOption
-              active={field.value === 'MERCADOPAGO'}
-              icon={<CreditCard className="h-5 w-5" />}
-              label="Pagar agora"
-              hint="Cartão ou Pix via Mercado Pago"
-              onClick={() => field.onChange('MERCADOPAGO')}
-            />
-            <PaymentMethodOption
-              active={field.value === 'CASH'}
-              icon={<Banknote className="h-5 w-5" />}
-              label="Dinheiro"
-              hint="Pagar na entrega"
-              onClick={() => field.onChange('CASH')}
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <PaymentMethodOption
+                active={field.value === 'MERCADOPAGO'}
+                icon={<CreditCard className="h-5 w-5" />}
+                label="Pagar agora"
+                hint="Cartão ou Pix via Mercado Pago"
+                onClick={() => {
+                  field.onChange('MERCADOPAGO');
+                  setValue('cashChangeFor', '');
+                }}
+              />
+              <PaymentMethodOption
+                active={showOnDeliveryOptions}
+                icon={<Wallet className="h-5 w-5" />}
+                label="Pagar na entrega"
+                hint="Dinheiro, Pix ou Cartão"
+                onClick={() => {
+                  field.onChange('ON_DELIVERY');
+                  setValue('cashChangeFor', '');
+                }}
+              />
+            </div>
+
+            {showOnDeliveryOptions ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Como deseja pagar na entrega?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <PaymentMethodOption
+                    active={field.value === 'DELIVERY_CARD_PIX'}
+                    icon={<CreditCard className="h-5 w-5" />}
+                    label="Cartão/Pix"
+                    hint="Pague na entrega com cartão ou Pix"
+                    onClick={() => {
+                      field.onChange('DELIVERY_CARD_PIX');
+                      setValue('cashChangeFor', '');
+                    }}
+                  />
+                  <PaymentMethodOption
+                    active={field.value === 'CASH'}
+                    icon={<Banknote className="h-5 w-5" />}
+                    label="Dinheiro"
+                    hint="Pague em dinheiro na entrega"
+                    onClick={() => field.onChange('CASH')}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </>
         )}
       />
 

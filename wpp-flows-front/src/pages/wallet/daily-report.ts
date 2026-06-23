@@ -5,6 +5,7 @@ import {
   formatBRL,
   formatDayLabel,
   orderNumber,
+  paymentProviderLabel,
 } from '../../helpers/order-helpers';
 
 interface DailyReportInput {
@@ -64,8 +65,7 @@ export function buildDailyReportHtml({
       const items = order.items
         .map((it) => `${it.qty}× ${escapeHtml(it.name)}`)
         .join(', ');
-      const paymentMethod =
-        order.paymentProvider === 'CASH' ? 'Dinheiro' : 'Mercado Pago';
+      const paymentMethod = paymentProviderLabel(order.paymentProvider);
       const paid = order.paymentStatus === 'PAID' ? '✓' : '—';
       return `
         <tr>

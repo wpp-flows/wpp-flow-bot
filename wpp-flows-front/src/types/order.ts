@@ -11,7 +11,7 @@ export type ServiceType = 'DELIVERY' | 'LOCAL';
 
 export type DeliveryMode = 'PICKUP' | 'DELIVERY';
 
-export type PaymentProvider = 'MERCADO_PAGO' | 'CASH';
+export type PaymentProvider = 'MERCADO_PAGO' | 'CASH' | 'DELIVERY_CARD_PIX';
 
 export interface OrderItemAdditional {
   id: string;

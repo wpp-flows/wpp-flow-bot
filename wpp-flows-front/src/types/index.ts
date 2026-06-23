@@ -55,6 +55,7 @@ export type {
   OrderItem,
   OrderStatus,
   OrderFilters,
+  PaymentProvider,
   PaymentStatus,
   ServiceType,
 } from './order';

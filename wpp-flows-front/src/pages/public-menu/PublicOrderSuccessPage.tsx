@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Banknote,
   CheckCircle2,
+  CreditCard,
   Loader2,
   MessageCircle,
   XCircle,
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { publicMenuService } from '@/services/publicMenuService';
 import type { PublicOrderStatusResponse } from '@/types/publicMenu';
 import { buildWhatsAppLink, digitsOnly, formatBrl } from '../../helpers/public-menu-helpers';
+import { isOnDeliveryPaymentProvider } from '@/helpers/order-helpers';
 
 export function PublicOrderSuccessPage() {
   const { slug = '', orderId = '' } = useParams<{ slug: string; orderId: string }>();
@@ -27,7 +29,7 @@ export function PublicOrderSuccessPage() {
       if (!data) return 3000;
       if (data.paymentStatus !== 'PENDING') return false;
       if (data.status === 'CANCELED') return false;
-      if (data.paymentProvider === 'CASH') return false;
+      if (isOnDeliveryPaymentProvider(data.paymentProvider)) return false;
       return 3000;
     },
     enabled: !!slug && !!orderId,
@@ -95,6 +97,15 @@ function OrderStateCard({
   }
   if (order.paymentProvider === 'CASH') {
     return <CashOnDeliveryCard order={order} orderNumber={orderNumber} customerPhone={customerPhone} />;
+  }
+  if (order.paymentProvider === 'DELIVERY_CARD_PIX') {
+    return (
+      <CardPixOnDeliveryCard
+        order={order}
+        orderNumber={orderNumber}
+        customerPhone={customerPhone}
+      />
+    );
   }
   return (
     <PendingCard
@@ -187,6 +198,64 @@ function CashOnDeliveryCard({
         <p>
           Pagamento <strong>em dinheiro na entrega</strong>. Tenha o valor por
           perto quando o pedido chegar.
+        </p>
+      </div>
+
+      <p className="mt-4 text-sm text-muted-foreground">
+        Já avisamos o restaurante. Toque abaixo para abrir o WhatsApp e
+        acompanhar.
+      </p>
+
+      <div className="mt-5">
+        {link ? (
+          <a href={link} target="_blank" rel="noreferrer">
+            <Button size="lg" leftIcon={<MessageCircle />} className="w-full">
+              Abrir conversa no WhatsApp
+            </Button>
+          </a>
+        ) : (
+          <p className="rounded-md border border-dashed border-border p-3 text-center text-sm text-muted-foreground">
+            Aguardando o restaurante entrar em contato.
+          </p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function CardPixOnDeliveryCard({
+  order,
+  orderNumber,
+  customerPhone,
+}: {
+  order: PublicOrderStatusResponse;
+  orderNumber: string;
+  customerPhone: string | null;
+}) {
+  const botDigits = digitsOnly(order.bot?.phoneNumber);
+  const message = `Olá! Pedido ${orderNumber} confirmado — pagamento com cartão ou Pix na entrega.${customerPhone ? '' : ' Pode me confirmar?'
+    }`;
+  const link = botDigits ? buildWhatsAppLink(botDigits, message) : null;
+
+  return (
+    <article className="rounded-xl border border-border bg-card p-6 shadow-soft-sm">
+      <div className="flex items-start gap-3">
+        <div className="rounded-full bg-emerald-500/15 p-2 text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">Pedido confirmado!</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pedido {orderNumber} — total {formatBrl(order.total)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+        <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
+        <p>
+          Pagamento com <strong>cartão ou Pix na entrega</strong>. Tenha o meio
+          de pagamento pronto quando o pedido chegar.
         </p>
       </div>
 

@@ -187,7 +187,7 @@ export const publicCheckoutSchema = z
     observation: z.string().max(500),
     deliveryMode: z.enum(['PICKUP', 'DELIVERY', '']),
     couponCode: z.string().max(40),
-    paymentMethod: z.enum(['MERCADOPAGO', 'CASH', '']),
+    paymentMethod: z.enum(['MERCADOPAGO', 'ON_DELIVERY', 'CASH', 'DELIVERY_CARD_PIX', '']),
     cashChangeFor: z.string().max(20),
   })
   .superRefine((data, ctx) => {
@@ -202,6 +202,13 @@ export const publicCheckoutSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Selecione uma forma de pagamento.',
+        path: ['paymentMethod'],
+      });
+    }
+    if (data.paymentMethod === 'ON_DELIVERY') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Selecione como deseja pagar na entrega.',
         path: ['paymentMethod'],
       });
     }
