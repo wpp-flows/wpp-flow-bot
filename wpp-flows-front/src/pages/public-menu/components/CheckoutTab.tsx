@@ -28,7 +28,23 @@ import {
   type PublicCheckoutFormValues,
 } from '@/lib/schemas';
 import { publicMenuService } from '@/services/publicMenuService';
-import type { CustomerContextBanner, ValidatedCoupon } from '@/types/publicMenu';
+import type {
+  CustomerContextBanner,
+  PublicCartSelectedOption,
+  ValidatedCoupon,
+} from '@/types/publicMenu';
+
+function groupSelectionsByGroupId(
+  selectedOptions: PublicCartSelectedOption[],
+): { groupId: string; optionIds: string[] }[] {
+  const byGroup = new Map<string, string[]>();
+  for (const o of selectedOptions) {
+    const arr = byGroup.get(o.groupId) ?? [];
+    arr.push(o.optionId);
+    byGroup.set(o.groupId, arr);
+  }
+  return Array.from(byGroup, ([groupId, optionIds]) => ({ groupId, optionIds }));
+}
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { usePublicCart } from '../hooks/usePublicCart';
 import {
@@ -134,17 +150,7 @@ export function CheckoutTab({
           itemId: it.itemId,
           qty: it.qty,
           notes: it.notes ?? null,
-          additionals: it.additionals.map((a) => ({ id: a.id })),
-          bundle: it.bundle
-            ? {
-              bundleId: it.bundle.bundleId,
-              picks: it.bundle.picks.map((p) => ({
-                componentId: p.componentId,
-                itemId: p.itemId,
-              })),
-              answers: it.bundle.answers,
-            }
-            : null,
+          selections: groupSelectionsByGroupId(it.selectedOptions),
         })),
         observation: values.observation.trim() || null,
         address:

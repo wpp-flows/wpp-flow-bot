@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { PublicCartAdditional, PublicCartItem } from '@/types/publicMenu';
+import type {
+  PublicCartItem,
+  PublicCartSelectedOption,
+} from '@/types/publicMenu';
 
 const STORAGE_PREFIX = 'mesa.public-cart';
 
@@ -13,25 +16,28 @@ function readCart(slug: string): PublicCartItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    // Backfill `additionals` for entries written before the field existed.
-    return (parsed as PublicCartItem[]).map((it) => ({
-      ...it,
-      additionals: it.additionals ?? [],
-    }));
+    return (parsed as Array<PublicCartItem & { additionals?: unknown }>).map(
+      (it) => ({
+        ...it,
+        selectedOptions: Array.isArray(it.selectedOptions)
+          ? it.selectedOptions
+          : [],
+      }),
+    );
   } catch {
     return [];
   }
 }
 
 /**
- * Per-line total, including additionals (each additional charged once per
- * line, multiplied by qty alongside the base price). Lives next to the cart
- * so both the cart UI and the checkout pricing share one source of truth.
+ * Per-line total, including all selected options (each option charged once
+ * per line, multiplied by qty alongside the base price). Lives next to the
+ * cart so the cart UI and checkout pricing share one source of truth.
  */
 export function cartLineTotal(item: PublicCartItem): number {
   const base = Number.parseFloat(item.price || '0');
-  const extras = item.additionals.reduce(
-    (sum, a) => sum + Number.parseFloat(a.price || '0'),
+  const extras = item.selectedOptions.reduce(
+    (sum, o) => sum + Number.parseFloat(o.additionalPrice || '0'),
     0,
   );
   return (base + extras) * item.qty;
@@ -40,13 +46,12 @@ export function cartLineTotal(item: PublicCartItem): number {
 function sameSignature(a: PublicCartItem, b: PublicCartItem): boolean {
   if (a.itemId !== b.itemId) return false;
   if ((a.notes ?? '') !== (b.notes ?? '')) return false;
-  if (a.bundle || b.bundle) return false;
-  return additionalsKey(a.additionals) === additionalsKey(b.additionals);
+  return optionsKey(a.selectedOptions) === optionsKey(b.selectedOptions);
 }
 
-function additionalsKey(adds: PublicCartAdditional[]): string {
-  return adds
-    .map((a) => a.id)
+function optionsKey(opts: PublicCartSelectedOption[]): string {
+  return opts
+    .map((o) => `${o.groupId}:${o.optionId}`)
     .sort()
     .join('|');
 }
@@ -102,9 +107,9 @@ export function usePublicCart(slug: string) {
   );
 
   const add = useCallback(
-    (item: Omit<PublicCartItem, 'id' | 'qty' | 'additionals'> & {
+    (item: Omit<PublicCartItem, 'id' | 'qty' | 'selectedOptions'> & {
       qty?: number;
-      additionals?: PublicCartAdditional[];
+      selectedOptions?: PublicCartSelectedOption[];
       notes?: string | null;
     }) => {
       const candidate: PublicCartItem = {
@@ -114,8 +119,7 @@ export function usePublicCart(slug: string) {
         price: item.price,
         qty: item.qty ?? 1,
         notes: item.notes ?? null,
-        additionals: item.additionals ?? [],
-        bundle: item.bundle ?? null,
+        selectedOptions: item.selectedOptions ?? [],
       };
       const current = readCart(slug);
       const existingIdx = current.findIndex((p) => sameSignature(p, candidate));

@@ -105,11 +105,6 @@ function formatItemsList(order: Order): string {
             if (item.notes) {
                 lines.push(`   (${item.notes})`);
             }
-            if (item.bundle) {
-                for (const pick of item.bundle.picks) {
-                    lines.push(`   ↳ ${pick.itemName}`);
-                }
-            }
             return lines.join("\n");
         })
         .join("\n");

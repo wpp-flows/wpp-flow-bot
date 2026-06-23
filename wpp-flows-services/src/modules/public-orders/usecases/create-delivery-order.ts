@@ -11,7 +11,10 @@ import type { CustomerRepository } from "@/modules/customer/repositories/custome
 import type { ItemRepository } from "@/modules/menu/repositories/menu-repo";
 import type { NotificationEmitter } from "@/modules/notification/usecases/notification-emitter";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
-import type { DeliveryMode } from "@/modules/order/repositories/order-repo";
+import type {
+    DeliveryMode,
+    OrderRepository,
+} from "@/modules/order/repositories/order-repo";
 import type { CreateOrderFromCartUseCase } from "@/modules/order/usecases/order-usecases";
 import type { CreatePaymentLinkUseCase } from "@/modules/payment/usecases/mercadopago-usecases";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
@@ -50,6 +53,7 @@ export class CreateDeliveryOrderUseCase {
         private readonly promotionRepo: PromotionRepository,
         private readonly couponRepo: CouponRepository,
         private readonly customerRepo: CustomerRepository,
+        private readonly orderRepo: OrderRepository,
         private readonly conversationRepo: ConversationRepository,
         private readonly createOrderFromCart: CreateOrderFromCartUseCase,
         private readonly createPaymentLink: CreatePaymentLinkUseCase,
@@ -73,6 +77,7 @@ export class CreateDeliveryOrderUseCase {
 
         const cartItems = await resolveCartItems({
             orgId: org.id,
+            serviceType: "DELIVERY",
             itemRepo: this.itemRepo,
             input: input.items,
         });
@@ -87,7 +92,9 @@ export class CreateDeliveryOrderUseCase {
             orgId: org.id,
             promotionRepo: this.promotionRepo,
             couponRepo: this.couponRepo,
+            orderRepo: this.orderRepo,
             cartItems,
+            customerId: customer.id,
             customerOrderCount: customer.orderCount,
             rawCouponCode: input.couponCode,
         });

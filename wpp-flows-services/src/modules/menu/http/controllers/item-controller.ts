@@ -10,6 +10,7 @@ import {
 } from "../../usecases/factories";
 import {
     createItemSchema,
+    listMenuQuerySchema,
     reorderItemsSchema,
     updateItemSchema,
 } from "../schema";
@@ -17,8 +18,11 @@ import {
 export class ItemController {
     @Route("GET", "/api/menu/items", { middlewares: [requireOrganization] })
     async list(request: FastifyRequest, reply: FastifyReply) {
+        const query = listMenuQuerySchema.parse(request.query ?? {});
         const useCase = makeListItems();
-        const result = await useCase.execute(request.organizationId);
+        const result = await useCase.execute(request.organizationId, {
+            serviceType: query.serviceType,
+        });
         return reply.send(result);
     }
 

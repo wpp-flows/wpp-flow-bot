@@ -1,6 +1,12 @@
+import type { ServiceType } from "@/modules/order/repositories/order-repo";
+
+export type PriceInput = number | string;
+export type NullablePriceInput = PriceInput | null;
+
 export interface MenuCategory {
     id: string;
     organizationId: string;
+    serviceType: ServiceType;
     name: string;
     description: string | null;
     position: number;
@@ -8,19 +14,33 @@ export interface MenuCategory {
     updatedAt: Date;
 }
 
-export interface MenuItemAdditional {
+export interface MenuItemOption {
     id: string;
     name: string;
-    price: string;
+    additionalPrice: string;
+    imageUrl: string | null;
+    position: number;
+}
+
+export interface MenuItemOptionGroup {
+    id: string;
+    title: string;
+    subtitle: string | null;
+    minSelections: number;
+    maxSelections: number;
+    position: number;
+    options: MenuItemOption[];
 }
 
 export interface MenuItem {
     id: string;
     organizationId: string;
     categoryId: string;
+    serviceType: ServiceType;
     name: string;
     description: string;
     price: string;
+    promotionalPrice: string | null;
     imageUrl: string | null;
     available: boolean;
     /**
@@ -28,19 +48,21 @@ export interface MenuItem {
      * restricts the item to those weekdays in the bot's menu.
      */
     availableDaysOfWeek: number[];
-    availableForDelivery: boolean;
-    availableForLocal: boolean;
     position: number;
-    additionals: MenuItemAdditional[];
+    optionGroups: MenuItemOptionGroup[];
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface CategoryRepository {
-    listByOrg(organizationId: string): Promise<MenuCategory[]>;
+    listByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<MenuCategory[]>;
     findByIdInOrg(organizationId: string, id: string): Promise<MenuCategory | null>;
     create(data: {
         organizationId: string;
+        serviceType: ServiceType;
         name: string;
         description?: string;
         position: number;
@@ -50,42 +72,48 @@ export interface CategoryRepository {
         data: { name?: string; description?: string }
     ): Promise<MenuCategory>;
     delete(id: string): Promise<void>;
-    countByOrg(organizationId: string): Promise<number>;
+    countByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<number>;
     setPositions(orderedIds: string[]): Promise<void>;
 }
 
 export interface ItemRepository {
-    listByOrg(organizationId: string): Promise<MenuItem[]>;
+    listByOrg(
+        organizationId: string,
+        filters?: { serviceType?: ServiceType },
+    ): Promise<MenuItem[]>;
     listByCategory(categoryId: string): Promise<MenuItem[]>;
     findByIdInOrg(organizationId: string, id: string): Promise<MenuItem | null>;
     create(data: {
         organizationId: string;
         categoryId: string;
+        serviceType: ServiceType;
         name: string;
         description: string;
-        price: number | string;
+        price: PriceInput;
+        promotionalPrice?: NullablePriceInput;
         imageUrl?: string;
         available?: boolean;
         availableDaysOfWeek?: number[];
-        availableForDelivery?: boolean;
-        availableForLocal?: boolean;
         position: number;
-        additionals?: MenuItemAdditional[];
+        optionGroups?: MenuItemOptionGroup[];
     }): Promise<MenuItem>;
     update(
         id: string,
         data: {
             categoryId?: string;
+            serviceType?: ServiceType;
             name?: string;
             description?: string;
-            price?: number | string;
+            price?: PriceInput;
+            promotionalPrice?: NullablePriceInput;
             imageUrl?: string | null;
             available?: boolean;
             availableDaysOfWeek?: number[];
-            availableForDelivery?: boolean;
-            availableForLocal?: boolean;
             position?: number;
-            additionals?: MenuItemAdditional[];
+            optionGroups?: MenuItemOptionGroup[];
         }
     ): Promise<MenuItem>;
     delete(id: string): Promise<void>;

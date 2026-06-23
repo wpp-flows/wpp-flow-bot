@@ -159,7 +159,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
               <Hash className="h-3 w-3" />
               <span>
                 {bot.lastConnectedAt
-                  ? `Ultima conexao ${formatRelativeTime(bot.lastConnectedAt)}`
+                  ? `Última conexão ${formatRelativeTime(bot.lastConnectedAt)}`
                   : 'Nunca conectado'}
               </span>
             </div>

@@ -205,8 +205,44 @@ export class PrismaOrderRepository implements OrderRepository {
         if (orderIds.length === 0) return 0;
         const result = await prisma.order.updateMany({
             where: { id: { in: orderIds } },
-            data: { billId },
+            data: {
+                billId,
+                status: "DELIVERED",
+                paymentStatus: "PAID",
+            },
         });
         return result.count;
+    }
+
+    async countByCoupon(
+        organizationId: string,
+        code: string,
+    ): Promise<number> {
+        const normalized = code.trim();
+        if (!normalized) return 0;
+        return prisma.order.count({
+            where: {
+                organizationId,
+                couponCode: { equals: normalized, mode: "insensitive" },
+                status: { not: "CANCELED" },
+            },
+        });
+    }
+
+    async countByCouponAndCustomer(
+        organizationId: string,
+        customerId: string,
+        code: string,
+    ): Promise<number> {
+        const normalized = code.trim();
+        if (!normalized) return 0;
+        return prisma.order.count({
+            where: {
+                organizationId,
+                customerId,
+                couponCode: { equals: normalized, mode: "insensitive" },
+                status: { not: "CANCELED" },
+            },
+        });
     }
 }

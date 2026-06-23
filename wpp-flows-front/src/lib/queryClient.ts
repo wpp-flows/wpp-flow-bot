@@ -27,8 +27,11 @@ export const queryKeys = {
     detail: (id: string) => ['bots', id] as const,
   },
   menu: {
-    categories: ['menu', 'categories'] as const,
-    items: ['menu', 'items'] as const,
+    categories: (serviceType: 'DELIVERY' | 'LOCAL') =>
+      ['menu', 'categories', serviceType] as const,
+    items: (serviceType: 'DELIVERY' | 'LOCAL') =>
+      ['menu', 'items', serviceType] as const,
+    all: ['menu'] as const,
   },
   flows: {
     all: ['flows'] as const,

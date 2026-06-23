@@ -50,7 +50,7 @@ export function BotStatusCard({ bot }: { bot: BotInstance }) {
           <Row icon={<Phone />} label="Telefone" value={bot.phoneNumber ?? '—'} mono />
           <Row
             icon={<Activity />}
-            label="Ultima conexao"
+            label="Última conexão"
             value={bot.lastConnectedAt ? formatRelativeTime(bot.lastConnectedAt) : 'Nunca'}
           />
           <Row icon={<Zap />} label="Status" value={bot.status} />

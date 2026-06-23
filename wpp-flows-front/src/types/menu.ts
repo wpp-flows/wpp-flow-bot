@@ -1,6 +1,9 @@
+import type { ServiceType } from './order';
+
 export interface MenuCategory {
   id: string;
   organizationId: string;
+  serviceType: ServiceType;
   name: string;
   description?: string | null;
   position: number;
@@ -8,32 +11,46 @@ export interface MenuCategory {
   updatedAt: string;
 }
 
-export interface MenuItemAdditional {
+export interface MenuItemOption {
   id: string;
   name: string;
-  price: string;
+  additionalPrice: string;
+  imageUrl?: string | null;
+  position: number;
+}
+
+export interface MenuItemOptionGroup {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  minSelections: number;
+  maxSelections: number;
+  position: number;
+  options: MenuItemOption[];
 }
 
 export interface MenuItem {
   id: string;
   organizationId: string;
   categoryId: string;
+  serviceType: ServiceType;
   name: string;
   description: string;
   price: string;
+  /** Optional active promo. When set, this is what the customer pays. */
+  promotionalPrice: string | null;
   imageUrl?: string | null;
   available: boolean;
   /** 0–6 (Sunday..Saturday). Empty = available every day. */
   availableDaysOfWeek: number[];
-  availableForDelivery: boolean;
-  availableForLocal: boolean;
   position: number;
-  additionals: MenuItemAdditional[];
+  optionGroups: MenuItemOptionGroup[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateCategoryPayload {
+  serviceType: ServiceType;
   name: string;
   description?: string;
 }
@@ -44,10 +61,20 @@ export interface UpdateCategoryPayload {
   description?: string;
 }
 
-export interface AdditionalPayload {
+export interface OptionPayload {
   id: string;
   name: string;
-  price: number;
+  additionalPrice: number;
+  imageUrl?: string;
+}
+
+export interface OptionGroupPayload {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  minSelections: number;
+  maxSelections: number;
+  options: OptionPayload[];
 }
 
 export interface CreateItemPayload {
@@ -55,12 +82,11 @@ export interface CreateItemPayload {
   name: string;
   description: string;
   price: number;
+  promotionalPrice?: number | null;
   imageUrl?: string;
   available?: boolean;
   availableDaysOfWeek?: number[];
-  availableForDelivery?: boolean;
-  availableForLocal?: boolean;
-  additionals?: AdditionalPayload[];
+  optionGroups?: OptionGroupPayload[];
 }
 
 export interface UpdateItemPayload {
@@ -69,10 +95,9 @@ export interface UpdateItemPayload {
   name?: string;
   description?: string;
   price?: number;
+  promotionalPrice?: number | null;
   imageUrl?: string | null;
   available?: boolean;
   availableDaysOfWeek?: number[];
-  availableForDelivery?: boolean;
-  availableForLocal?: boolean;
-  additionals?: AdditionalPayload[];
+  optionGroups?: OptionGroupPayload[];
 }

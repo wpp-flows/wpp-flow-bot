@@ -11,15 +11,21 @@ import { categorySchema, type CategoryFormValues } from '@/lib/schemas';
 import { menuService } from '@/services/menuService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
 import { toast } from '@/stores/uiStore';
-import type { MenuCategory } from '@/types';
+import type { MenuCategory, ServiceType } from '@/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   category?: MenuCategory | null;
+  serviceType: ServiceType;
 }
 
-export function CategoryFormModal({ open, onClose, category }: Props) {
+export function CategoryFormModal({
+  open,
+  onClose,
+  category,
+  serviceType,
+}: Readonly<Props>) {
   const qc = useQueryClient();
   const editing = Boolean(category);
 
@@ -43,9 +49,12 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
   }, [open, category, reset]);
 
   const create = useMutation({
-    mutationFn: (v: CategoryFormValues) => menuService.createCategory(v),
+    mutationFn: (v: CategoryFormValues) =>
+      menuService.createCategory({ ...v, serviceType }),
     onSuccess: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.menu.categories(serviceType) },
+      ]);
       toast.success('Categoria adicionada');
       onClose();
     },
@@ -55,7 +64,9 @@ export function CategoryFormModal({ open, onClose, category }: Props) {
     mutationFn: (v: CategoryFormValues) =>
       menuService.updateCategory({ id: category!.id, ...v }),
     onSuccess: () => {
-      void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.menu.categories }]);
+      void invalidateQueriesByFilters(qc, [
+        { queryKey: queryKeys.menu.categories(serviceType) },
+      ]);
       toast.success('Categoria atualizada');
       onClose();
     },

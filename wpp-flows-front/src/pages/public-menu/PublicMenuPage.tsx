@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { publicMenuService } from "@/services/publicMenuService";
 import { queryKeys } from "@/lib/queryClient";
-import type { PublicMenuItem } from "@/types/publicMenu";
+import type { PublicCartSelectedOption, PublicMenuItem } from "@/types/publicMenu";
 import { CartTab } from "./components/CartTab";
 import { CatalogTab } from "./components/CatalogTab";
 import { CheckoutTab } from "./components/CheckoutTab";
@@ -69,7 +69,7 @@ export function PublicMenuPage() {
       item: PublicMenuItem;
       qty: number;
       notes: string;
-      additionals: { id: string; name: string; price: string }[];
+      selectedOptions: PublicCartSelectedOption[];
     }) => {
       cart.add({
         itemId: input.item.id,
@@ -77,7 +77,7 @@ export function PublicMenuPage() {
         price: input.item.price,
         qty: input.qty,
         notes: input.notes || null,
-        additionals: input.additionals,
+        selectedOptions: input.selectedOptions,
       });
     },
   });
@@ -171,7 +171,7 @@ export function PublicMenuPage() {
             item: openItem,
             qty: input.qty,
             notes: input.notes,
-            additionals: input.additionals,
+            selectedOptions: input.selectedOptions,
           });
         }}
       />

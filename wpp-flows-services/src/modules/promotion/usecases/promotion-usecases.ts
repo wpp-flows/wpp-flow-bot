@@ -1,6 +1,5 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import type {
-    BundleConfig,
     Promotion,
     PromotionInput,
     PromotionRepository,
@@ -30,61 +29,12 @@ function validateDailyMessage(input: PromotionInput): void {
     }
 }
 
-function validateBundleComponents(bundle: BundleConfig): void {
-    for (const component of bundle.components) {
-        if (!component.label.trim()) {
-            throw new ValidationError(
-                "Cada componente do combo precisa de um rótulo.",
-            );
-        }
-        if (component.count <= 0) {
-            throw new ValidationError(
-                `O componente "${component.label}" precisa de pelo menos 1 item.`,
-            );
-        }
-        if (component.itemIds.length === 0) {
-            throw new ValidationError(
-                `Selecione pelo menos um item para "${component.label}".`,
-            );
-        }
-    }
-}
-
-function validateBundleQuestions(bundle: BundleConfig): void {
-    const fieldKeys = new Set<string>();
-    for (const q of bundle.questions ?? []) {
-        if (fieldKeys.has(q.fieldKey)) {
-            throw new ValidationError(
-                `Pergunta com chave duplicada: ${q.fieldKey}`,
-            );
-        }
-        fieldKeys.add(q.fieldKey);
-    }
-}
-
-function validateBundle(input: PromotionInput): void {
-    const bundle = input.bundle;
-    if (!bundle || bundle.components.length === 0) {
-        throw new ValidationError(
-            "Informe pelo menos um componente para o combo.",
-        );
-    }
-    const price = Number(bundle.price);
-    if (!Number.isFinite(price) || price < 0) {
-        throw new ValidationError("Informe o preço do combo.");
-    }
-    validateBundleComponents(bundle);
-    validateBundleQuestions(bundle);
-}
-
 function validate(input: PromotionInput): void {
     switch (input.kind) {
         case "NTH_ORDER_DISCOUNT":
             return validateNthOrder(input);
         case "DAILY_MESSAGE":
             return validateDailyMessage(input);
-        case "BUNDLE":
-            return validateBundle(input);
     }
 }
 

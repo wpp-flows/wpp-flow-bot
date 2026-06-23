@@ -4,17 +4,24 @@ import type {
   CreateItemPayload,
   MenuCategory,
   MenuItem,
+  ServiceType,
   UpdateCategoryPayload,
   UpdateItemPayload,
 } from '@/types';
 
 export const menuService = {
-  listCategories(): Promise<MenuCategory[]> {
-    return apiCall<MenuCategory[]>({ endpoint: '/api/menu/categories' });
+  listCategories(filters?: { serviceType?: ServiceType }): Promise<MenuCategory[]> {
+    return apiCall<MenuCategory[]>({
+      endpoint: '/api/menu/categories',
+      query: filters?.serviceType ? { serviceType: filters.serviceType } : undefined,
+    });
   },
 
-  listItems(): Promise<MenuItem[]> {
-    return apiCall<MenuItem[]>({ endpoint: '/api/menu/items' });
+  listItems(filters?: { serviceType?: ServiceType }): Promise<MenuItem[]> {
+    return apiCall<MenuItem[]>({
+      endpoint: '/api/menu/items',
+      query: filters?.serviceType ? { serviceType: filters.serviceType } : undefined,
+    });
   },
 
   createCategory(payload: CreateCategoryPayload): Promise<MenuCategory> {
@@ -41,11 +48,14 @@ export const menuService = {
     });
   },
 
-  reorderCategories(orderedIds: string[]): Promise<MenuCategory[]> {
+  reorderCategories(
+    serviceType: ServiceType,
+    orderedIds: string[],
+  ): Promise<MenuCategory[]> {
     return apiCall<MenuCategory[]>({
       endpoint: '/api/menu/categories/reorder',
       method: 'PATCH',
-      body: { orderedIds },
+      body: { serviceType, orderedIds },
     });
   },
 

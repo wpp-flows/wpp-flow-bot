@@ -35,6 +35,7 @@ export const createDeliveryOrder = new CreateDeliveryOrderUseCase(
     promotionRepo,
     couponRepo,
     customerRepo,
+    orderRepo,
     conversationRepo,
     createOrderFromCart,
     createPaymentLink,
@@ -47,6 +48,7 @@ export const createLocalOrder = new CreateLocalOrderUseCase(
     promotionRepo,
     couponRepo,
     customerRepo,
+    orderRepo,
     tableRepo,
     createOrderFromCart,
     notificationEmitter,
@@ -62,6 +64,7 @@ export const cancelPublicOrder = new CancelPublicOrderUseCase(
 export const validatePublicCoupon = new ValidatePublicCouponUseCase(
     organizationRepo,
     couponRepo,
+    orderRepo,
 );
 
 export const getCustomerContext = new GetCustomerContextUseCase(

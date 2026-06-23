@@ -138,6 +138,7 @@ export function Sidebar() {
                         to={item.to}
                         end={item.to === '/'}
                         onClick={() => setOpen(false)}
+                        data-tour={item.tourId}
                         className={({ isActive }) =>
                           cn(
                             'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium tracking-tight',

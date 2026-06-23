@@ -1,13 +1,27 @@
-import { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Suspense, useEffect, useRef } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { shouldAutoStartTour, startTour } from '@/lib/tour';
 
 export function AppShell() {
   const { organization } = useAuth();
+  const navigate = useNavigate();
   useRealtimeSync(!!organization);
+
+  const tourKickedRef = useRef(false);
+
+  useEffect(() => {
+    if (!organization) return;
+    if (tourKickedRef.current) return;
+    if (!shouldAutoStartTour()) return;
+    tourKickedRef.current = true;
+    const t = setTimeout(() => startTour((path) => navigate(path)), 500);
+    return () => clearTimeout(t);
+  }, [organization, navigate]);
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <Sidebar />

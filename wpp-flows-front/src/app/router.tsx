@@ -166,7 +166,7 @@ export function AppRouter() {
             <Route element={<AppShell />}>
               <Route path={ROUTES.dashboard} element={<DashboardPage />} />
               <Route path={ROUTES.bots} element={<BotsPage />} />
-              <Route path={ROUTES.menu} element={<MenuPage />} />
+              <Route path={ROUTES.menu} element={<MenuPage serviceType="DELIVERY" />} />
               <Route path={ROUTES.flows} element={<FlowsPage />} />
               <Route path={ROUTES.conversations} element={<ConversationsPage />} />
               <Route path={ROUTES.orders} element={<OrdersPage />} />
@@ -189,6 +189,10 @@ export function AppRouter() {
               />
               <Route path={ROUTES.localOrders} element={<LocalOrdersPage />} />
               <Route path={ROUTES.localWallet} element={<LocalWalletPage />} />
+              <Route
+                path={ROUTES.localMenu}
+                element={<MenuPage serviceType="LOCAL" />}
+              />
               <Route
                 path={ROUTES.localSettings}
                 element={<LocalSettingsPage />}

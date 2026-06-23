@@ -9,6 +9,10 @@ export interface Coupon {
   isActive: boolean;
   validFrom: string | null;
   validUntil: string | null;
+  /** null = unlimited. */
+  maxUses: number | null;
+  /** null = unlimited. */
+  maxUsesPerCustomer: number | null;
   description: string | null;
   createdAt: string;
   updatedAt: string;
@@ -21,5 +25,7 @@ export interface CouponInput {
   isActive?: boolean;
   validFrom?: string | null;
   validUntil?: string | null;
+  maxUses?: number | null;
+  maxUsesPerCustomer?: number | null;
   description?: string | null;
 }

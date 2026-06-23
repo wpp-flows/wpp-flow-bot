@@ -13,7 +13,6 @@ import {
   DAY_LABELS,
   type PromotionFormState,
 } from '../promotions-constants';
-import { BundleFields } from './BundleFields';
 
 interface Props {
   form: PromotionFormState;
@@ -35,7 +34,6 @@ export function PromotionForm({ form, setForm, menuItems }: Readonly<Props>) {
         >
           <option value="NTH_ORDER_DISCOUNT">Desconto no Nº pedido</option>
           <option value="DAILY_MESSAGE">Mensagem do dia</option>
-          <option value="BUNDLE">Combo</option>
         </Select>
       </FormField>
       <FormField label="Nome" htmlFor="promo-name" required>
@@ -57,9 +55,6 @@ export function PromotionForm({ form, setForm, menuItems }: Readonly<Props>) {
           menuItems={menuItems}
           regularPrice={regularPrice}
         />
-      ) : null}
-      {form.kind === 'BUNDLE' ? (
-        <BundleFields form={form} setForm={setForm} menuItems={menuItems} />
       ) : null}
 
       <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5 sm:col-span-2">

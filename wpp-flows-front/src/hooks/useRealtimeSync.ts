@@ -18,7 +18,13 @@ export type RealtimeEvent =
     }
   | { kind: 'table.updated'; tableId: string }
   | { kind: 'table.deleted'; tableId: string }
-  | { kind: 'bill.closed'; tableId: string; billId: string };
+  | { kind: 'bill.closed'; tableId: string; billId: string }
+  | {
+      kind: 'chat.message';
+      conversationId: string;
+      direction: 'IN' | 'OUT';
+    }
+  | { kind: 'chat.conversation'; conversationId: string };
 
 export function useRealtimeSync(enabled: boolean): void {
   const qc = useQueryClient();
@@ -68,6 +74,18 @@ export function useRealtimeSync(enabled: boolean): void {
             { queryKey: queryKeys.localBills.all },
             { queryKey: queryKeys.reports.daily },
             { queryKey: queryKeys.localWallet.summary },
+          ];
+          break;
+        case 'chat.message':
+          filters = [
+            { queryKey: queryKeys.chats.all },
+            { queryKey: queryKeys.chats.messages(event.conversationId) },
+          ];
+          break;
+        case 'chat.conversation':
+          filters = [
+            { queryKey: queryKeys.chats.all },
+            { queryKey: queryKeys.chats.detail(event.conversationId) },
           ];
           break;
         default:

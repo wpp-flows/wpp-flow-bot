@@ -7,6 +7,10 @@ export interface CouponFormState {
   isActive: boolean;
   validFrom: string;
   validUntil: string;
+  /** Empty string = unlimited. */
+  maxUses: string;
+  /** Empty string = unlimited. */
+  maxUsesPerCustomer: string;
   description: string;
 }
 
@@ -17,6 +21,8 @@ export const emptyCouponForm: CouponFormState = {
   isActive: true,
   validFrom: '',
   validUntil: '',
+  maxUses: '',
+  maxUsesPerCustomer: '',
   description: '',
 };
 
@@ -28,6 +34,8 @@ export function buildFormFromCoupon(coupon: Coupon): CouponFormState {
     isActive: coupon.isActive,
     validFrom: coupon.validFrom ? coupon.validFrom.slice(0, 10) : '',
     validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
+    maxUses: coupon.maxUses?.toString() ?? '',
+    maxUsesPerCustomer: coupon.maxUsesPerCustomer?.toString() ?? '',
     description: coupon.description ?? '',
   };
 }
@@ -53,10 +61,31 @@ export function validateCouponForm(
   if (form.validFrom && form.validUntil && form.validFrom > form.validUntil) {
     return { ok: false, error: 'A data de início é posterior à data de fim.' };
   }
+  const totalLimit = parseUsageLimit(form.maxUses);
+  if (totalLimit === 'invalid') {
+    return { ok: false, error: 'Limite total inválido — use um número inteiro > 0.' };
+  }
+  const perCustomerLimit = parseUsageLimit(form.maxUsesPerCustomer);
+  if (perCustomerLimit === 'invalid') {
+    return {
+      ok: false,
+      error: 'Limite por cliente inválido — use um número inteiro > 0.',
+    };
+  }
   return { ok: true };
 }
 
+function parseUsageLimit(raw: string): number | null | 'invalid' {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!/^\d+$/.test(trimmed)) return 'invalid';
+  const n = Number.parseInt(trimmed, 10);
+  return n > 0 ? n : 'invalid';
+}
+
 export function buildCouponPayload(form: CouponFormState): CouponInput {
+  const total = parseUsageLimit(form.maxUses);
+  const perCustomer = parseUsageLimit(form.maxUsesPerCustomer);
   return {
     code: form.code.trim().toUpperCase(),
     discountType: form.discountType,
@@ -66,6 +95,8 @@ export function buildCouponPayload(form: CouponFormState): CouponInput {
     validUntil: form.validUntil
       ? new Date(`${form.validUntil}T23:59:59`).toISOString()
       : null,
+    maxUses: total === 'invalid' ? null : total,
+    maxUsesPerCustomer: perCustomer === 'invalid' ? null : perCustomer,
     description: form.description.trim() || null,
   };
 }
@@ -76,6 +107,26 @@ export function formatCouponDiscount(coupon: Coupon): string {
     return `${value.toFixed(0)}% off`;
   }
   return `R$ ${value.toFixed(2).replace('.', ',')} off`;
+}
+
+export function formatCouponUsageLimit(coupon: Coupon): string | null {
+  if (coupon.maxUses == null && coupon.maxUsesPerCustomer == null) return null;
+  const parts: string[] = [];
+  if (coupon.maxUsesPerCustomer != null) {
+    parts.push(
+      coupon.maxUsesPerCustomer === 1
+        ? '1 uso/cliente'
+        : `${coupon.maxUsesPerCustomer} usos/cliente`,
+    );
+  }
+  if (coupon.maxUses != null) {
+    parts.push(
+      coupon.maxUses === 1
+        ? '1 uso no total'
+        : `máx. ${coupon.maxUses} usos`,
+    );
+  }
+  return parts.join(' · ');
 }
 
 export function formatCouponWindow(coupon: Coupon): string | null {

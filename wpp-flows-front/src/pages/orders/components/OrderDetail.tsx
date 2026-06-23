@@ -109,28 +109,11 @@ export function OrderDetail({
               <div className="flex justify-between gap-3">
                 <span className="truncate">
                   {it.qty}× {it.name}
-                  {it.bundle ? (
-                    <Badge tone="primary" size="sm" className="ml-2">
-                      Combo
-                    </Badge>
-                  ) : null}
                 </span>
                 <span className="font-mono text-muted-foreground">
                   {formatBRL(Number.parseFloat(it.price) * it.qty)}
                 </span>
               </div>
-              {it.bundle ? (
-                <ul className="ml-4 space-y-0.5 border-l border-border pl-3 text-xs text-muted-foreground">
-                  {it.bundle.picks.map((p, idx) => (
-                    <li key={`${it.itemId}-pick-${idx}`}>↳ {p.itemName}</li>
-                  ))}
-                  {Object.entries(it.bundle.answers).map(([key, value]) => (
-                    <li key={`${it.itemId}-q-${key}`} className="italic">
-                      ↳ {key}: {value}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
             </li>
           ))}
         </ul>

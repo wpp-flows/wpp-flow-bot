@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, BotOff, CheckCircle2, Phone, Send, XCircle } from "lucide-react";
+import { Bot, BotOff, CheckCircle2, Send, XCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { IconButton } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { chatService } from "@/services/chatService";
@@ -155,11 +153,6 @@ export function ChatPanel({
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content="Ligar para contato">
-            <IconButton variant="ghost" aria-label="Ligar">
-              <Phone />
-            </IconButton>
-          </Tooltip>
           <Button
             size="sm"
             variant={conversation.botActive ? "outline" : "primary"}
@@ -199,11 +192,11 @@ export function ChatPanel({
       >
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={`h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
-              />
-            ))
+            <Skeleton
+              key={i}
+              className={`h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
+            />
+          ))
           : messages?.map((m) => <MessageBubble key={m.id} message={m} />)}
       </div>
 

@@ -1,4 +1,4 @@
-import { Menu, Moon, Search, Sun, LogOut } from 'lucide-react';
+import { HelpCircle, Menu, Moon, Search, Sun, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/IconButton';
@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/constants/app';
+import { startTour } from '@/lib/tour';
 import { NotificationsBell } from './NotificationsBell';
 
 export function Topbar() {
@@ -37,7 +38,18 @@ export function Topbar() {
           <IconButton variant="ghost" onClick={toggle} aria-label="Toggle theme">
             {resolved === 'dark' ? <Sun /> : <Moon />}
           </IconButton>
-          <NotificationsBell />
+          <span data-tour="notifications">
+            <NotificationsBell />
+          </span>
+          <span data-tour="help">
+            <IconButton
+              variant="ghost"
+              onClick={() => startTour((path) => navigate(path))}
+              aria-label="Ver tour de boas-vindas"
+            >
+              <HelpCircle />
+            </IconButton>
+          </span>
 
         <div className="relative ml-2">
           <button

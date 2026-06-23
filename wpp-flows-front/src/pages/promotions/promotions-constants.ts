@@ -1,14 +1,6 @@
-import type {
-  BundleComponent,
-  BundleQuestion,
-  PromotionDiscountType,
-  PromotionKind,
-} from '@/types';
+import type { PromotionDiscountType, PromotionKind } from '@/types';
 
 export const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
-
-export interface BundleFormComponent extends BundleComponent {}
-export interface BundleFormQuestion extends BundleQuestion {}
 
 export interface PromotionFormState {
   kind: PromotionKind;
@@ -24,9 +16,6 @@ export interface PromotionFormState {
   teaserOrderOffset: string;
   teaserMessage: string;
   qualifyingMessage: string;
-  bundleComponents: BundleFormComponent[];
-  bundlePrice: string;
-  bundleQuestions: BundleFormQuestion[];
 }
 
 export const emptyPromotionForm: PromotionFormState = {
@@ -43,7 +32,4 @@ export const emptyPromotionForm: PromotionFormState = {
   teaserOrderOffset: '',
   teaserMessage: '',
   qualifyingMessage: '',
-  bundleComponents: [],
-  bundlePrice: '',
-  bundleQuestions: [],
 };

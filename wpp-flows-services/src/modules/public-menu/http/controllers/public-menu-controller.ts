@@ -23,8 +23,8 @@ export class PublicMenuController {
 
         // dps ver de fazer em uma query só
         const [categories, items, promotions, bots] = await Promise.all([
-            categoryRepo.listByOrg(org.id),
-            itemRepo.listByOrg(org.id),
+            categoryRepo.listByOrg(org.id, { serviceType }),
+            itemRepo.listByOrg(org.id, { serviceType }),
             promotionRepo.listActive(org.id),
             botRepo.listByOrg(org.id),
         ]);
@@ -38,9 +38,7 @@ export class PublicMenuController {
             ) {
                 return false;
             }
-
-            if (serviceType === "LOCAL") return it.availableForLocal;
-            return it.availableForDelivery;
+            return true;
         });
 
         const visiblePromotions = promotions.filter((p) => {
@@ -73,9 +71,10 @@ export class PublicMenuController {
                 name: it.name,
                 description: it.description,
                 price: it.price,
+                promotionalPrice: it.promotionalPrice,
                 imageUrl: it.imageUrl,
                 position: it.position,
-                additionals: it.additionals,
+                optionGroups: it.optionGroups,
             })),
             promotions: visiblePromotions.map((p) => ({
                 id: p.id,
@@ -90,7 +89,6 @@ export class PublicMenuController {
                 teaserOrderOffset: p.teaserOrderOffset,
                 teaserMessage: p.teaserMessage,
                 qualifyingMessage: p.qualifyingMessage,
-                bundle: p.bundle,
             })),
             bot: onlineBot
                 ? {

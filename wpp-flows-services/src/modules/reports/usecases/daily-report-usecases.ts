@@ -1,9 +1,9 @@
-import { prisma } from "@/infrastructure/database/client";
-import type { Order } from "@/modules/order/repositories/order-repo";
-
-const REPORT_TZ = "America/Sao_Paulo";
+import type { Order, ServiceType } from "@/modules/order/repositories/order-repo";
+import type { ReportRepository } from "../repositories/report-repo";
+import { GenerateDailyReportUseCase, spDateOf } from "./generate-daily-report";
 
 export interface DailyReportSummary {
+    /** Always the SP-local date as `YYYY-MM-DD`. */
     date: string;
     count: number;
     revenue: string;
@@ -18,149 +18,120 @@ export interface DailyReportDetail {
     orders: Order[];
 }
 
-interface DailyAggRow {
-    date: string;
-    count: bigint;
-    revenue: string | null;
-    paid_revenue: string | null;
-    cash_count: bigint;
-    canceled_count: bigint;
-}
-
 export class ListDailyReportsUseCase {
+    constructor(private readonly repo: ReportRepository) {}
+
     async execute(
         organizationId: string,
-        filters: { serviceType?: "DELIVERY" | "LOCAL" } = {},
+        filters: { serviceType?: ServiceType } = {},
     ): Promise<DailyReportSummary[]> {
-        const serviceType = filters.serviceType ?? null;
-        const rows = await prisma.$queryRaw<DailyAggRow[]>`
-            SELECT
-                to_char(
-                    date_trunc('day', "createdAt" AT TIME ZONE ${REPORT_TZ}),
-                    'YYYY-MM-DD'
-                ) AS "date",
-                COUNT(*) AS "count",
-                COALESCE(
-                    SUM(CASE WHEN "status" <> 'CANCELED' THEN "total" END),
-                    0
-                )::text AS "revenue",
-                COALESCE(
-                    SUM(CASE WHEN "paymentStatus" = 'PAID' THEN "total" END),
-                    0
-                )::text AS "paid_revenue",
-                COUNT(*) FILTER (WHERE "paymentProvider" = 'CASH') AS "cash_count",
-                COUNT(*) FILTER (WHERE "status" = 'CANCELED') AS "canceled_count"
-            FROM "order"
-            WHERE "organizationId" = ${organizationId}
-              AND (${serviceType}::text IS NULL OR "serviceType"::text = ${serviceType}::text)
-            GROUP BY 1
-            ORDER BY 1 DESC
-        `;
-        return rows.map((row) => ({
-            date: row.date,
-            count: Number(row.count),
-            revenue: row.revenue ?? "0",
-            paidRevenue: row.paid_revenue ?? "0",
-            cashCount: Number(row.cash_count),
-            canceledCount: Number(row.canceled_count),
-        }));
+        const reports = await this.repo.listForOrg(organizationId, {
+            serviceType: filters.serviceType,
+        });
+
+        if (filters.serviceType) {
+            return reports.map((r) => ({
+                date: r.reportDate,
+                count: r.totalOrders,
+                revenue: r.revenue,
+                paidRevenue: r.paidRevenue,
+                cashCount: r.cashCount,
+                canceledCount: r.canceledCount,
+            }));
+        }
+
+        const byDate = new Map<string, DailyReportSummary>();
+        for (const r of reports) {
+            const existing = byDate.get(r.reportDate);
+            if (!existing) {
+                byDate.set(r.reportDate, {
+                    date: r.reportDate,
+                    count: r.totalOrders,
+                    revenue: r.revenue,
+                    paidRevenue: r.paidRevenue,
+                    cashCount: r.cashCount,
+                    canceledCount: r.canceledCount,
+                });
+                continue;
+            }
+            existing.count += r.totalOrders;
+            existing.revenue = sumString(existing.revenue, r.revenue);
+            existing.paidRevenue = sumString(existing.paidRevenue, r.paidRevenue);
+            existing.cashCount += r.cashCount;
+            existing.canceledCount += r.canceledCount;
+        }
+        return Array.from(byDate.values()).sort((a, b) =>
+            a.date < b.date ? 1 : -1,
+        );
     }
 }
 
 export class GetDailyReportUseCase {
+    constructor(
+        private readonly repo: ReportRepository,
+        private readonly generator: GenerateDailyReportUseCase,
+    ) {}
+
     async execute(input: {
         organizationId: string;
         date: string;
-        serviceType?: "DELIVERY" | "LOCAL";
+        serviceType?: ServiceType;
     }): Promise<DailyReportDetail | null> {
-        const range = parseDayRange(input.date);
-        if (!range) return null;
+        const today = spDateOf(0);
+        const isToday = input.date === today;
 
-        const orders = await prisma.order.findMany({
-            where: {
-                organizationId: input.organizationId,
-                createdAt: { gte: range.from, lt: range.to },
-                ...(input.serviceType ? { serviceType: input.serviceType } : {}),
-            },
-            include: { customer: { select: { name: true } } },
-            orderBy: { createdAt: "asc" },
-        });
-        if (orders.length === 0) return null;
+        const services: ServiceType[] = input.serviceType
+            ? [input.serviceType]
+            : ["DELIVERY", "LOCAL"];
 
+        const reports = await Promise.all(
+            services.map(async (s) => {
+                if (isToday) {
+                    return this.generator.execute({
+                        organizationId: input.organizationId,
+                        serviceType: s,
+                        date: input.date,
+                    });
+                }
+                return this.repo.findOne(input.organizationId, s, input.date);
+            }),
+        );
+
+        const present = reports.filter((r): r is NonNullable<typeof r> => r != null);
+        if (present.length === 0) return null;
+
+        let count = 0;
         let revenue = 0;
         let paidRevenue = 0;
         let cashCount = 0;
         let canceledCount = 0;
-        for (const o of orders) {
-            const total = Number.parseFloat(o.total.toString());
-            if (o.status !== "CANCELED") revenue += total;
-            else canceledCount += 1;
-            if (o.paymentStatus === "PAID") paidRevenue += total;
-            if (o.paymentProvider === "CASH") cashCount += 1;
+        const orders: Order[] = [];
+        for (const r of present) {
+            count += r.totalOrders;
+            revenue += Number.parseFloat(r.revenue);
+            paidRevenue += Number.parseFloat(r.paidRevenue);
+            cashCount += r.cashCount;
+            canceledCount += r.canceledCount;
+            orders.push(...r.orders);
         }
+
+        if (count === 0) return null;
 
         return {
             date: input.date,
             summary: {
                 date: input.date,
-                count: orders.length,
+                count,
                 revenue: revenue.toFixed(2),
                 paidRevenue: paidRevenue.toFixed(2),
                 cashCount,
                 canceledCount,
             },
-            orders: orders.map(toOrderShape),
+            orders,
         };
     }
 }
 
-function parseDayRange(date: string): { from: Date; to: Date } | null {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    if (!match) return null;
-    const [, y, m, d] = match;
-    const year = Number(y);
-    const month = Number(m) - 1;
-    const day = Number(d);
-    const from = new Date(Date.UTC(year, month, day, 3, 0, 0));
-    const to = new Date(Date.UTC(year, month, day + 1, 3, 0, 0));
-    return { from, to };
-}
-
-function toOrderShape(row: any): Order {
-    return {
-        id: row.id,
-        organizationId: row.organizationId,
-        customerId: row.customerId,
-        conversationId: row.conversationId,
-        sequence: row.sequence,
-        items: row.items ?? [],
-        subtotal: String(row.subtotal),
-        discount: row.discount == null ? null : String(row.discount),
-        total: String(row.total),
-        status: row.status,
-        observation: row.observation,
-        address: row.address,
-        deliveryMode: row.deliveryMode ?? "DELIVERY",
-        deliveryFee: row.deliveryFee != null ? String(row.deliveryFee) : "0",
-        couponCode: row.couponCode ?? null,
-        couponDiscount:
-            row.couponDiscount == null ? null : String(row.couponDiscount),
-        paymentStatus: row.paymentStatus,
-        paymentProvider: row.paymentProvider,
-        paymentProviderRef: row.paymentProviderRef,
-        paymentLink: row.paymentLink ?? null,
-        receiptUrl: row.receiptUrl,
-        cashChangeFor:
-            row.cashChangeFor == null ? null : String(row.cashChangeFor),
-        serviceType: (row.serviceType ?? "DELIVERY") as
-            | "DELIVERY"
-            | "LOCAL",
-        tableId: row.tableId ?? null,
-        tableLabel: row.tableLabel ?? null,
-        billId: row.billId ?? null,
-        customerName: row.customer?.name ?? null,
-        appliedPromotionIds: (row.appliedPromotionIds as string[] | null) ?? null,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-    };
+function sumString(a: string, b: string): string {
+    return (Number.parseFloat(a) + Number.parseFloat(b)).toFixed(2);
 }

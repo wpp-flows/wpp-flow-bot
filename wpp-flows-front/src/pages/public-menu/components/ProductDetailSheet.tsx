@@ -4,11 +4,19 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { cn } from '@/lib/utils';
+import { deriveOptionGroupHelperText } from '@/lib/schemas';
 import type {
-  PublicCartAdditional,
+  PublicCartSelectedOption,
   PublicMenuItem,
+  PublicMenuOption,
+  PublicMenuOptionGroup,
 } from '@/types/publicMenu';
-import { formatBrl } from '@/helpers/public-menu-helpers';
+import {
+  effectiveItemPrice,
+  formatBrl,
+  originalDisplayPrice,
+  startingPriceFor,
+} from '@/helpers/public-menu-helpers';
 
 interface Props {
   item: PublicMenuItem | null;
@@ -17,10 +25,12 @@ interface Props {
   onConfirm: (input: {
     qty: number;
     notes: string;
-    additionals: PublicCartAdditional[];
+    selectedOptions: PublicCartSelectedOption[];
   }) => void;
   disabled?: boolean;
 }
+
+type Selections = Record<string, string[]>;
 
 export function ProductDetailSheet({
   item,
@@ -31,50 +41,103 @@ export function ProductDetailSheet({
 }: Readonly<Props>) {
   const [qty, setQty] = useState(1);
   const [notes, setNotes] = useState('');
-  const [selectedAdditionalIds, setSelectedAdditionalIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selections, setSelections] = useState<Selections>({});
 
   useEffect(() => {
-    if (open && item) {
-      setQty(1);
-      setNotes('');
-      setSelectedAdditionalIds(new Set());
+    if (!open || !item) return;
+    setQty(1);
+    setNotes('');
+    const initial: Selections = {};
+    for (const g of item.optionGroups) {
+      if (g.minSelections >= 1 && g.maxSelections === 1 && g.options.length > 0) {
+        const cheapest = [...g.options].sort(
+          (a, b) =>
+            Number.parseFloat(a.additionalPrice) -
+            Number.parseFloat(b.additionalPrice),
+        )[0];
+        if (cheapest) initial[g.id] = [cheapest.id];
+      } else {
+        initial[g.id] = [];
+      }
     }
+    setSelections(initial);
   }, [open, item]);
 
-  const selectedAdditionals = useMemo<PublicCartAdditional[]>(() => {
+  const flatSelections = useMemo<PublicCartSelectedOption[]>(() => {
     if (!item) return [];
-    return item.additionals
-      .filter((a) => selectedAdditionalIds.has(a.id))
-      .map((a) => ({ id: a.id, name: a.name, price: a.price }));
-  }, [item, selectedAdditionalIds]);
+    const out: PublicCartSelectedOption[] = [];
+    for (const g of item.optionGroups) {
+      const picked = selections[g.id] ?? [];
+      for (const optId of picked) {
+        const opt = g.options.find((o) => o.id === optId);
+        if (!opt) continue;
+        out.push({
+          groupId: g.id,
+          optionId: opt.id,
+          name: opt.name,
+          additionalPrice: opt.additionalPrice,
+        });
+      }
+    }
+    return out;
+  }, [item, selections]);
+
+  const effectivePrice = item ? effectiveItemPrice(item) : 0;
 
   const lineTotal = useMemo(() => {
-    if (!item) return 0;
-    const base = Number.parseFloat(item.price || '0');
-    const extras = selectedAdditionals.reduce(
-      (sum, a) => sum + Number.parseFloat(a.price || '0'),
+    const extras = flatSelections.reduce(
+      (sum, o) => sum + Number.parseFloat(o.additionalPrice || '0'),
       0,
     );
-    return (base + extras) * qty;
-  }, [item, selectedAdditionals, qty]);
+    return (effectivePrice + extras) * qty;
+  }, [effectivePrice, flatSelections, qty]);
 
-  function toggleAdditional(id: string) {
-    setSelectedAdditionalIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const validationError = useMemo<string | null>(() => {
+    if (!item) return null;
+    for (const g of item.optionGroups) {
+      const picked = selections[g.id]?.length ?? 0;
+      if (picked < g.minSelections) {
+        return `Complete "${g.title}" para continuar.`;
+      }
+    }
+    return null;
+  }, [item, selections]);
+
+  function toggleOption(group: PublicMenuOptionGroup, option: PublicMenuOption) {
+    setSelections((prev) => {
+      const current = prev[group.id] ?? [];
+      const isSelected = current.includes(option.id);
+
+      if (group.maxSelections === 1) {
+        if (isSelected && group.minSelections === 0) {
+          return { ...prev, [group.id]: [] };
+        }
+        return { ...prev, [group.id]: [option.id] };
+      }
+
+      if (isSelected) {
+        return {
+          ...prev,
+          [group.id]: current.filter((id) => id !== option.id),
+        };
+      }
+
+      if (current.length >= group.maxSelections) {
+        return {
+          ...prev,
+          [group.id]: [...current.slice(1), option.id],
+        };
+      }
+      return { ...prev, [group.id]: [...current, option.id] };
     });
   }
 
   function handleConfirm() {
-    if (!item) return;
+    if (!item || validationError) return;
     onConfirm({
       qty,
       notes: notes.trim(),
-      additionals: selectedAdditionals,
+      selectedOptions: flatSelections,
     });
     onOpenChange(false);
   }
@@ -115,9 +178,13 @@ export function ProductDetailSheet({
               size="lg"
               className="flex-1"
               onClick={handleConfirm}
-              disabled={disabled}
+              disabled={disabled || !!validationError}
             >
-              {disabled ? 'Restaurante fechado' : `Adicionar — ${formatBrl(lineTotal)}`}
+              {disabled
+                ? 'Restaurante fechado'
+                : validationError
+                  ? validationError
+                  : `Adicionar — ${formatBrl(lineTotal)}`}
             </Button>
           </div>
         ) : null
@@ -127,65 +194,14 @@ export function ProductDetailSheet({
         <div className="mx-auto flex max-w-3xl flex-col gap-4 pt-2">
           <ItemHeader item={item} />
 
-          {item.additionals.length > 0 ? (
-            <section>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Adicionais
-              </p>
-              <ul className="space-y-2">
-                {item.additionals.map((add) => {
-                  const checked = selectedAdditionalIds.has(add.id);
-                  return (
-                    <li key={add.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggleAdditional(add.id)}
-                        className={cn(
-                          'flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition',
-                          checked
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border bg-background hover:bg-muted/40',
-                        )}
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span
-                            className={cn(
-                              'flex h-5 w-5 shrink-0 items-center justify-center rounded border',
-                              checked
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-border bg-background',
-                            )}
-                          >
-                            {checked ? (
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                                aria-hidden
-                              >
-                                <path
-                                  d="M3 8.5L6.5 12L13 5"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            ) : null}
-                          </span>
-                          <span className="truncate text-sm font-medium">{add.name}</span>
-                        </div>
-                        <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                          + {formatBrl(add.price)}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ) : null}
+          {item.optionGroups.map((group) => (
+            <OptionGroupSelector
+              key={group.id}
+              group={group}
+              selectedIds={selections[group.id] ?? []}
+              onToggle={(opt) => toggleOption(group, opt)}
+            />
+          ))}
 
           {!disabled ? (
             <section>
@@ -206,7 +222,119 @@ export function ProductDetailSheet({
   );
 }
 
+interface OptionGroupSelectorProps {
+  group: PublicMenuOptionGroup;
+  selectedIds: string[];
+  onToggle: (option: PublicMenuOption) => void;
+}
+
+function OptionGroupSelector({
+  group,
+  selectedIds,
+  onToggle,
+}: Readonly<OptionGroupSelectorProps>) {
+  const helperText =
+    group.subtitle?.trim() ||
+    deriveOptionGroupHelperText(group.minSelections, group.maxSelections);
+  const isRadio = group.maxSelections === 1;
+  const required = group.minSelections >= 1;
+
+  return (
+    <section className="rounded-lg border border-border bg-card/40">
+      <header className="flex items-start justify-between gap-3 border-b border-border bg-muted/30 px-3 py-2.5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="text-sm font-semibold text-foreground">
+              {group.title}
+            </h4>
+            {required ? (
+              <span className="rounded bg-foreground px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider text-background">
+                Obrigatório
+              </span>
+            ) : null}
+          </div>
+          <p className="text-2xs text-muted-foreground">{helperText}</p>
+        </div>
+      </header>
+
+      <ul className="divide-y divide-border">
+        {group.options.map((option) => {
+          const checked = selectedIds.includes(option.id);
+          const priceNum = Number.parseFloat(option.additionalPrice || '0');
+          return (
+            <li key={option.id}>
+              <button
+                type="button"
+                onClick={() => onToggle(option)}
+                className={cn(
+                  'flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition',
+                  checked ? 'bg-primary/5' : 'hover:bg-muted/40',
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <SelectionMark checked={checked} isRadio={isRadio} />
+                  <span className="truncate text-sm font-medium">
+                    {option.name}
+                  </span>
+                </span>
+                {priceNum > 0 ? (
+                  <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                    + {formatBrl(priceNum)}
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function SelectionMark({
+  checked,
+  isRadio,
+}: {
+  checked: boolean;
+  isRadio: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        'flex h-5 w-5 shrink-0 items-center justify-center border transition',
+        isRadio ? 'rounded-full' : 'rounded',
+        checked
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-background',
+      )}
+      aria-hidden
+    >
+      {checked ? (
+        isRadio ? (
+          <span className="h-2 w-2 rounded-full bg-current" />
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M3 8.5L6.5 12L13 5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )
+      ) : null}
+    </span>
+  );
+}
+
 function ItemHeader({ item }: { item: PublicMenuItem }) {
+  const startingPrice = startingPriceFor(item);
+  const effective = effectiveItemPrice(item);
+  const original = originalDisplayPrice(item);
+  const hasStrike = original != null && original > effective;
+  const hasFrom = startingPrice > effective;
+
   return (
     <div className="flex flex-col gap-3">
       <ItemImage url={item.imageUrl} alt={item.name} />
@@ -216,7 +344,26 @@ function ItemHeader({ item }: { item: PublicMenuItem }) {
             {item.description}
           </p>
         ) : null}
-        <p className="mt-2 text-base font-semibold">{formatBrl(item.price)}</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-2">
+          {hasFrom ? (
+            <span className="text-2xs uppercase tracking-wider text-muted-foreground">
+              A partir de
+            </span>
+          ) : null}
+          {hasStrike ? (
+            <span className="text-sm text-muted-foreground line-through">
+              {formatBrl(original)}
+            </span>
+          ) : null}
+          <span
+            className={cn(
+              'text-base font-semibold',
+              hasStrike ? 'text-primary' : 'text-foreground',
+            )}
+          >
+            {formatBrl(hasFrom ? startingPrice : effective)}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -242,3 +389,4 @@ function ItemImage({ url, alt }: { url: string | null; alt: string }) {
     </div>
   );
 }
+

@@ -2,6 +2,7 @@ import type {
     Conversation,
     ConversationRepository,
 } from "@/modules/chat/repositories/chat-repo";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import {
     extractText,
     isPersonalJid,
@@ -87,6 +88,12 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
             lastMessagePreview: text.slice(0, 100),
             lastMessageAt: recorded.createdAt,
             unreadCount: nextUnread,
+        });
+
+        orgEventBus.emit(ctx.bot.organizationId, {
+            kind: "chat.message",
+            conversationId: conversation.id,
+            direction: msg.key.fromMe ? "OUT" : "IN",
         });
 
         if (msg.key.fromMe) return;

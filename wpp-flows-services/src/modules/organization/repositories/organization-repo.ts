@@ -48,6 +48,7 @@ export interface OrganizationRepository {
     findById(id: string): Promise<Organization | null>;
     findByOwnerId(ownerId: string): Promise<Organization | null>;
     findBySlug(slug: string): Promise<Organization | null>;
+    listAll(): Promise<Organization[]>;
     create(data: { name: string; slug: string; ownerId: string }): Promise<Organization>;
     update(
         id: string,

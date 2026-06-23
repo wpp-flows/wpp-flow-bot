@@ -87,6 +87,41 @@ export function CouponForm({ form, setForm }: Readonly<Props>) {
         Deixe em branco para um cupom sem janela de validade.
       </p>
 
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="coupon-max-uses">Limite total de usos</Label>
+          <Input
+            id="coupon-max-uses"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            step="1"
+            value={form.maxUses}
+            onChange={(e) => setForm((f) => ({ ...f, maxUses: e.target.value }))}
+            placeholder="—"
+          />
+        </div>
+        <div>
+          <Label htmlFor="coupon-max-per-customer">Limite por cliente</Label>
+          <Input
+            id="coupon-max-per-customer"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            step="1"
+            value={form.maxUsesPerCustomer}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, maxUsesPerCustomer: e.target.value }))
+            }
+            placeholder="—"
+          />
+        </div>
+      </div>
+      <p className="-mt-2 text-2xs text-muted-foreground">
+        Em branco = sem limite. Para "uma vez por cliente", coloque <b>1</b> no
+        limite por cliente.
+      </p>
+
       <div>
         <Label htmlFor="coupon-description">Descrição (opcional)</Label>
         <Textarea

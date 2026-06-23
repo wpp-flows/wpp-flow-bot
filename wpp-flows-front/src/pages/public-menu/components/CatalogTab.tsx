@@ -6,7 +6,13 @@ import type {
   PublicMenuPromotion,
   PublicMenuResponse,
 } from '@/types/publicMenu';
-import { formatBrl } from '@/helpers/public-menu-helpers';
+import {
+  effectiveItemPrice,
+  formatBrl,
+  itemShowsStartingFrom,
+  originalDisplayPrice,
+  startingPriceFor,
+} from '@/helpers/public-menu-helpers';
 import { PromotionalBanners } from './PromotionalBanners';
 
 interface Props {
@@ -152,16 +158,12 @@ function CategoriesSection({
                           {item.description}
                         </p>
                       ) : null}
-                      <div className="mt-2 flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">
-                          {formatBrl(item.price)}
+                      <TilePrice item={item} />
+                      {item.optionGroups.length > 0 ? (
+                        <p className="mt-0.5 text-2xs text-muted-foreground">
+                          Personalizável
                         </p>
-                        {item.additionals.length > 0 ? (
-                          <span className="text-2xs text-muted-foreground">
-                            · {item.additionals.length} adiciona{item.additionals.length === 1 ? 'l' : 'is'}
-                          </span>
-                        ) : null}
-                      </div>
+                      ) : null}
                     </div>
                   </button>
                 ))}
@@ -169,6 +171,36 @@ function CategoriesSection({
             </section>
           );
         })}
+    </div>
+  );
+}
+
+function TilePrice({ item }: Readonly<{ item: PublicMenuItem }>) {
+  const effective = effectiveItemPrice(item);
+  const original = originalDisplayPrice(item);
+  const hasStrike = original != null && original > effective;
+  const floor = startingPriceFor(item);
+  const hasFrom = itemShowsStartingFrom(item);
+  return (
+    <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      {hasFrom ? (
+        <span className="text-2xs uppercase tracking-wider text-muted-foreground">
+          A partir de
+        </span>
+      ) : null}
+      {hasStrike ? (
+        <span className="text-xs text-muted-foreground line-through">
+          {formatBrl(original)}
+        </span>
+      ) : null}
+      <span
+        className={cn(
+          'text-sm font-semibold',
+          hasStrike ? 'text-primary' : 'text-foreground',
+        )}
+      >
+        {formatBrl(hasFrom ? floor : effective)}
+      </span>
     </div>
   );
 }

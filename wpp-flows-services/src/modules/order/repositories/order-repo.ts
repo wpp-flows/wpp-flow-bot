@@ -11,24 +11,6 @@ export type DeliveryMode = "PICKUP" | "DELIVERY";
 
 export type ServiceType = "DELIVERY" | "LOCAL";
 
-export interface OrderItemBundlePick {
-    componentId: string;
-    itemId: string;
-    itemName: string;
-}
-
-/**
- * Bundle metadata attached to an order item that represents a completed BUNDLE
- * promotion. The order line still has a single price (the bundle's locked
- * price); this blob carries the picks + per-bundle question answers for
- * rendering on the order detail and receipts.
- */
-export interface OrderItemBundle {
-    bundleId: string;
-    picks: OrderItemBundlePick[];
-    answers: Record<string, string>;
-}
-
 export interface OrderItemAdditional {
     id: string;
     name: string;
@@ -42,7 +24,6 @@ export interface OrderItem {
     qty: number;
     notes?: string | null;
     additionals?: OrderItemAdditional[];
-    bundle?: OrderItemBundle | null;
 }
 
 export interface Order {
@@ -143,4 +124,10 @@ export interface OrderRepository {
         data: Partial<{ observation: string | null; address: string | null }>,
     ): Promise<Order>;
     attachToBill(orderIds: string[], billId: string): Promise<number>;
+    countByCoupon(organizationId: string, code: string): Promise<number>;
+    countByCouponAndCustomer(
+        organizationId: string,
+        customerId: string,
+        code: string,
+    ): Promise<number>;
 }

@@ -13,18 +13,6 @@ export type DeliveryMode = 'PICKUP' | 'DELIVERY';
 
 export type PaymentProvider = 'MERCADO_PAGO' | 'CASH';
 
-export interface OrderItemBundlePick {
-  componentId: string;
-  itemId: string;
-  itemName: string;
-}
-
-export interface OrderItemBundle {
-  bundleId: string;
-  picks: OrderItemBundlePick[];
-  answers: Record<string, string>;
-}
-
 export interface OrderItemAdditional {
   id: string;
   name: string;
@@ -38,7 +26,6 @@ export interface OrderItem {
   qty: number;
   notes?: string | null;
   additionals?: OrderItemAdditional[];
-  bundle?: OrderItemBundle | null;
 }
 
 export interface Order {

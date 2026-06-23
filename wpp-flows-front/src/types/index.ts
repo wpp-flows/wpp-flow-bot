@@ -13,13 +13,15 @@ export type {
 export type { BotInstance, BotStatus, CreateBotPayload, UpdateBotPayload } from './bot';
 export type {
   MenuItem,
-  MenuItemAdditional,
+  MenuItemOption,
+  MenuItemOptionGroup,
   MenuCategory,
   CreateCategoryPayload,
   UpdateCategoryPayload,
   CreateItemPayload,
   UpdateItemPayload,
-  AdditionalPayload,
+  OptionPayload,
+  OptionGroupPayload,
 } from './menu';
 export type {
   Flow,
@@ -51,8 +53,6 @@ export type {
 export type {
   Order,
   OrderItem,
-  OrderItemBundle,
-  OrderItemBundlePick,
   OrderStatus,
   OrderFilters,
   PaymentStatus,
@@ -70,9 +70,6 @@ export type {
   PromotionInput,
   PromotionKind,
   PromotionDiscountType,
-  BundleConfig,
-  BundleComponent,
-  BundleQuestion,
 } from './promotion';
 export type {
   Notification,

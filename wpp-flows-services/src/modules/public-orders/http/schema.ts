@@ -6,28 +6,16 @@ const phoneSchema = z
     .max(20)
     .regex(/^[+\d\s()\-]+$/, "Telefone inválido");
 
-const bundlePickSchema = z.object({
-    componentId: z.string().min(1),
-    itemId: z.uuid(),
-});
-
-const additionalSchema = z.object({
-    id: z.string().min(1).max(64),
+const selectionSchema = z.object({
+    groupId: z.string().min(1).max(64),
+    optionIds: z.array(z.string().min(1).max(64)).max(50),
 });
 
 const cartItemSchema = z.object({
     itemId: z.uuid(),
     qty: z.number().int().min(1).max(100),
     notes: z.string().max(500).nullable().optional(),
-    additionals: z.array(additionalSchema).max(50).optional(),
-    bundle: z
-        .object({
-            bundleId: z.uuid(),
-            picks: z.array(bundlePickSchema).min(1),
-            answers: z.record(z.string(), z.string()).optional(),
-        })
-        .nullable()
-        .optional(),
+    selections: z.array(selectionSchema).max(20).optional(),
 });
 
 export const createPublicOrderSchema = z.object({

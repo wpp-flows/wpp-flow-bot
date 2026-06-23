@@ -47,10 +47,15 @@ export function CartTab({ slug, items: menuItems, onBrowseMenu, onCheckout }: Re
                   <p className="text-sm text-muted-foreground">
                     {formatBrl(item.price)} {item.qty > 1 ? '· un.' : ''}
                   </p>
-                  {item.additionals.length > 0 ? (
+                  {item.selectedOptions.length > 0 ? (
                     <ul className="mt-2 space-y-0.5 text-2xs text-muted-foreground">
-                      {item.additionals.map((a) => (
-                        <li key={a.id}>+ {a.name} ({formatBrl(a.price)})</li>
+                      {item.selectedOptions.map((o) => (
+                        <li key={`${o.groupId}:${o.optionId}`}>
+                          + {o.name}
+                          {Number.parseFloat(o.additionalPrice || '0') > 0
+                            ? ` (${formatBrl(o.additionalPrice)})`
+                            : ''}
+                        </li>
                       ))}
                     </ul>
                   ) : null}

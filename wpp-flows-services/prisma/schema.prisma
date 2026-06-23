@@ -170,6 +170,7 @@ model Organization {
   notifications Notification[]
   coupons       Coupon[]
   tables        RestaurantTable[]
+  reports       Report[]
 
   @@map("organization")
 }
@@ -216,6 +217,7 @@ model MenuCategory {
   id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceType    ServiceType  @default(DELIVERY)
   name           String
   description    String?
   position       Int          @default(0)
@@ -225,39 +227,47 @@ model MenuCategory {
   items MenuItem[]
 
   @@index([organizationId])
+  @@index([organizationId, serviceType])
   @@map("menu_category")
 }
 
 model MenuItem {
-  id                   String       @id @default(uuid())
-  organizationId       String
-  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  categoryId           String
-  category             MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  name                 String
-  description          String
-  price                Decimal      @db.Decimal(10, 2)
-  imageUrl             String?
-  available            Boolean      @default(true)
-  availableForDelivery Boolean      @default(true)
-  availableForLocal    Boolean      @default(true)
+  id                  String       @id @default(uuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categoryId          String
+  category            MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  serviceType         ServiceType  @default(DELIVERY)
+  name                String
+  description         String
+  price               Decimal      @db.Decimal(10, 2)
+  /// Optional discounted price. When set, this is what the customer pays and
+  /// `price` is shown struck-through in the catalog.
+  promotionalPrice    Decimal?     @db.Decimal(10, 2)
+  imageUrl            String?
+  available           Boolean      @default(true)
   /// 0–6 (Sunday..Saturday). Empty array means available every day. When set,
   /// the bot only lists this item on the matching weekdays.
-  availableDaysOfWeek  Int[]        @default([])
-  position             Int          @default(0)
-  /// Optional adicionais the customer can tick when ordering this item on the
-  /// public menu (e.g. "Borda recheada", "Queijo extra"). Shape:
-  ///   [{ id: string, name: string, price: string }]
-  /// Stored as JSON because the list is small and item-scoped — querying
-  /// inside it isn't needed.
-  additionals          Json?
-  createdAt            DateTime     @default(now()) @db.Timestamptz
-  updatedAt            DateTime     @updatedAt @db.Timestamptz
+  availableDaysOfWeek Int[]        @default([])
+  position            Int          @default(0)
+  /// Shape:
+  ///   [{
+  ///     id: string, title: string, subtitle?: string|null,
+  ///     minSelections: number, maxSelections: number, position: number,
+  ///     options: [{ id: string, name: string, additionalPrice: string,
+  ///                 imageUrl?: string|null, position: number }]
+  ///   }]
+  /// JSON because every read fetches the whole list together and the
+  /// browse / order paths don't need to query inside it.
+  optionGroups        Json?
+  createdAt           DateTime     @default(now()) @db.Timestamptz
+  updatedAt           DateTime     @updatedAt @db.Timestamptz
 
   featuredInPromotions Promotion[]
 
   @@index([organizationId])
   @@index([categoryId])
+  @@index([organizationId, serviceType])
   @@map("menu_item")
 }
 
@@ -511,6 +521,11 @@ model Coupon {
   /// Inclusive validity window. Both null = always valid.
   validFrom      DateTime?          @db.Timestamptz
   validUntil     DateTime?          @db.Timestamptz
+  /// Total redemptions allowed across all customers. null = unlimited.
+  maxUses           Int?
+  /// Max redemptions a single customer can make with this code. null = unlimited.
+  /// Counted by previous orders with this `couponCode` for the same customerId.
+  maxUsesPerCustomer Int?
   /// Free-text label shown to the org owner (optional).
   description    String?
   createdAt      DateTime           @default(now()) @db.Timestamptz
@@ -576,11 +591,6 @@ enum PromotionKind {
   NTH_ORDER_DISCOUNT
   /// Free-text "promotion of the day" message inserted before the menu.
   DAILY_MESSAGE
-  /// Orderable combo. Carries its full configuration in the `bundle` JSON
-  /// column (components/pools, fixed price, per-bundle questions). Shows up
-  /// as a virtual "Promoções" category in the menu and is picked by the
-  /// customer like any other item.
-  BUNDLE
 }
 
 enum PromotionDiscountType {
@@ -618,13 +628,6 @@ model Promotion {
   /// the customer hits the qualifying order ("🎉 5º pedido — 10% off aplicado!").
   /// Null = auto-built default.
   qualifyingMessage String?
-  /// BUNDLE: full combo configuration. Shape:
-  ///   { components: [{ id, label, itemIds, count, free }],
-  ///     price: "59.90",
-  ///     questions: [{ id, label, fieldKey }] }
-  /// Stored as JSON because the shape will evolve as we ship the orderable
-  /// promo experience and we don't query inside it.
-  bundle            Json?
   createdAt         DateTime               @default(now()) @db.Timestamptz
   updatedAt         DateTime               @updatedAt @db.Timestamptz
 
@@ -687,4 +690,26 @@ model Notification {
   @@index([organizationId, createdAt])
   @@index([organizationId, readAt])
   @@map("notification")
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceType    ServiceType
+  reportDate     DateTime     @db.Date
+  totalOrders    Int          @default(0)
+  canceledCount  Int          @default(0)
+  cashCount      Int          @default(0)
+  revenue        Decimal      @default(0) @db.Decimal(10, 2)
+  paidRevenue    Decimal      @default(0) @db.Decimal(10, 2)
+  orders         Json         @default("[]")
+  generatedAt    DateTime     @default(now()) @db.Timestamptz
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @db.Timestamptz
+
+  @@unique([organizationId, serviceType, reportDate])
+  @@index([organizationId])
+  @@index([organizationId, reportDate])
+  @@map("report")
 }

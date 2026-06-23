@@ -1,25 +1,25 @@
 import { evaluateCoupon, describeCouponRejection } from "@/modules/coupon/usecases/coupon-evaluator";
 import type { CouponRepository } from "@/modules/coupon/repositories/coupon-repo";
 import type { ItemRepository } from "@/modules/menu/repositories/menu-repo";
-import type { OrderItem } from "@/modules/order/repositories/order-repo";
+import type {
+    OrderItem,
+    OrderRepository,
+    ServiceType,
+} from "@/modules/order/repositories/order-repo";
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import { evaluateDiscount } from "@/modules/promotion/usecases/promotion-evaluator";
 import { ValidationError } from "@/shared/exceptions/http";
 
-export interface PublicOrderItemAdditionalInput {
-    id: string;
+export interface PublicOrderItemSelectionInput {
+    groupId: string;
+    optionIds: string[];
 }
 
 export interface PublicOrderItemInput {
     itemId: string;
     qty: number;
     notes?: string | null;
-    additionals?: PublicOrderItemAdditionalInput[];
-    bundle?: {
-        bundleId: string;
-        picks: { componentId: string; itemId: string }[];
-        answers?: Record<string, string>;
-    } | null;
+    selections?: PublicOrderItemSelectionInput[];
 }
 
 export interface PublicOrderResult {
@@ -31,6 +31,7 @@ export interface PublicOrderResult {
 
 export async function resolveCartItems(deps: {
     orgId: string;
+    serviceType: ServiceType;
     itemRepo: ItemRepository;
     input: PublicOrderItemInput[];
 }): Promise<OrderItem[]> {
@@ -46,42 +47,68 @@ export async function resolveCartItems(deps: {
                     `Item ${entry.itemId} não está mais disponível.`,
                 );
             }
-            const catalogAdditionals = new Map(
-                item.additionals.map((a) => [a.id, a]),
-            );
-            const additionals = (entry.additionals ?? [])
-                .map((a) => catalogAdditionals.get(a.id))
-                .filter((a): a is NonNullable<typeof a> => a != null)
-                .map((a) => ({ id: a.id, name: a.name, price: a.price }));
+            if (item.serviceType !== deps.serviceType) {
+                throw new ValidationError(
+                    `Item ${entry.itemId} não pertence a este menu.`,
+                );
+            }
+
+            const groupsById = new Map(item.optionGroups.map((g) => [g.id, g]));
+            const selectionsByGroupId = new Map<string, string[]>();
+            for (const sel of entry.selections ?? []) {
+                // Dedup option IDs the client may have sent twice.
+                selectionsByGroupId.set(sel.groupId, Array.from(new Set(sel.optionIds)));
+            }
+
+            const additionals: { id: string; name: string; price: string }[] = [];
+            for (const group of item.optionGroups) {
+                const picked = selectionsByGroupId.get(group.id) ?? [];
+                if (picked.length < group.minSelections) {
+                    throw new ValidationError(
+                        `Grupo "${group.title}" requer ${group.minSelections} opção(ões).`,
+                    );
+                }
+                if (picked.length > group.maxSelections) {
+                    throw new ValidationError(
+                        `Grupo "${group.title}" aceita no máximo ${group.maxSelections} opção(ões).`,
+                    );
+                }
+                const optionsById = new Map(group.options.map((o) => [o.id, o]));
+                for (const optionId of picked) {
+                    const opt = optionsById.get(optionId);
+                    if (!opt) {
+                        throw new ValidationError(
+                            `Opção inválida em "${group.title}".`,
+                        );
+                    }
+                    additionals.push({
+                        id: opt.id,
+                        name: opt.name,
+                        price: opt.additionalPrice,
+                    });
+                }
+            }
+
+            for (const sentGroupId of selectionsByGroupId.keys()) {
+                if (!groupsById.has(sentGroupId)) {
+                    throw new ValidationError(
+                        `Grupo de opções desconhecido para ${item.name}.`,
+                    );
+                }
+            }
+
+            const chargedPrice = item.promotionalPrice ?? item.price;
+
             return {
                 itemId: item.id,
                 name: item.name,
-                price: item.price,
+                price: chargedPrice,
                 qty: Math.max(1, Math.floor(entry.qty)),
                 notes: entry.notes?.trim() || null,
                 additionals,
-                bundle: entry.bundle
-                    ? {
-                        bundleId: entry.bundle.bundleId,
-                        picks: entry.bundle.picks.map((p) => ({
-                            componentId: p.componentId,
-                            itemId: p.itemId,
-                            itemName: "",
-                        })),
-                        answers: entry.bundle.answers ?? {},
-                    }
-                    : null,
             };
         }),
     );
-
-    for (const ci of cartItems) {
-        if (!ci.bundle) continue;
-        for (const pick of ci.bundle.picks) {
-            const picked = await deps.itemRepo.findByIdInOrg(deps.orgId, pick.itemId);
-            pick.itemName = picked?.name ?? "Item";
-        }
-    }
 
     return cartItems;
 }
@@ -99,7 +126,9 @@ export async function computePricing(deps: {
     orgId: string;
     promotionRepo: PromotionRepository;
     couponRepo: CouponRepository;
+    orderRepo: OrderRepository;
     cartItems: OrderItem[];
+    customerId: string;
     customerOrderCount: number;
     rawCouponCode?: string | null;
 }): Promise<ResolvedPricing> {
@@ -129,9 +158,21 @@ export async function computePricing(deps: {
     const trimmed = deps.rawCouponCode?.trim();
     if (trimmed) {
         const coupon = await deps.couponRepo.findByCodeInOrg(deps.orgId, trimmed);
+        const [totalUsageCount, customerUsageCount] = coupon
+            ? await Promise.all([
+                deps.orderRepo.countByCoupon(deps.orgId, coupon.code),
+                deps.orderRepo.countByCouponAndCustomer(
+                    deps.orgId,
+                    deps.customerId,
+                    coupon.code,
+                ),
+            ])
+            : [0, 0];
         const evaluation = evaluateCoupon({
             coupon,
             subtotal: Math.max(0, subtotal - promoDiscount),
+            totalUsageCount,
+            customerUsageCount,
         });
         if (!evaluation.ok) {
             throw new ValidationError(describeCouponRejection(evaluation.reason));

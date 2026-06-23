@@ -1,5 +1,3 @@
-import type { BundleConfig } from './promotion';
-
 export interface PublicMenuOrganization {
   id: string;
   name: string;
@@ -17,10 +15,22 @@ export interface PublicMenuCategory {
   position: number;
 }
 
-export interface PublicMenuAdditional {
+export interface PublicMenuOption {
   id: string;
   name: string;
-  price: string;
+  additionalPrice: string;
+  imageUrl: string | null;
+  position: number;
+}
+
+export interface PublicMenuOptionGroup {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  minSelections: number;
+  maxSelections: number;
+  position: number;
+  options: PublicMenuOption[];
 }
 
 export interface PublicMenuItem {
@@ -29,14 +39,15 @@ export interface PublicMenuItem {
   name: string;
   description: string;
   price: string;
+  promotionalPrice: string | null;
   imageUrl: string | null;
   position: number;
-  additionals: PublicMenuAdditional[];
+  optionGroups: PublicMenuOptionGroup[];
 }
 
 export interface PublicMenuPromotion {
   id: string;
-  kind: 'NTH_ORDER_DISCOUNT' | 'DAILY_MESSAGE' | 'BUNDLE';
+  kind: 'NTH_ORDER_DISCOUNT' | 'DAILY_MESSAGE';
   name: string;
   message: string | null;
   featuredItemId: string | null;
@@ -47,7 +58,6 @@ export interface PublicMenuPromotion {
   teaserOrderOffset: number | null;
   teaserMessage: string | null;
   qualifyingMessage: string | null;
-  bundle: BundleConfig | null;
 }
 
 export type CustomerContextBannerKind = 'QUALIFYING' | 'TEASER';
@@ -83,16 +93,11 @@ export interface PublicMenuResponse {
   closedMessage: string | null;
 }
 
-export interface PublicCartBundlePick {
-  componentId: string;
-  itemId: string;
-  itemName: string;
-}
-
-export interface PublicCartAdditional {
-  id: string;
+export interface PublicCartSelectedOption {
+  groupId: string;
+  optionId: string;
   name: string;
-  price: string;
+  additionalPrice: string;
 }
 
 export interface PublicCartItem {
@@ -102,12 +107,7 @@ export interface PublicCartItem {
   price: string;
   qty: number;
   notes?: string | null;
-  additionals: PublicCartAdditional[];
-  bundle?: {
-    bundleId: string;
-    picks: PublicCartBundlePick[];
-    answers: Record<string, string>;
-  } | null;
+  selectedOptions: PublicCartSelectedOption[];
 }
 
 export type PublicPaymentMethod = 'MERCADOPAGO' | 'CASH';
@@ -118,12 +118,7 @@ export interface CreatePublicOrderPayload {
     itemId: string;
     qty: number;
     notes?: string | null;
-    additionals?: { id: string }[];
-    bundle?: {
-      bundleId: string;
-      picks: { componentId: string; itemId: string }[];
-      answers?: Record<string, string>;
-    } | null;
+    selections?: { groupId: string; optionIds: string[] }[];
   }>;
   observation?: string | null;
   address?: string | null;

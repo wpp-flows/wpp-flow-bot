@@ -65,7 +65,6 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
 
   const itemCount = order.items.reduce((sum, it) => sum + it.qty, 0);
   const itemPreview = buildItemPreview(order.items);
-  const hasBundle = order.items.some((it) => !!it.bundle);
   const hasDiscount = !!order.discount && Number.parseFloat(order.discount) > 0;
   const hasObservation = !!order.observation?.trim();
   const isCash = order.paymentProvider === 'CASH';
@@ -163,11 +162,6 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
             <Package className="h-3 w-3" />
             {itemCount} {itemCount === 1 ? 'item' : 'itens'}
           </span>
-          {hasBundle ? (
-            <Badge tone="primary" size="sm">
-              Combo
-            </Badge>
-          ) : null}
           {hasDiscount ? (
             <span
               className="inline-flex items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-2xs font-medium text-success"

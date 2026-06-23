@@ -9,11 +9,11 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function formatCurrency(value: number, currency = 'USD', locale = 'en-US') {
+export function formatCurrency(value: number, currency = 'BRL', locale = 'pt-BR') {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
 }
 
-export function formatRelativeTime(date: Date | string, locale = 'en-US') {
+export function formatRelativeTime(date: Date | string, locale = 'pt-BR') {
   const target = typeof date === 'string' ? new Date(date) : date;
   const diffSec = Math.round((target.getTime() - Date.now()) / 1000);
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
@@ -36,7 +36,7 @@ export function formatRelativeTime(date: Date | string, locale = 'en-US') {
   return rtf.format(diffSec, 'second');
 }
 
-export function formatDateTime(date: Date | string, locale = 'en-US') {
+export function formatDateTime(date: Date | string, locale = 'pt-BR') {
   const target = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
