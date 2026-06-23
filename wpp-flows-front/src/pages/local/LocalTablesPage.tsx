@@ -83,7 +83,7 @@ export function LocalTablesPage() {
         notes: values.notes?.trim() || null,
       }),
     onSuccess: () => {
-      toast.success("Conectacriada");
+      toast.success("Mesa criada");
       setCreating(false);
       form.reset({ label: "", seats: "", notes: "" });
       void qc.invalidateQueries({ queryKey: queryKeys.localTables.all });
@@ -176,12 +176,12 @@ export function LocalTablesPage() {
             htmlFor="new-table-label"
             error={form.formState.errors.label?.message}
             required
-            hint="Ex.: Conecta1, Varanda 3, Balcão."
+            hint="Ex.: Mesa1, Varanda 3, Balcão."
           >
             <Input
               id="new-table-label"
               autoFocus
-              placeholder="Conecta1"
+              placeholder="Mesa1"
               invalid={!!form.formState.errors.label}
               {...form.register("label")}
             />
@@ -305,7 +305,7 @@ function TableCard({
               </span>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">Conectalivre</p>
+            <p className="text-xs text-muted-foreground">Mesa livre</p>
           )}
         </div>
       </Card>

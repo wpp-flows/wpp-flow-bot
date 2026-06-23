@@ -49,7 +49,7 @@ export class CreateLocalOrderUseCase {
 
         const table = await this.tableRepo.findByToken(input.tableToken);
         if (!table || table.organizationId !== org.id) {
-            throw new NotFoundError("Conecta");
+            throw new NotFoundError("Mesa");
         }
 
         const hours = workingHoursFor(org, "LOCAL");
@@ -68,7 +68,7 @@ export class CreateLocalOrderUseCase {
         const typedName = input.customerName?.trim() || "";
         const customer = await this.customerRepo.upsert({
             organizationId: org.id,
-            name: typedName || `Conecta ${table.label}`,
+            name: typedName || `Mesa ${table.label}`,
             phone: typedName
                 ? `local:${table.id}:${slugifyName(typedName)}`
                 : `local:${table.id}`,

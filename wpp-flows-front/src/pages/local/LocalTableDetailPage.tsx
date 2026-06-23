@@ -112,7 +112,7 @@ export function LocalTableDetailPage() {
   const removeTable = useMutation({
     mutationFn: () => tableService.remove(id),
     onSuccess: () => {
-      toast.success("Conectaexcluída");
+      toast.success("Mesa excluída");
       setConfirmDelete(false);
       void qc.invalidateQueries({ queryKey: queryKeys.localTables.all });
       navigate(ROUTES.localTables, { replace: true });
@@ -158,7 +158,7 @@ export function LocalTableDetailPage() {
         description={
           table.seats
             ? `${table.seats} lugares${table.notes ? ` · ${table.notes}` : ""}`
-            : (table.notes ?? "Conectade salão")
+            : (table.notes ?? "Mesa de salão")
         }
         actions={
           <>
@@ -191,7 +191,7 @@ export function LocalTableDetailPage() {
           ) : orders.length === 0 ? (
             <EmptyState
               icon={<Receipt />}
-              title="Conectalivre"
+              title="Mesa livre"
               description="Quando o cliente fizer um pedido pelo QR, aparece aqui."
             />
           ) : (

@@ -40,7 +40,7 @@ export class CloseBillUseCase {
             input.organizationId,
             input.tableId,
         );
-        if (!table) throw new NotFoundError("Conecta");
+        if (!table) throw new NotFoundError("Mesa");
 
         const openOrders = await this.orders.listByOrg(input.organizationId, {
             tableId: input.tableId,
@@ -83,7 +83,7 @@ export class CloseBillUseCase {
                 status: "COMPLETED",
                 billId: bill.id,
                 serviceType: "LOCAL",
-                note: `Conecta ${table.label} · ${humanMethod(input.paymentMethod)}`,
+                note: `Mesa ${table.label} · ${humanMethod(input.paymentMethod)}`,
             });
         }
 

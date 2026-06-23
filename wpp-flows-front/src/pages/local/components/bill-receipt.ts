@@ -29,8 +29,8 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
     minute: "2-digit",
   });
 
-  const tableLabel = input.bill.tableLabel ?? input.table?.label ?? "Conecta";
-  const fallbackName = `Conecta${tableLabel}`;
+  const tableLabel = input.bill.tableLabel ?? input.table?.label ?? "Mesa";
+  const fallbackName = `Mesa${tableLabel}`;
 
   const ordersHtml = input.orders
     .sort((a, b) => a.sequence - b.sequence)

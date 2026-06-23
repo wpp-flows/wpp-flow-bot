@@ -25,7 +25,7 @@ export class GetTableUseCase {
         id: string;
     }): Promise<RestaurantTable> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
-        if (!t) throw new NotFoundError("Conecta");
+        if (!t) throw new NotFoundError("Mesa");
         return t;
     }
 }
@@ -40,7 +40,7 @@ export class CreateTableUseCase {
         position?: number;
     }): Promise<RestaurantTable> {
         const label = input.label.trim();
-        if (label.length < 1) throw new ValidationError("Informe um nome para a Conecta.");
+        if (label.length < 1) throw new ValidationError("Informe um nome para a Mesa.");
         if (label.length > 60) throw new ValidationError("Nome muito longo.");
         const created = await this.repo.create({
             organizationId: input.organizationId,
@@ -69,7 +69,7 @@ export class UpdateTableUseCase {
         position?: number;
     }): Promise<RestaurantTable> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
-        if (!t) throw new NotFoundError("Conecta");
+        if (!t) throw new NotFoundError("Mesa");
         const updated = await this.repo.update(input.id, {
             ...(input.label !== undefined ? { label: input.label.trim() } : {}),
             ...(input.position !== undefined ? { position: input.position } : {}),
@@ -93,7 +93,7 @@ export class RegenerateQrTokenUseCase {
         id: string;
     }): Promise<RestaurantTable> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
-        if (!t) throw new NotFoundError("Conecta");
+        if (!t) throw new NotFoundError("Mesa");
         const updated = await this.repo.update(input.id, { qrToken: newQrToken() });
         orgEventBus.emit(input.organizationId, {
             kind: "table.updated",
@@ -110,7 +110,7 @@ export class DeleteTableUseCase {
     ) {}
     async execute(input: { organizationId: string; id: string }): Promise<void> {
         const t = await this.repo.findByIdInOrg(input.organizationId, input.id);
-        if (!t) throw new NotFoundError("Conecta");
+        if (!t) throw new NotFoundError("Mesa");
 
         const open = await this.orderRepo.listByOrg(input.organizationId, {
             tableId: input.id,
@@ -118,7 +118,7 @@ export class DeleteTableUseCase {
         });
         if (open.length > 0) {
             throw new ValidationError(
-                "Não é possível excluir uma Conecta com pedidos abertos. Feche a conta primeiro.",
+                "Não é possível excluir uma Mesa com pedidos abertos. Feche a conta primeiro.",
             );
         }
         await this.repo.delete(input.id);
@@ -133,7 +133,7 @@ export class RequestBillUseCase {
     constructor(private readonly repo: TableRepository) {}
     async execute(token: string): Promise<RestaurantTable> {
         const t = await this.repo.findByToken(token);
-        if (!t) throw new NotFoundError("Conecta");
+        if (!t) throw new NotFoundError("Mesa");
         if (t.billRequestedAt) return t;
         const updated = await this.repo.update(t.id, {
             billRequestedAt: new Date(),
