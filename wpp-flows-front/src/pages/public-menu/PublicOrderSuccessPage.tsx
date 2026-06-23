@@ -136,7 +136,7 @@ function PaidCard({
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold tracking-tight">Pagamento confirmado!</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Pedido em preparo!</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Pedido {orderNumber} — total {formatBrl(order.total)}
           </p>
@@ -144,8 +144,7 @@ function PaidCard({
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Toque no botão abaixo para abrir o WhatsApp. O restaurante já recebeu
-        seu pedido e logo confirma por lá.
+        Seu pedido foi confirmado pelo restaurante!
       </p>
 
       <div className="mt-5">
@@ -260,8 +259,7 @@ function CardPixOnDeliveryCard({
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Já avisamos o restaurante. Toque abaixo para abrir o WhatsApp e
-        acompanhar.
+        Já avisamos o restaurante, você será notificado via WhatsApp
       </p>
 
       <div className="mt-5">
