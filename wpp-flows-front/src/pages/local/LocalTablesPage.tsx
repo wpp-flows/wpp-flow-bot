@@ -176,12 +176,12 @@ export function LocalTablesPage() {
             htmlFor="new-table-label"
             error={form.formState.errors.label?.message}
             required
-            hint="Ex.: Mesa1, Varanda 3, Balcão."
+            hint="Ex.: Mesa 1, Varanda 3, Balcão."
           >
             <Input
               id="new-table-label"
               autoFocus
-              placeholder="Mesa1"
+              placeholder="Mesa 1"
               invalid={!!form.formState.errors.label}
               {...form.register("label")}
             />

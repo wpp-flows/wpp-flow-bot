@@ -40,7 +40,7 @@ export class CreateTableUseCase {
         position?: number;
     }): Promise<RestaurantTable> {
         const label = input.label.trim();
-        if (label.length < 1) throw new ValidationError("Informe um nome para a Mesa.");
+        if (label.length < 1) throw new ValidationError("Informe um nome para a mesa.");
         if (label.length > 60) throw new ValidationError("Nome muito longo.");
         const created = await this.repo.create({
             organizationId: input.organizationId,
@@ -118,7 +118,7 @@ export class DeleteTableUseCase {
         });
         if (open.length > 0) {
             throw new ValidationError(
-                "Não é possível excluir uma Mesa com pedidos abertos. Feche a conta primeiro.",
+                "Não é possível excluir uma mesa com pedidos abertos. Feche a conta primeiro.",
             );
         }
         await this.repo.delete(input.id);

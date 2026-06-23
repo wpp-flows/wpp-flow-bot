@@ -30,7 +30,7 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
   });
 
   const tableLabel = input.bill.tableLabel ?? input.table?.label ?? "Mesa";
-  const fallbackName = `Mesa${tableLabel}`;
+  const fallbackName = `Mesa ${tableLabel}`;
 
   const ordersHtml = input.orders
     .sort((a, b) => a.sequence - b.sequence)

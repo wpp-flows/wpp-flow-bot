@@ -146,7 +146,7 @@ export function LocalOrdersPage() {
           selected
             ? `Pedido ${orderNumber(selected.sequence)}${
                 selected.tableId
-                  ? ` · ${tableLabelById.get(selected.tableId) ?? "Conecta"}`
+                  ? ` · ${tableLabelById.get(selected.tableId) ?? "Mesa"}`
                   : ""
               }`
             : "Pedido"
