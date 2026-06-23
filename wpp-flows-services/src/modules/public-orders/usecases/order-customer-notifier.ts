@@ -1,4 +1,5 @@
 import { evolutionApi } from "@/infrastructure/evolution/client";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
 import type {
     ConversationRepository,
@@ -55,6 +56,12 @@ export class OrderCustomerNotifier {
             await this.conversationRepo.update(conversation.id, {
                 lastMessagePreview: text.slice(0, 100),
                 lastMessageAt: new Date(),
+            });
+            
+            orgEventBus.emit(organizationId, {
+                kind: "chat.message",
+                conversationId: conversation.id,
+                direction: "OUT",
             });
             return true;
         } catch (err) {

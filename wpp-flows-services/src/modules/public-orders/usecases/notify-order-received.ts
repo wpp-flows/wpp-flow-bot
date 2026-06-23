@@ -1,0 +1,39 @@
+import type { CustomerRepository } from "@/modules/customer/repositories/customer-repo";
+import type { Order } from "@/modules/order/repositories/order-repo";
+import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
+import { renderOrderTemplate } from "@/modules/organization/order-template";
+import type { OrderCustomerNotifier } from "./order-customer-notifier";
+
+const DEFAULT_RECEIVED_MESSAGE = [
+    "✅ Pedido {{order_number}} recebido!",
+    "Estamos preparando tudo por aqui. Você paga na entrega 💵",
+    "Qualquer dúvida, é só responder por aqui 🙌",
+].join("\n\n");
+
+export class NotifyOrderReceivedUseCase {
+    constructor(
+        private readonly orgRepo: OrganizationRepository,
+        private readonly customerRepo: CustomerRepository,
+        private readonly notifier: OrderCustomerNotifier,
+    ) { }
+
+    async execute(order: Order): Promise<void> {
+        const [org, customer] = await Promise.all([
+            this.orgRepo.findById(order.organizationId),
+            this.customerRepo.findByIdInOrg(order.organizationId, order.customerId),
+        ]);
+        if (!org || !customer) return;
+
+        const text = renderOrderTemplate(DEFAULT_RECEIVED_MESSAGE, {
+            organization: org,
+            order,
+            customer,
+        });
+        await this.notifier.notify({
+            organizationId: org.id,
+            phone: customer.phone,
+            contactName: customer.name,
+            text,
+        });
+    }
+}

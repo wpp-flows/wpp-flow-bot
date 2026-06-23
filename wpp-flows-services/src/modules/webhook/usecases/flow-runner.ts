@@ -15,6 +15,7 @@ import type {
     FlowWithSteps,
 } from "@/modules/flow/repositories/flow-repo";
 import { evolutionApi } from "@/infrastructure/evolution/client";
+import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
 import {
     buildOutOfHoursMessage,
@@ -255,6 +256,11 @@ export class FlowRunner {
                 lastMessageAt: now,
                 lastBotReplyAt: now,
             });
+            orgEventBus.emit(bot.organizationId, {
+                kind: "chat.message",
+                conversationId: conversation.id,
+                direction: "OUT",
+            });
         } catch (err) {
             console.warn("Failed to send out-of-hours message:", err);
         }
@@ -305,6 +311,12 @@ export class FlowRunner {
                 lastMessagePreview: sent.preview.slice(0, 100),
                 lastMessageAt: message.createdAt,
                 lastBotReplyAt: message.createdAt,
+            });
+
+            orgEventBus.emit(bot.organizationId, {
+                kind: "chat.message",
+                conversationId: conversation.id,
+                direction: "OUT",
             });
 
             return true;

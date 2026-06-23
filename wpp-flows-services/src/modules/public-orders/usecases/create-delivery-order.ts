@@ -20,6 +20,7 @@ import type { CreatePaymentLinkUseCase } from "@/modules/payment/usecases/mercad
 import type { PromotionRepository } from "@/modules/promotion/repositories/promotion-repo";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
+import type { NotifyOrderReceivedUseCase } from "./notify-order-received";
 import {
     computePricing,
     orderNumberOf,
@@ -58,6 +59,7 @@ export class CreateDeliveryOrderUseCase {
         private readonly createOrderFromCart: CreateOrderFromCartUseCase,
         private readonly createPaymentLink: CreatePaymentLinkUseCase,
         private readonly notificationEmitter: NotificationEmitter,
+        private readonly notifyOrderReceived: NotifyOrderReceivedUseCase,
     ) { }
 
     async execute(input: CreateDeliveryOrderInput): Promise<PublicOrderResult> {
@@ -151,6 +153,12 @@ export class CreateDeliveryOrderUseCase {
         let paymentLink: string;
         if (isOnDelivery) {
             paymentLink = `${cleanBase()}/r/${input.slug}/pedido/${order.id}`;
+            void this.notifyOrderReceived.execute(order).catch((err) => {
+                console.warn(
+                    `notifyOrderReceived failed for cash order ${order.id}:`,
+                    err,
+                );
+            });
         } else {
             const link = await this.createPaymentLink.execute({
                 organizationId: org.id,

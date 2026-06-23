@@ -24,20 +24,22 @@ export class FlowStepSender {
 
     /**
      * Fires the "digitando…" presence and waits {@link TYPING_DELAY_MS} so the
-     * customer actually sees the indicator before the message lands.
-     * Best-effort — failures don't abort delivery.
+     * customer actually sees the indicator before the message lands. The
+     * presence call is fire-and-forget — awaiting it serialized two round-trips
+     * (presence + sendText) and noticeably delayed the first reply after the
+     * Evolution instance came online.
      */
     async indicateTyping(instanceName: string, phoneNumber: string): Promise<void> {
-        try {
-            await evolutionApi.sendPresence({
+        void evolutionApi
+            .sendPresence({
                 instanceName,
                 number: phoneNumber,
                 presence: "composing",
                 delayMs: TYPING_DELAY_MS,
+            })
+            .catch((err) => {
+                console.warn("sendPresence failed (best-effort):", err);
             });
-        } catch (err) {
-            console.warn("sendPresence failed (best-effort):", err);
-        }
         await new Promise<void>((resolve) => setTimeout(resolve, TYPING_DELAY_MS));
     }
 

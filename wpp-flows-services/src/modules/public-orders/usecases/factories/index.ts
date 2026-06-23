@@ -15,6 +15,7 @@ import { CancelPublicOrderUseCase } from "../cancel-public-order";
 import { CreateDeliveryOrderUseCase } from "../create-delivery-order";
 import { CreateLocalOrderUseCase } from "../create-local-order";
 import { GetCustomerContextUseCase } from "../get-customer-context";
+import { NotifyOrderReceivedUseCase } from "../notify-order-received";
 import { NotifyPaymentConfirmedUseCase } from "../notify-payment-confirmed";
 import { OrderCustomerNotifier } from "../order-customer-notifier";
 import { PaymentTimeoutHandler } from "../payment-timeout-handler";
@@ -28,6 +29,12 @@ const customerNotifier = new OrderCustomerNotifier(
 
 const createOrderFromCart = new CreateOrderFromCartUseCase(orderRepo, customerRepo);
 
+const notifyOrderReceived = new NotifyOrderReceivedUseCase(
+    organizationRepo,
+    customerRepo,
+    customerNotifier,
+);
+
 export const createDeliveryOrder = new CreateDeliveryOrderUseCase(
     organizationRepo,
     botRepo,
@@ -40,6 +47,7 @@ export const createDeliveryOrder = new CreateDeliveryOrderUseCase(
     createOrderFromCart,
     createPaymentLink,
     notificationEmitter,
+    notifyOrderReceived,
 );
 
 export const createLocalOrder = new CreateLocalOrderUseCase(

@@ -1,5 +1,6 @@
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import { orgEventBus } from "@/infrastructure/events/event-bus";
+import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import type {
     DeliveryMode,
     Order,
@@ -79,7 +80,21 @@ export class UpdateOrderStatusUseCase {
                 `Transição de ${order.status} para ${input.status} não é permitida.`,
             );
         }
-        const updated = await this.repo.updateStatus(input.id, input.status);
+        let updated = await this.repo.updateStatus(input.id, input.status);
+
+        // Cancellation winds down any payment-side waiting: drop the pending
+        // timeout (otherwise the timeout handler would still fire and try to
+        // cancel an already-cancelled order) and flip a still-PENDING payment
+        // to FAILED so the order shows up as unpaid in reports.
+        if (input.status === "CANCELED") {
+            await paymentTimeoutScheduler.clear(order.id);
+            if (order.paymentStatus === "PENDING") {
+                updated = await this.repo.updatePayment(input.id, {
+                    paymentStatus: "FAILED",
+                });
+            }
+        }
+
         orgEventBus.emit(input.organizationId, {
             kind: "order.updated",
             orderId: updated.id,

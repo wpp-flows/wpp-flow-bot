@@ -9,10 +9,12 @@ export const MAX_AUTO_CHAIN = 10;
 
 /**
  * How long the "digitando…" indicator stays up before the actual message goes
- * out. Long enough to feel human, short enough not to annoy. The same delay is
- * passed to Evolution so the platform releases the presence cleanly.
+ * out. Tuned for low latency on the first reply (a longer pause makes the
+ * cold-start of the Evolution session feel noticeably slow). Still enough for
+ * the indicator to show before the message lands. The same delay is passed to
+ * Evolution so the platform releases the presence cleanly.
  */
-export const TYPING_DELAY_MS = 1500;
+export const TYPING_DELAY_MS = 600;
 
 export interface SendResult {
     evolutionResp: EvolutionSendTextResponse;
