@@ -1,37 +1,38 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Bell, Plus, Receipt, Table as TableIcon } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { FormField } from '@/components/ui/FormField';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { Textarea } from '@/components/ui/Textarea';
-import { ROUTES } from '@/constants/app';
-import { queryKeys } from '@/lib/queryClient';
-import { tableService } from '@/services/tableService';
-import { orderService } from '@/services/orderService';
-import { toast } from '@/stores/uiStore';
-import { cn } from '@/lib/utils';
-import { ApiError } from '@/instances/api';
-import type { Order, RestaurantTable } from '@/types';
-import { formatBRL } from '@/helpers/order-helpers';
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Bell, Plus, Receipt, Table as TableIcon } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Textarea } from "@/components/ui/Textarea";
+import { ROUTES } from "@/constants/app";
+import { queryKeys } from "@/lib/queryClient";
+import { tableService } from "@/services/tableService";
+import { orderService } from "@/services/orderService";
+import { toast } from "@/stores/uiStore";
+import { cn } from "@/lib/utils";
+import { ApiError } from "@/instances/api";
+import type { Order, RestaurantTable } from "@/types";
+import { formatBRL } from "@/helpers/order-helpers";
 
 const newTableSchema = z.object({
-  label: z.string().trim().min(1, 'Informe o nome da mesa.').max(60),
+  label: z.string().trim().min(1, "Informe o nome da mesa.").max(60),
   seats: z
     .string()
     .optional()
     .refine(
-      (v) => !v || (!Number.isNaN(Number(v)) && Number(v) > 0 && Number(v) <= 99),
-      'Entre 1 e 99.',
+      (v) =>
+        !v || (!Number.isNaN(Number(v)) && Number(v) > 0 && Number(v) <= 99),
+      "Entre 1 e 99.",
     ),
   notes: z.string().max(280).optional(),
 });
@@ -50,7 +51,7 @@ export function LocalTablesPage() {
   const ordersQ = useQuery({
     queryKey: queryKeys.localOrders.all,
     queryFn: () =>
-      orderService.list({ serviceType: 'LOCAL', unbilledOnly: true }),
+      orderService.list({ serviceType: "LOCAL", unbilledOnly: true }),
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
@@ -61,10 +62,10 @@ export function LocalTablesPage() {
   const totalsByTable = useMemo(() => {
     const m = new Map<string, { count: number; revenue: number }>();
     for (const o of orders) {
-      if (!o.tableId || o.status === 'CANCELED') continue;
+      if (!o.tableId || o.status === "CANCELED") continue;
       const cur = m.get(o.tableId) ?? { count: 0, revenue: 0 };
       cur.count += 1;
-      cur.revenue += Number.parseFloat(o.total || '0');
+      cur.revenue += Number.parseFloat(o.total || "0");
       m.set(o.tableId, cur);
     }
     return m;
@@ -72,7 +73,7 @@ export function LocalTablesPage() {
 
   const form = useForm<NewTableForm>({
     resolver: zodResolver(newTableSchema),
-    defaultValues: { label: '', seats: '', notes: '' },
+    defaultValues: { label: "", seats: "", notes: "" },
   });
   const createTable = useMutation({
     mutationFn: (values: NewTableForm) =>
@@ -82,13 +83,15 @@ export function LocalTablesPage() {
         notes: values.notes?.trim() || null,
       }),
     onSuccess: () => {
-      toast.success('Mesa criada');
+      toast.success("Mesa criada");
       setCreating(false);
-      form.reset({ label: '', seats: '', notes: '' });
+      form.reset({ label: "", seats: "", notes: "" });
       void qc.invalidateQueries({ queryKey: queryKeys.localTables.all });
     },
     onError: (err) =>
-      toast.error(err instanceof ApiError ? err.message : 'Falha ao criar mesa'),
+      toast.error(
+        err instanceof ApiError ? err.message : "Falha ao criar mesa",
+      ),
   });
 
   return (
@@ -103,10 +106,10 @@ export function LocalTablesPage() {
             </p>
             <p className="text-muted-foreground">
               Cadastre uma mesa, imprima o QR e cole na mesa. O cliente
-              escaneia, escolhe os itens e o pedido cai direto no kanban
-              de Salão → Pedidos. Quando o cliente acabar, clique em{' '}
-              <strong>Fechar conta</strong> na mesa para gerar o recibo
-              e creditar a carteira do salão.
+              escaneia, escolhe os itens e o pedido cai direto no kanban de
+              Salão → Pedidos. Quando o cliente acabar, clique em{" "}
+              <strong>Fechar conta</strong> na mesa para gerar o recibo e
+              creditar a carteira do salão.
             </p>
           </div>
         }
@@ -180,7 +183,7 @@ export function LocalTablesPage() {
               autoFocus
               placeholder="Mesa 1"
               invalid={!!form.formState.errors.label}
-              {...form.register('label')}
+              {...form.register("label")}
             />
           </FormField>
           <FormField
@@ -196,7 +199,7 @@ export function LocalTablesPage() {
               max={99}
               placeholder="4"
               invalid={!!form.formState.errors.seats}
-              {...form.register('seats')}
+              {...form.register("seats")}
             />
           </FormField>
           <FormField label="Observações (opcional)" htmlFor="new-table-notes">
@@ -204,7 +207,7 @@ export function LocalTablesPage() {
               id="new-table-notes"
               rows={2}
               placeholder="Aniversário do João, mesa do canto…"
-              {...form.register('notes')}
+              {...form.register("notes")}
             />
           </FormField>
         </form>
@@ -219,7 +222,11 @@ interface TableCardProps {
   ordersForTable: Order[];
 }
 
-function TableCard({ table, totals, ordersForTable }: Readonly<TableCardProps>) {
+function TableCard({
+  table,
+  totals,
+  ordersForTable,
+}: Readonly<TableCardProps>) {
   const oldest = useMemo(() => {
     if (ordersForTable.length === 0) return null;
     const t = ordersForTable.reduce((min, o) => {
@@ -229,15 +236,17 @@ function TableCard({ table, totals, ordersForTable }: Readonly<TableCardProps>) 
     return t;
   }, [ordersForTable]);
 
-  const minutesElapsed = oldest ? Math.floor((Date.now() - oldest) / 60_000) : 0;
+  const minutesElapsed = oldest
+    ? Math.floor((Date.now() - oldest) / 60_000)
+    : 0;
   const dotTone =
-    table.status === 'EMPTY'
-      ? 'bg-zinc-300 dark:bg-zinc-600'
+    table.status === "EMPTY"
+      ? "bg-zinc-300 dark:bg-zinc-600"
       : minutesElapsed < 30
-        ? 'bg-emerald-500'
+        ? "bg-emerald-500"
         : minutesElapsed < 60
-          ? 'bg-amber-500'
-          : 'bg-rose-500';
+          ? "bg-amber-500"
+          : "bg-rose-500";
 
   const occupiedFor = oldest
     ? minutesElapsed < 60
@@ -245,19 +254,23 @@ function TableCard({ table, totals, ordersForTable }: Readonly<TableCardProps>) 
       : `${Math.floor(minutesElapsed / 60)}h ${minutesElapsed % 60}min`
     : null;
 
-  const billRequested = table.status === 'BILL_REQUESTED' || !!table.billRequestedAt;
+  const billRequested =
+    table.status === "BILL_REQUESTED" || !!table.billRequestedAt;
 
   return (
     <Link to={ROUTES.localTableDetail(table.id)} className="block">
       <Card
         className={cn(
-          'flex h-full flex-col gap-3 p-4 transition-shadow hover:shadow-soft-md',
-          billRequested && 'ring-2 ring-amber-400 animate-pulse-soft',
+          "flex h-full flex-col gap-3 p-4 transition-shadow hover:shadow-soft-md",
+          billRequested && "ring-2 ring-amber-400 animate-pulse-soft",
         )}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className={cn('h-2.5 w-2.5 rounded-full', dotTone)} aria-hidden />
+            <span
+              className={cn("h-2.5 w-2.5 rounded-full", dotTone)}
+              aria-hidden
+            />
             <h3 className="text-base font-semibold tracking-tight">
               {table.label}
             </h3>
@@ -284,7 +297,7 @@ function TableCard({ table, totals, ordersForTable }: Readonly<TableCardProps>) 
             <div className="flex items-baseline justify-between">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Receipt className="h-3 w-3" />
-                {totals.count} pedido{totals.count === 1 ? '' : 's'}
+                {totals.count} pedido{totals.count === 1 ? "" : "s"}
                 {occupiedFor ? <span>· há {occupiedFor}</span> : null}
               </div>
               <span className="font-mono text-sm font-semibold">

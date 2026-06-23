@@ -3,8 +3,8 @@ import type {
   Order,
   RestaurantTable,
   TableBill,
-} from '@/types';
-import { formatBRL, orderNumber } from '../../../helpers/order-helpers';
+} from "@/types";
+import { formatBRL, orderNumber } from "../../../helpers/order-helpers";
 
 interface BillReceiptInput {
   restaurantName: string;
@@ -14,42 +14,42 @@ interface BillReceiptInput {
 }
 
 const METHOD_LABEL: Record<LocalPaymentMethod, string> = {
-  CASH: 'Dinheiro',
-  CARD: 'Cartão',
-  PIX: 'Pix',
-  OTHER: 'Outro',
+  CASH: "Dinheiro",
+  CARD: "Cartão",
+  PIX: "Pix",
+  OTHER: "Outro",
 };
 
 export function buildBillReceiptHtml(input: BillReceiptInput): string {
-  const closedAt = new Date(input.bill.closedAt).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  const closedAt = new Date(input.bill.closedAt).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  const tableLabel = input.bill.tableLabel ?? input.table?.label ?? 'Mesa';
+  const tableLabel = input.bill.tableLabel ?? input.table?.label ?? "Mesa";
   const fallbackName = `Mesa ${tableLabel}`;
 
   const ordersHtml = input.orders
     .sort((a, b) => a.sequence - b.sequence)
     .map((order) => {
-      const time = new Date(order.createdAt).toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
+      const time = new Date(order.createdAt).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
       });
       const items = order.items
         .map((it) => {
-          const lineTotal = Number.parseFloat(it.price || '0') * it.qty;
+          const lineTotal = Number.parseFloat(it.price || "0") * it.qty;
           return `<div class="row"><span>${it.qty}× ${escapeHtml(it.name)}</span><span>${formatBRL(lineTotal)}</span></div>`;
         })
-        .join('');
+        .join("");
       const diner = order.customerName?.trim();
       const dinerHtml =
         diner && diner !== fallbackName
           ? `<div class="row muted"><span>Cliente</span><span>${escapeHtml(diner)}</span></div>`
-          : '';
+          : "";
       return `
         <section class="order">
           <div class="row strong">
@@ -62,7 +62,7 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
         </section>
       `;
     })
-    .join('');
+    .join("");
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -101,7 +101,7 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
     <section class="section">
       <div class="row grand"><span>Total</span><span>${formatBRL(input.bill.total)}</span></div>
       <div class="row"><span>Forma de pagamento</span><span>${escapeHtml(METHOD_LABEL[input.bill.paymentMethod])}</span></div>
-      ${input.bill.notes ? `<p class="muted">${escapeHtml(input.bill.notes)}</p>` : ''}
+      ${input.bill.notes ? `<p class="muted">${escapeHtml(input.bill.notes)}</p>` : ""}
     </section>
 
     <p class="muted center" style="margin-top:12px;">Obrigado pela visita!</p>
@@ -112,9 +112,9 @@ export function buildBillReceiptHtml(input: BillReceiptInput): string {
 
 function escapeHtml(s: string): string {
   return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

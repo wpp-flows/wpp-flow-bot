@@ -1,4 +1,4 @@
-# Mesa — WhatsApp Chatbots for Restaurants
+# Conecta— WhatsApp Chatbots for Restaurants
 
 A production-quality SaaS frontend for managing WhatsApp restaurant chatbots
 powered by the Evolution API. Built with **Vite + React + TypeScript**.
@@ -11,17 +11,17 @@ powered by the Evolution API. Built with **Vite + React + TypeScript**.
 
 ## Stack
 
-| Concern             | Tool                              |
-| ------------------- | --------------------------------- |
-| Build / dev         | Vite 5                            |
-| Framework           | React 18 + TypeScript (strict)    |
-| Routing             | React Router 6 (lazy routes)      |
-| Server state        | TanStack Query 5                  |
-| Client state        | Zustand 5 (+ persist middleware)  |
-| Forms               | React Hook Form 7                 |
-| Validation          | Zod 3                             |
-| Styling             | Tailwind CSS 3 (dark mode: class) |
-| Icons               | Lucide React                      |
+| Concern      | Tool                              |
+| ------------ | --------------------------------- |
+| Build / dev  | Vite 5                            |
+| Framework    | React 18 + TypeScript (strict)    |
+| Routing      | React Router 6 (lazy routes)      |
+| Server state | TanStack Query 5                  |
+| Client state | Zustand 5 (+ persist middleware)  |
+| Forms        | React Hook Form 7                 |
+| Validation   | Zod 3                             |
+| Styling      | Tailwind CSS 3 (dark mode: class) |
+| Icons        | Lucide React                      |
 
 ## Scripts
 
@@ -103,14 +103,14 @@ async/await ready.
 
 Services exposed:
 
-| Service              | Mock-replaceable methods                                                        |
-| -------------------- | ------------------------------------------------------------------------------- |
-| `authService`        | `login`, `logout`, `me`                                                         |
-| `botService`         | `list`, `getById`, `create`, `update`, `remove`, `connect`, `disconnect`        |
-| `menuService`        | `listCategories`, `listItems`, `createCategory`, `updateCategory`, `removeCategory`, `reorderCategories`, `createItem`, `updateItem`, `removeItem` |
-| `flowService`        | `list`, `getById`, `create`, `update`, `remove`, `saveSteps`                    |
-| `chatService`        | `list`, `getById`, `listMessages`, `sendMessage`, `updateStatus`                |
-| `dashboardService`   | `getStats`                                                                      |
+| Service            | Mock-replaceable methods                                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authService`      | `login`, `logout`, `me`                                                                                                                            |
+| `botService`       | `list`, `getById`, `create`, `update`, `remove`, `connect`, `disconnect`                                                                           |
+| `menuService`      | `listCategories`, `listItems`, `createCategory`, `updateCategory`, `removeCategory`, `reorderCategories`, `createItem`, `updateItem`, `removeItem` |
+| `flowService`      | `list`, `getById`, `create`, `update`, `remove`, `saveSteps`                                                                                       |
+| `chatService`      | `list`, `getById`, `listMessages`, `sendMessage`, `updateStatus`                                                                                   |
+| `dashboardService` | `getStats`                                                                                                                                         |
 
 ### State
 
@@ -159,17 +159,17 @@ CSS custom properties drive every color, with a parallel dark-mode set under
 `.dark`. Tailwind reads them through HSL channel variables so any component
 can express e.g. `bg-primary/10` and stay theme-correct in both modes.
 
-| Token           | Light                  | Dark                  | Use                        |
-| --------------- | ---------------------- | --------------------- | -------------------------- |
-| `--primary`     | hsl(152 60% 36%) green | hsl(152 56% 48%)      | Brand accent, all CTAs     |
-| `--background`  | hsl(0 0% 100%)         | hsl(224 14% 6%)       | Page canvas                |
-| `--card`        | hsl(0 0% 100%)         | hsl(224 14% 8%)       | Surfaces                   |
-| `--muted`       | hsl(220 14% 96%)       | hsl(224 12% 14%)      | Subtle surfaces            |
-| `--border`      | hsl(220 13% 91%)       | hsl(224 12% 16%)      | Hairlines                  |
-| `--success`     | hsl(152 60% 36%)       | hsl(152 56% 48%)      | Online status, confirms    |
-| `--warning`     | hsl(38 92% 50%)        | hsl(38 92% 58%)       | Connecting, hidden items   |
-| `--destructive` | hsl(358 75% 55%)       | hsl(358 75% 60%)      | Errors, deletes            |
-| `--info`        | hsl(212 96% 52%)       | hsl(212 96% 58%)      | Informational badges       |
+| Token           | Light                  | Dark             | Use                      |
+| --------------- | ---------------------- | ---------------- | ------------------------ |
+| `--primary`     | hsl(152 60% 36%) green | hsl(152 56% 48%) | Brand accent, all CTAs   |
+| `--background`  | hsl(0 0% 100%)         | hsl(224 14% 6%)  | Page canvas              |
+| `--card`        | hsl(0 0% 100%)         | hsl(224 14% 8%)  | Surfaces                 |
+| `--muted`       | hsl(220 14% 96%)       | hsl(224 12% 14%) | Subtle surfaces          |
+| `--border`      | hsl(220 13% 91%)       | hsl(224 12% 16%) | Hairlines                |
+| `--success`     | hsl(152 60% 36%)       | hsl(152 56% 48%) | Online status, confirms  |
+| `--warning`     | hsl(38 92% 50%)        | hsl(38 92% 58%)  | Connecting, hidden items |
+| `--destructive` | hsl(358 75% 55%)       | hsl(358 75% 60%) | Errors, deletes          |
+| `--info`        | hsl(212 96% 52%)       | hsl(212 96% 58%) | Informational badges     |
 
 Plus `*-soft` variants (10% tinted backgrounds for badges) and
 `*-foreground` (text-on-color).
@@ -309,7 +309,7 @@ both success and failure.
    stateless and trivially mockable in tests.
 2. **localStorage as the mock backend.** Mock services persist through a
    tiny `storage` helper. Reorder a category, refresh, it stays. This makes
-   the demo feel real *and* keeps the seed predictable on first load.
+   the demo feel real _and_ keeps the seed predictable on first load.
 3. **TanStack Query owns server state.** No useEffect+useState dance for
    loading/error states; everything is `useQuery`/`useMutation` with central
    `queryKeys`.

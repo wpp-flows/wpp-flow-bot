@@ -1,19 +1,19 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { orderService } from '@/services/orderService';
-import { tableService } from '@/services/tableService';
-import { useAuth } from '@/hooks/useAuth';
-import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
-import { toast } from '@/stores/uiStore';
-import type { OrderStatus } from '@/types';
-import { OrderDetail } from '../orders/components/OrderDetail';
-import { OrderKanban } from '../orders/components/OrderKanban';
-import { orderNumber } from '@/helpers/order-helpers';
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { orderService } from "@/services/orderService";
+import { tableService } from "@/services/tableService";
+import { useAuth } from "@/hooks/useAuth";
+import { invalidateQueriesByFilters, queryKeys } from "@/lib/queryClient";
+import { toast } from "@/stores/uiStore";
+import type { OrderStatus } from "@/types";
+import { OrderDetail } from "../orders/components/OrderDetail";
+import { OrderKanban } from "../orders/components/OrderKanban";
+import { orderNumber } from "@/helpers/order-helpers";
 
 /**
  * Mirror of the delivery /orders page, scoped to LOCAL serviceType +
@@ -28,7 +28,7 @@ import { orderNumber } from '@/helpers/order-helpers';
 export function LocalOrdersPage() {
   const qc = useQueryClient();
   const { organization } = useAuth();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -37,7 +37,7 @@ export function LocalOrdersPage() {
   const ordersQ = useQuery({
     queryKey: queryKeys.localOrders.all,
     queryFn: () =>
-      orderService.list({ serviceType: 'LOCAL', unbilledOnly: true }),
+      orderService.list({ serviceType: "LOCAL", unbilledOnly: true }),
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
@@ -79,10 +79,12 @@ export function LocalOrdersPage() {
         { queryKey: queryKeys.orders.all },
         { queryKey: queryKeys.reports.daily },
       ]);
-      toast.success('Status atualizado');
+      toast.success("Status atualizado");
     },
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status'),
+      toast.error(
+        err instanceof Error ? err.message : "Falha ao atualizar status",
+      ),
   });
 
   const selected = useMemo(
@@ -102,9 +104,9 @@ export function LocalOrdersPage() {
               Apenas pedidos do salão, abertos.
             </p>
             <p className="text-muted-foreground">
-              Pedidos com a conta fechada saem deste quadro e ficam no{' '}
-              <strong>Carteira → Relatórios diários</strong>. A mesa volta a
-              ser <em>livre</em> assim que a conta é fechada.
+              Pedidos com a conta fechada saem deste quadro e ficam no{" "}
+              <strong>Carteira → Relatórios diários</strong>. A mesa volta a ser{" "}
+              <em>livre</em> assim que a conta é fechada.
             </p>
           </div>
         }
@@ -144,17 +146,17 @@ export function LocalOrdersPage() {
           selected
             ? `Pedido ${orderNumber(selected.sequence)}${
                 selected.tableId
-                  ? ` · ${tableLabelById.get(selected.tableId) ?? 'Mesa'}`
-                  : ''
+                  ? ` · ${tableLabelById.get(selected.tableId) ?? "Mesa"}`
+                  : ""
               }`
-            : 'Pedido'
+            : "Pedido"
         }
         size="xl"
       >
         {selected ? (
           <OrderDetail
             order={selected}
-            restaurantName={organization?.name ?? 'Restaurante'}
+            restaurantName={organization?.name ?? "Restaurante"}
             onAdvance={(status) => {
               advanceStatus.mutate(
                 { id: selected.id, status },

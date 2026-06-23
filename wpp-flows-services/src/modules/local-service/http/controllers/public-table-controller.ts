@@ -13,7 +13,7 @@ export class PublicTableController {
     async resolve(request: FastifyRequest, reply: FastifyReply) {
         const { token } = request.params as { token: string };
         const table = await tableRepo.findByToken(token);
-        if (!table) throw new NotFoundError("Mesa");
+        if (!table) throw new NotFoundError("Conecta");
         const org = await organizationRepo.findById(table.organizationId);
         if (!org) throw new NotFoundError("Restaurante");
         return reply.send({
@@ -40,7 +40,7 @@ export class PublicTableController {
     async listOrders(request: FastifyRequest, reply: FastifyReply) {
         const { token } = request.params as { token: string };
         const table = await tableRepo.findByToken(token);
-        if (!table) throw new NotFoundError("Mesa");
+        if (!table) throw new NotFoundError("Conecta");
 
         const orders = await orderRepo.listByOrg(table.organizationId, {
             serviceType: "LOCAL",
