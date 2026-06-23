@@ -28,7 +28,7 @@ import {
     type PublicOrderResult,
 } from "./shared";
 
-export type DeliveryPaymentMethod = "MERCADOPAGO" | "CASH";
+export type DeliveryPaymentMethod = "MERCADOPAGO" | "CASH" | "DELIVERY_CARD_PIX";
 
 export interface CreateDeliveryOrderInput {
     slug: string;
@@ -102,7 +102,8 @@ export class CreateDeliveryOrderUseCase {
         const deliveryMode: DeliveryMode = input.deliveryMode ?? "DELIVERY";
         const deliveryFee = deliveryMode === "DELIVERY" ? Number(org.deliveryFee) : 0;
         const paymentMethod = input.paymentMethod ?? "MERCADOPAGO";
-        const isCash = paymentMethod === "CASH";
+        const isCashOnDelivery = paymentMethod === "CASH";
+        const isOnDelivery = isCashOnDelivery || paymentMethod === "DELIVERY_CARD_PIX";
 
         let conversationId: string | null = null;
         const bots = await this.botRepo.listByOrg(org.id);
@@ -136,15 +137,19 @@ export class CreateDeliveryOrderUseCase {
             deliveryFee,
             couponCode: pricing.couponCode,
             couponDiscount: pricing.couponDiscount > 0 ? pricing.couponDiscount : null,
-            paymentProvider: isCash ? "CASH" : null,
-            cashChangeFor: isCash ? input.cashChangeFor ?? null : null,
+            paymentProvider: isCashOnDelivery
+                ? "CASH"
+                : isOnDelivery
+                    ? "DELIVERY_CARD_PIX"
+                    : null,
+            cashChangeFor: isCashOnDelivery ? input.cashChangeFor ?? null : null,
             serviceType: "DELIVERY",
             tableId: null,
             tableLabel: null,
         });
 
         let paymentLink: string;
-        if (isCash) {
+        if (isOnDelivery) {
             paymentLink = `${cleanBase()}/r/${input.slug}/pedido/${order.id}`;
         } else {
             const link = await this.createPaymentLink.execute({
@@ -167,7 +172,11 @@ export class CreateDeliveryOrderUseCase {
             serviceType: "DELIVERY",
         });
 
-        const sideLabel = isCash ? " (dinheiro)" : "";
+        const sideLabel = isCashOnDelivery
+            ? " (dinheiro)"
+            : isOnDelivery
+                ? " (cartão/pix na entrega)"
+                : "";
         void this.notificationEmitter.emit({
             organizationId: org.id,
             type: "NEW_ORDER",

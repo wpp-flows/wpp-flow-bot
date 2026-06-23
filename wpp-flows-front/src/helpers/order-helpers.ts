@@ -1,5 +1,5 @@
 import type { BadgeProps } from '@/components/ui/Badge';
-import type { OrderStatus, PaymentStatus } from '@/types';
+import type { OrderStatus, PaymentProvider, PaymentStatus } from '@/types';
 
 export const ORDER_STATUSES: readonly OrderStatus[] = [
   'RECEIVED',
@@ -52,6 +52,42 @@ export const PAYMENT_TONE: Record<PaymentStatus, BadgeProps['tone']> = {
   FAILED: 'destructive',
   REFUNDED: 'neutral',
 };
+
+export function isOnDeliveryPaymentProvider(
+  paymentProvider: PaymentProvider | string | null | undefined,
+): boolean {
+  return paymentProvider === 'CASH' || paymentProvider === 'DELIVERY_CARD_PIX';
+}
+
+export function paymentProviderLabel(
+  paymentProvider: PaymentProvider | string | null | undefined,
+): string {
+  switch (paymentProvider) {
+    case 'MERCADO_PAGO':
+      return 'Mercado Pago';
+    case 'CASH':
+      return 'Dinheiro';
+    case 'DELIVERY_CARD_PIX':
+      return 'Cartão/Pix na entrega';
+    default:
+      return 'Pagamento na entrega';
+  }
+}
+
+export function receiptPaymentLabel(
+  paymentProvider: PaymentProvider | null,
+): string {
+  switch (paymentProvider) {
+    case 'MERCADO_PAGO':
+      return 'Plataforma';
+    case 'CASH':
+      return 'Dinheiro na entrega';
+    case 'DELIVERY_CARD_PIX':
+      return 'Cartão/Pix na entrega';
+    default:
+      return 'Pagamento na entrega';
+  }
+}
 
 const ALLOWED_NEXT: Record<OrderStatus, OrderStatus[]> = {
   RECEIVED: ['PREPARING', 'CANCELED'],

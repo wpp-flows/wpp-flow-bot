@@ -10,3 +10,4 @@ envs
 /generated/prisma
 
 /src/generated/prisma
+dist/

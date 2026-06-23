@@ -1,4 +1,4 @@
-import { Banknote, Check, Copy, Printer } from "lucide-react";
+import { Banknote, Check, Copy, CreditCard, Printer } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -181,6 +181,28 @@ export function OrderDetail({
                 </span>
               )}
             </div>
+            {order.paymentStatus === "PENDING" && onMarkPaid ? (
+              <Button
+                size="sm"
+                variant="primary"
+                leftIcon={<Check />}
+                loading={markingPaid}
+                onClick={onMarkPaid}
+              >
+                Marcar como pago
+              </Button>
+            ) : null}
+          </div>
+        </Section>
+      ) : null}
+
+      {order.paymentProvider === "DELIVERY_CARD_PIX" ? (
+        <Section title="Pagamento na entrega">
+          <div className="space-y-2">
+            <Badge tone="warning" className="inline-flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              Cartão/Pix na entrega
+            </Badge>
             {order.paymentStatus === "PENDING" && onMarkPaid ? (
               <Button
                 size="sm"

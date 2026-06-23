@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Banknote,
+  CreditCard,
   GripVertical,
   MapPin,
   Package,
@@ -68,6 +69,7 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
   const hasDiscount = !!order.discount && Number.parseFloat(order.discount) > 0;
   const hasObservation = !!order.observation?.trim();
   const isCash = order.paymentProvider === 'CASH';
+  const isDeliveryCardPix = order.paymentProvider === 'DELIVERY_CARD_PIX';
   const addressShort = order.address?.split(',')[0]?.trim() || null;
   const accent = ACCENT_BY_TONE[(STATUS_TONE[order.status] ?? 'neutral') as keyof typeof ACCENT_BY_TONE];
 
@@ -153,6 +155,12 @@ export const OrderKanbanCard = forwardRef<HTMLDivElement, Props>(function OrderK
             <Badge tone="warning" size="sm" className="inline-flex items-center gap-1">
               <Banknote className="h-3 w-3" />
               Dinheiro
+            </Badge>
+          ) : null}
+          {isDeliveryCardPix ? (
+            <Badge tone="warning" size="sm" className="inline-flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              Cartão ou Pix
             </Badge>
           ) : null}
           <Badge tone={PAYMENT_TONE[order.paymentStatus]} size="sm">
