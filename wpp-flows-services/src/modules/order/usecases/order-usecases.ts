@@ -22,7 +22,7 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export class ListOrdersUseCase {
-    constructor(private readonly repo: OrderRepository) {}
+    constructor(private readonly repo: OrderRepository) { }
     execute(input: {
         organizationId: string;
         filters: OrderFilters;
@@ -32,7 +32,7 @@ export class ListOrdersUseCase {
 }
 
 export class GetOrderUseCase {
-    constructor(private readonly repo: OrderRepository) {}
+    constructor(private readonly repo: OrderRepository) { }
     async execute(input: { organizationId: string; id: string }): Promise<Order> {
         const order = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!order) throw new NotFoundError("Order");
@@ -41,7 +41,7 @@ export class GetOrderUseCase {
 }
 
 export class MarkOrderPaidUseCase {
-    constructor(private readonly repo: OrderRepository) {}
+    constructor(private readonly repo: OrderRepository) { }
     async execute(input: { organizationId: string; id: string }): Promise<Order> {
         const order = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!order) throw new NotFoundError("Order");
@@ -63,7 +63,7 @@ export class UpdateOrderStatusUseCase {
     constructor(
         private readonly repo: OrderRepository,
         private readonly notifyCustomer: NotifyCustomerOrderStatusChangeUseCase,
-    ) {}
+    ) { }
     async execute(input: {
         organizationId: string;
         id: string;
@@ -82,10 +82,6 @@ export class UpdateOrderStatusUseCase {
         }
         let updated = await this.repo.updateStatus(input.id, input.status);
 
-        // Cancellation winds down any payment-side waiting: drop the pending
-        // timeout (otherwise the timeout handler would still fire and try to
-        // cancel an already-cancelled order) and flip a still-PENDING payment
-        // to FAILED so the order shows up as unpaid in reports.
         if (input.status === "CANCELED") {
             await paymentTimeoutScheduler.clear(order.id);
             if (order.paymentStatus === "PENDING") {
@@ -117,7 +113,7 @@ export class CreateOrderFromCartUseCase {
     constructor(
         private readonly orderRepo: OrderRepository,
         private readonly customerRepo: CustomerRepository,
-    ) {}
+    ) { }
 
     async execute(input: {
         organizationId: string;
