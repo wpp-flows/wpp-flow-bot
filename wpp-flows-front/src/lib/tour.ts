@@ -19,7 +19,7 @@ interface TourStep {
 
 const WELCOME: TourStep[] = [
     {
-        title: '👋 Boas-vindas ao Mesa!',
+        title: '👋 Boas-vindas ao Conecta!',
         description:
             'Tour completo da plataforma — vamos passar por cada aba primeiro do <b>Delivery</b> e depois do <b>Salão</b>, abrindo cada uma e mostrando o que dá pra fazer. Use <b>Próximo</b> para avançar e <b>Anterior</b> para voltar.',
     },
