@@ -69,9 +69,9 @@ const checkoutDefaultValues: PublicCheckoutFormValues = {
   addressNeighborhood: '',
   addressNotes: '',
   observation: '',
-  deliveryMode: 'DELIVERY',
+  deliveryMode: '',
   couponCode: '',
-  paymentMethod: 'MERCADOPAGO',
+  paymentMethod: '',
   cashChangeFor: '',
 };
 
@@ -115,6 +115,7 @@ export function CheckoutTab({
     }
   }, [autofill.name, autofill.phone, getValues, setValue]);
 
+  const hasCheckoutChoices = deliveryMode !== '' && paymentMethod !== '';
   const deliveryFee = deliveryMode === 'DELIVERY' ? orgDeliveryFee : 0;
   const couponDiscount = coupon?.discount ?? 0;
   const total = Math.max(0, cart.subtotal - couponDiscount) + deliveryFee;
@@ -143,8 +144,12 @@ export function CheckoutTab({
   });
 
   const mutation = useMutation({
-    mutationFn: (values: PublicCheckoutFormValues) =>
-      publicMenuService.createOrder(slug, {
+    mutationFn: (values: PublicCheckoutFormValues) => {
+      if (!values.deliveryMode || !values.paymentMethod) {
+        throw new Error('Selecione pagamento e entrega.');
+      }
+
+      return publicMenuService.createOrder(slug, {
         customer: { name: values.name.trim(), phone: values.phone.trim() },
         items: cart.items.map((it) => ({
           itemId: it.itemId,
@@ -169,7 +174,8 @@ export function CheckoutTab({
           values.paymentMethod === 'CASH' && values.cashChangeFor.trim()
             ? Number(values.cashChangeFor.replace(',', '.'))
             : null,
-      }),
+      });
+    },
     onSuccess: (res, values) => {
       cart.clear();
       const successUrl = new URL(
@@ -217,9 +223,9 @@ export function CheckoutTab({
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <CustomerBanners banners={customerContext.data?.banners ?? []} />
-        <DeliveryModeSection orgDeliveryFee={orgDeliveryFee} />
         <CustomerSection />
         <PaymentMethodSection />
+        <DeliveryModeSection orgDeliveryFee={orgDeliveryFee} />
         <CouponSection
           coupon={coupon}
           couponError={couponError}
@@ -249,13 +255,15 @@ export function CheckoutTab({
               size="lg"
               className="w-full shadow-soft-lg"
               loading={mutation.isPending}
-              disabled={!isOpen}
+              disabled={!isOpen || !hasCheckoutChoices}
             >
               {!isOpen
                 ? 'Restaurante fechado'
-                : paymentMethod === 'CASH'
-                  ? `Confirmar pedido — ${formatBrl(total)}`
-                  : `Pagar — ${formatBrl(total)}`}
+                : !hasCheckoutChoices
+                  ? 'Complete as informações para continuar'
+                  : paymentMethod === 'CASH'
+                    ? `Confirmar pedido — ${formatBrl(total)}`
+                    : `Pagar — ${formatBrl(total)}`}
             </Button>
           </div>
         </div>
@@ -468,7 +476,7 @@ function PaymentMethodSection() {
   return (
     <section className="rounded-lg border border-border bg-card p-5 shadow-soft-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Forma de pagamento
+        Selecione uma forma de pagamento
       </h2>
       <Controller
         name="paymentMethod"

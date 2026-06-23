@@ -185,12 +185,26 @@ export const publicCheckoutSchema = z
     addressNeighborhood: z.string().max(120),
     addressNotes: z.string().max(300),
     observation: z.string().max(500),
-    deliveryMode: z.enum(['PICKUP', 'DELIVERY']),
+    deliveryMode: z.enum(['PICKUP', 'DELIVERY', '']),
     couponCode: z.string().max(40),
-    paymentMethod: z.enum(['MERCADOPAGO', 'CASH']),
+    paymentMethod: z.enum(['MERCADOPAGO', 'CASH', '']),
     cashChangeFor: z.string().max(20),
   })
   .superRefine((data, ctx) => {
+    if (!data.deliveryMode) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Selecione como deseja receber.',
+        path: ['deliveryMode'],
+      });
+    }
+    if (!data.paymentMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Selecione uma forma de pagamento.',
+        path: ['paymentMethod'],
+      });
+    }
     if (data.deliveryMode === 'DELIVERY') {
       if (!data.addressStreet.trim()) {
         ctx.addIssue({
