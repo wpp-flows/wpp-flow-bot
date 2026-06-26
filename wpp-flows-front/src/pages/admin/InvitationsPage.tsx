@@ -4,21 +4,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
+  Bell,
   Check,
+  CheckCheck,
   Copy,
   Mail,
   MoreHorizontal,
   Plus,
   Search,
+  Smartphone,
   X,
 } from "lucide-react";
 import { invitationService } from "@/services/invitationService";
+import {
+  adminNotificationService,
+  type AdminNotification,
+} from "@/services/adminNotificationService";
 import { toast } from "@/stores/uiStore";
 import { ApiError } from "@/instances/api";
 import { cn } from "@/lib/utils";
 import type { Invitation } from "@/types";
 
 const queryKey = ["admin", "invitations"] as const;
+const notificationsKey = ["admin", "notifications"] as const;
 
 const inviteSchema = z.object({
   email: z
@@ -99,12 +107,14 @@ export function InvitationsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-10">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Convites</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Painel admin</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Convide novos operadores para criar uma conta no Conecta. Cada link é
-          de uso único e expira em 7 dias.
+          Convites de novos operadores e notificações de plataforma. Cada link
+          de convite é de uso único e expira em 7 dias.
         </p>
       </header>
+
+      <AdminNotificationsSection />
 
       {/* Invite form */}
       <section className="rounded-xl border border-zinc-200 p-5">
@@ -378,6 +388,214 @@ function InvitationRow({
       </td>
     </tr>
   );
+}
+
+function AdminNotificationsSection() {
+  const qc = useQueryClient();
+  const notificationsQ = useQuery({
+    queryKey: notificationsKey,
+    queryFn: () => adminNotificationService.list(),
+    // Refetch on focus so a freshly-resolved drift shows up without a reload.
+    refetchOnWindowFocus: true,
+  });
+
+  const markRead = useMutation({
+    mutationFn: (id: string) => adminNotificationService.markRead(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: notificationsKey });
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError ? err.message : "Falha ao marcar como lida",
+      );
+    },
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: () => adminNotificationService.markAllRead(),
+    onSuccess: (res) => {
+      if (res.markedCount > 0) {
+        toast.success(
+          res.markedCount === 1
+            ? "1 notificação marcada como lida"
+            : `${res.markedCount} notificações marcadas como lidas`,
+        );
+      }
+      void qc.invalidateQueries({ queryKey: notificationsKey });
+    },
+  });
+
+  const items = notificationsQ.data?.items ?? [];
+  const unread = notificationsQ.data?.unread ?? 0;
+
+  return (
+    <section className="rounded-xl border border-zinc-200 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-zinc-500" />
+          <h2 className="text-base font-semibold tracking-tight">
+            Notificações
+          </h2>
+          {unread > 0 ? (
+            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-2xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
+              {unread} {unread === 1 ? "nova" : "novas"}
+            </span>
+          ) : null}
+        </div>
+        {unread > 0 ? (
+          <button
+            type="button"
+            onClick={() => markAllRead.mutate()}
+            disabled={markAllRead.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            Marcar todas como lidas
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-4">
+        {notificationsQ.isLoading ? (
+          <p className="text-sm text-zinc-500">Carregando…</p>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            Sem notificações por aqui. Atualizações de versão do WhatsApp Web
+            aparecem aqui quando detectadas.
+          </p>
+        ) : (
+          <ul className="-mx-2 divide-y divide-zinc-100">
+            {items.map((n) => (
+              <li key={n.id} className="px-2">
+                <AdminNotificationItem
+                  notification={n}
+                  onMarkRead={() => markRead.mutate(n.id)}
+                  marking={markRead.isPending && markRead.variables === n.id}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AdminNotificationItem({
+  notification,
+  onMarkRead,
+  marking,
+}: {
+  notification: AdminNotification;
+  onMarkRead: () => void;
+  marking: boolean;
+}) {
+  const unread = !notification.readAt;
+  const { from, to, coolifyDeploy } = parseVersionMetadata(notification);
+  const createdLabel = new Date(notification.createdAt).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="flex items-start gap-3 py-3">
+      <div
+        className={cn(
+          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+          unread ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600",
+        )}
+      >
+        <Smartphone className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <p className="text-sm font-medium text-zinc-900">
+            {notification.title}
+          </p>
+          {unread ? (
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+          ) : null}
+          <span className="text-xs text-zinc-500 tabular-nums">
+            {createdLabel}
+          </span>
+        </div>
+        {from && to ? (
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-xs">
+            <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700">
+              {from}
+            </span>
+            <span className="text-zinc-400">→</span>
+            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700 ring-1 ring-inset ring-emerald-200">
+              {to}
+            </span>
+            {coolifyDeploy ? (
+              <CoolifyDeployBadge outcome={coolifyDeploy} />
+            ) : null}
+          </div>
+        ) : null}
+        <p className="mt-1 text-sm text-zinc-600">{notification.body}</p>
+      </div>
+      {unread ? (
+        <button
+          type="button"
+          onClick={onMarkRead}
+          disabled={marking}
+          className="ml-2 inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50"
+          aria-label="Marcar como lida"
+          title="Marcar como lida"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function CoolifyDeployBadge({
+  outcome,
+}: {
+  outcome: "ok" | "skipped" | "failed";
+}) {
+  const styles: Record<typeof outcome, string> = {
+    ok: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    skipped: "bg-amber-50 text-amber-700 ring-amber-200",
+    failed: "bg-rose-50 text-rose-700 ring-rose-200",
+  };
+  const labels: Record<typeof outcome, string> = {
+    ok: "Coolify deploy ok",
+    skipped: "Coolify não configurado",
+    failed: "Coolify falhou",
+  };
+  return (
+    <span
+      className={cn(
+        "ml-1 rounded px-1.5 py-0.5 text-2xs font-medium ring-1 ring-inset",
+        styles[outcome],
+      )}
+    >
+      {labels[outcome]}
+    </span>
+  );
+}
+
+function parseVersionMetadata(
+  notification: AdminNotification,
+): {
+  from?: string;
+  to?: string;
+  coolifyDeploy?: "ok" | "skipped" | "failed";
+} {
+  if (notification.type !== "WA_VERSION_UPDATED") return {};
+  const meta = notification.metadata ?? {};
+  const from = typeof meta.from === "string" ? meta.from : undefined;
+  const to = typeof meta.to === "string" ? meta.to : undefined;
+  const raw = meta.coolifyDeploy;
+  const coolifyDeploy =
+    raw === "ok" || raw === "skipped" || raw === "failed" ? raw : undefined;
+  return { from, to, coolifyDeploy };
 }
 
 function StatusBadge({ status }: { status: Invitation["status"] }) {
