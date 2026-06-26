@@ -23,6 +23,9 @@ const schema = z.object({
     SUPABASE_STORAGE_BUCKET: z.string().default("mesa-uploads"),
     RESEND_API_KEY: z.string().optional(),
     INVITE_FROM_EMAIL: z.string().default("Conecta IA <onboarding@resend.dev>"),
+    WPP_COOLIFY_URL: z.string().optional(),
+    WPP_COOLIFY_TOKEN: z.string().optional(),
+    WPP_COOLIFY_APP_UUID: z.string().optional(),
 })
 
 const parsed = schema.safeParse(process.env)

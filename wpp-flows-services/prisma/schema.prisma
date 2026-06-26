@@ -692,6 +692,26 @@ model Notification {
   @@map("notification")
 }
 
+enum AdminNotificationType {
+  WA_VERSION_UPDATED
+}
+
+model AdminNotification {
+  id        String                @id @default(uuid())
+  type      AdminNotificationType
+  title     String
+  body      String
+  ///   { "from": "2.3000.1038839325", "to": "2.3000.1042201107",
+  ///     "coolifyDeploy": "ok" | "skipped" | "failed" }
+  metadata  Json?
+  readAt    DateTime?             @db.Timestamptz
+  createdAt DateTime              @default(now()) @db.Timestamptz
+
+  @@index([createdAt])
+  @@index([readAt])
+  @@map("admin_notification")
+}
+
 model Report {
   id             String       @id @default(uuid())
   organizationId String

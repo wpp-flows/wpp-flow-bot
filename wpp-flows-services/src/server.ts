@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { app } from './app'
 import { env } from '@/infrastructure/config/env'
-import { botMonitor } from '@/modules/bot/usecases/factories'
+import { botMonitor, whatsappVersionMonitor } from '@/modules/bot/usecases/factories'
 import { dailyReportScheduler } from '@/modules/reports/usecases/factories'
 
 const PORT = env.PORT
@@ -12,6 +12,7 @@ await app.listen({
 })
 console.log(`🚀 HTTP Server Running on port ${PORT}.`)
 botMonitor.start()
+whatsappVersionMonitor.start()
 dailyReportScheduler.start()
 
 // depois comentar, é só para popular relatórios antigos.

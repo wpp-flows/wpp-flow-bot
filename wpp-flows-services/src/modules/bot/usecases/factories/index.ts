@@ -1,4 +1,5 @@
 import { notificationEmitter } from "@/modules/notification/usecases/factories";
+import { makeCreateAdminNotification } from "@/modules/admin/usecases/factories";
 import { PrismaBotRepository } from "../../repositories/prisma/prisma-bot-repo";
 import {
     ConnectBotUseCase,
@@ -11,6 +12,7 @@ import {
     UpdateBotUseCase,
 } from "../bot-usecases";
 import { BotMonitor } from "../bot-monitor";
+import { WhatsAppVersionMonitor } from "../whatsapp-version-monitor";
 
 const repo = new PrismaBotRepository();
 
@@ -25,5 +27,8 @@ export const makeGetBotConnectionState = () =>
     new GetBotConnectionStateUseCase(repo);
 
 export const botMonitor = new BotMonitor(repo, notificationEmitter);
+export const whatsappVersionMonitor = new WhatsAppVersionMonitor(
+    makeCreateAdminNotification(),
+);
 
 export { repo as botRepo };
