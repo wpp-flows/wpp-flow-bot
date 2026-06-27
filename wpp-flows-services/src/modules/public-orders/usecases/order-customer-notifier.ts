@@ -26,7 +26,9 @@ export class OrderCustomerNotifier {
 
         const bots = await this.botRepo.listByOrg(organizationId);
         const bot =
-            bots.find((b) => b.status === "ONLINE") ?? bots[0] ?? null;
+            bots.find((b) => b.status === "ONLINE" && b.isActive) ??
+            bots.find((b) => b.isActive) ??
+            null;
         if (!bot) return false;
 
         const remoteJid = `${phone.replace(/\D/g, "")}@s.whatsapp.net`;

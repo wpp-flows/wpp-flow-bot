@@ -13,3 +13,7 @@ export const updateBotSchema = z.object({
     webhookUrl: z.url().nullable().optional(),
     flowId: z.uuid().nullable().optional(),
 });
+
+export const setBotIsActiveSchema = z.object({
+    isActive: z.boolean(),
+});

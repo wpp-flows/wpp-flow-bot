@@ -98,6 +98,8 @@ export class MessagesUpsertStrategy implements WebhookEventStrategy {
 
         if (msg.key.fromMe) return;
 
+        if (!ctx.bot.isActive) return;
+
         // Post-payment deep-link: the customer just tapped the wa.me link the
         // public checkout seeded, carrying a "Pedido #XXXX confirmado" draft.
         // We ack the paid order and skip the flow runner — there's nothing to

@@ -181,3 +181,16 @@ export class GetBotConnectionStateUseCase {
         }
     }
 }
+
+export class SetBotIsActiveUseCase {
+    constructor(private readonly repo: BotRepository) { }
+    async execute(input: {
+        organizationId: string;
+        id: string;
+        isActive: boolean;
+    }): Promise<Bot> {
+        const bot = await this.repo.findByIdInOrg(input.organizationId, input.id);
+        if (!bot) throw new NotFoundError("Bot");
+        return this.repo.update(input.id, { isActive: input.isActive });
+    }
+}

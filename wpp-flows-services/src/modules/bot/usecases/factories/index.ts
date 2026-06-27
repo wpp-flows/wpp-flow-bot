@@ -9,6 +9,7 @@ import {
     GetBotConnectionStateUseCase,
     GetBotUseCase,
     ListBotsUseCase,
+    SetBotIsActiveUseCase,
     UpdateBotUseCase,
 } from "../bot-usecases";
 import { BotMonitor } from "../bot-monitor";
@@ -25,6 +26,7 @@ export const makeConnectBot = () => new ConnectBotUseCase(repo);
 export const makeDisconnectBot = () => new DisconnectBotUseCase(repo);
 export const makeGetBotConnectionState = () =>
     new GetBotConnectionStateUseCase(repo);
+export const makeSetBotIsActive = () => new SetBotIsActiveUseCase(repo);
 
 export const botMonitor = new BotMonitor(repo, notificationEmitter);
 export const whatsappVersionMonitor = new WhatsAppVersionMonitor(

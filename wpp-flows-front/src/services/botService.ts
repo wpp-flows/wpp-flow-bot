@@ -48,4 +48,12 @@ export const botService = {
   getConnectionState(id: string): Promise<{ bot: BotInstance; evolutionState: string | null }> {
     return apiCall({ endpoint: `/api/bots/${id}/state` });
   },
+
+  setIsActive(id: string, isActive: boolean): Promise<BotInstance> {
+    return apiCall<BotInstance>({
+      endpoint: `/api/bots/${id}/is-active`,
+      method: 'PATCH',
+      body: { isActive },
+    });
+  },
 };

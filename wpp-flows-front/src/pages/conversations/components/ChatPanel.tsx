@@ -36,19 +36,23 @@ export function ChatPanel({
   conversation,
   botName,
   botStatus,
+  botIsActive = true,
 }: Readonly<{
   conversation: Conversation;
   botName?: string;
   botStatus?: BotStatus;
+  botIsActive?: boolean;
 }>) {
   const botBadge: { tone: "success" | "warning" | "destructive"; label: string } =
-    !conversation.botActive
-      ? { tone: "warning", label: "bot pausado" }
-      : botStatus === "OFFLINE" || botStatus === "ERROR"
-        ? { tone: "destructive", label: "bot offline" }
-        : botStatus === "CONNECTING"
-          ? { tone: "warning", label: "bot conectando" }
-          : { tone: "success", label: "bot ativo" };
+    !botIsActive
+      ? { tone: "warning", label: "Bot pausado globalmente" }
+      : !conversation.botActive
+        ? { tone: "warning", label: "bot pausado" }
+        : botStatus === "OFFLINE" || botStatus === "ERROR"
+          ? { tone: "destructive", label: "bot offline" }
+          : botStatus === "CONNECTING"
+            ? { tone: "warning", label: "bot conectando" }
+            : { tone: "success", label: "bot ativo" };
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);

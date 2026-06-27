@@ -16,6 +16,7 @@ export interface Bot {
     recoveryAttempts: number;
     lastRecoveryAt: Date | null;
     lastDisconnectNotifiedAt: Date | null;
+    isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -48,6 +49,7 @@ export interface BotRepository {
             recoveryAttempts: number;
             lastRecoveryAt: Date | null;
             lastDisconnectNotifiedAt: Date | null;
+            isActive: boolean;
         }>
     ): Promise<Bot>;
     delete(id: string): Promise<void>;

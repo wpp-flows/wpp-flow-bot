@@ -7,6 +7,7 @@ export interface BotInstance {
   evolutionInstanceName: string;
   phoneNumber?: string | null;
   status: BotStatus;
+  isActive: boolean;
   qrCode?: string | null;
   flowId?: string | null;
   webhookUrl?: string | null;
