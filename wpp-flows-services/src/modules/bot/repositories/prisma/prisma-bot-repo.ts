@@ -21,6 +21,7 @@ const toBot = (row: any): Bot => ({
     recoveryAttempts: row.recoveryAttempts,
     lastRecoveryAt: row.lastRecoveryAt,
     lastDisconnectNotifiedAt: row.lastDisconnectNotifiedAt,
+    isActive: row.isActive,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
 });
@@ -86,6 +87,7 @@ export class PrismaBotRepository implements BotRepository {
             recoveryAttempts: number;
             lastRecoveryAt: Date | null;
             lastDisconnectNotifiedAt: Date | null;
+            isActive: boolean;
         }>
     ): Promise<Bot> {
         const row = await prisma.bot.update({ where: { id }, data });

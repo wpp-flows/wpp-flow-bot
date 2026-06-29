@@ -9,9 +9,10 @@ import {
     makeGetBot,
     makeGetBotConnectionState,
     makeListBots,
+    makeSetBotIsActive,
     makeUpdateBot,
 } from "../../usecases/factories";
-import { createBotSchema, updateBotSchema } from "../schema";
+import { createBotSchema, setBotIsActiveSchema, updateBotSchema } from "../schema";
 
 export class BotController {
     @Route("GET", "/api/bots", { middlewares: [requireOrganization] })
@@ -90,6 +91,20 @@ export class BotController {
         const result = await makeGetBotConnectionState().execute({
             organizationId: request.organizationId,
             id,
+        });
+        return reply.send(result);
+    }
+
+    @Route("PATCH", "/api/bots/:id/is-active", {
+        middlewares: [requireOrganization],
+    })
+    async setIsActive(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const body = setBotIsActiveSchema.parse(request.body);
+        const result = await makeSetBotIsActive().execute({
+            organizationId: request.organizationId,
+            id,
+            isActive: body.isActive,
         });
         return reply.send(result);
     }

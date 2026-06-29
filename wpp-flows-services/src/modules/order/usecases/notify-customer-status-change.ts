@@ -31,6 +31,7 @@ export class NotifyCustomerOrderStatusChangeUseCase {
             conversation.botId,
         );
         if (!bot?.evolutionInstanceName) return;
+        if (!bot.isActive) return;
 
         try {
             const sent = await evolutionApi.sendText({

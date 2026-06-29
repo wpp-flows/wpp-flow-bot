@@ -61,6 +61,7 @@ export class FlowRunner {
         conversation: Conversation;
     }): Promise<void> {
         const { bot, conversation } = input;
+        if (!bot.isActive) return;
         if (!conversation.botActive) return;
 
         const org = await this.orgRepo.findById(bot.organizationId);

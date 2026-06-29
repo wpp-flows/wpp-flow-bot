@@ -84,8 +84,14 @@ export function ConversationsPage() {
   }, [bots.data]);
 
   const botStatusById = useMemo(() => {
-    const map: Record<string, BotInstance['status']> = {};
+    const map: Record<string, BotInstance["status"]> = {};
     for (const b of bots.data ?? []) map[b.id] = b.status;
+    return map;
+  }, [bots.data]);
+
+  const botIsActiveById = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const b of bots.data ?? []) map[b.id] = b.isActive;
     return map;
   }, [bots.data]);
 
@@ -194,6 +200,7 @@ export function ConversationsPage() {
                 conversation={selected}
                 botName={botNamesById[selected.botId]}
                 botStatus={botStatusById[selected.botId]}
+                botIsActive={botIsActiveById[selected.botId] ?? true}
                 key={selected.id}
               />
             </>

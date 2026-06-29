@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash } from 'lucide-react';
+import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash, Bot, BotOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -61,6 +61,22 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
     },
   });
 
+  const toggleIsActive = useMutation({
+    mutationFn: (next: boolean) => botService.setIsActive(bot.id, next),
+    onSuccess: (_, next) => {
+      refresh();
+      toast.info(
+        next
+          ? 'Bot ativado — respostas automaticas retomadas em todas as conversas.'
+          : 'Bot desativado globalmente — respostas automaticas pausadas em todas as conversas.',
+      );
+    },
+    onError: (err) => {
+      const apiErr = err as { message?: string };
+      toast.error('Nao foi possivel alterar o bot', apiErr.message);
+    },
+  });
+
   const isOnline = bot.status === 'ONLINE';
 
   return (
@@ -83,6 +99,11 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              {!bot.isActive ? (
+                <span className="rounded-full bg-warning-soft px-2 py-0.5 text-2xs font-medium text-warning">
+                  Pausado
+                </span>
+              ) : null}
               <StatusBadge status={bot.status} size="sm" />
               <div className="relative">
                 <IconButton
@@ -165,27 +186,49 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            {isOnline ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              {isOnline ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => disconnect.mutate()}
+                  loading={disconnect.isPending}
+                >
+                  Desconectar
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => connect.mutate()}
+                  loading={connect.isPending}
+                >
+                  Conectar
+                </Button>
+              )}
               <Button
-                variant="outline"
                 size="sm"
+                variant={bot.isActive ? 'outline' : 'primary'}
                 className="flex-1"
-                onClick={() => disconnect.mutate()}
-                loading={disconnect.isPending}
+                leftIcon={bot.isActive ? <BotOff /> : <Bot />}
+                onClick={() => toggleIsActive.mutate(!bot.isActive)}
+                loading={toggleIsActive.isPending}
+                title={
+                  bot.isActive
+                    ? 'Pausa as respostas automaticas do bot em todas as conversas, sem desconectar o WhatsApp.'
+                    : 'Retoma as respostas automaticas do bot em todas as conversas.'
+                }
               >
-                Desconectar
+                {bot.isActive ? 'Desativar' : 'Ativar'}
               </Button>
-            ) : (
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => connect.mutate()}
-                loading={connect.isPending}
-              >
-                Conectar
-              </Button>
-            )}
+            </div>
+            <p className="text-2xs text-muted-foreground text-pretty">
+              {bot.isActive
+                ? 'Desativar pausa as respostas automaticas em todas as conversas, sem desconectar o WhatsApp.'
+                : 'Automação pausada globalmente — o WhatsApp permanece conectado.'}
+            </p>
           </div>
         </CardContent>
       </Card>
