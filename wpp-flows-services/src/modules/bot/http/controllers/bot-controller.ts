@@ -6,6 +6,7 @@ import {
     makeCreateBot,
     makeDeleteBot,
     makeDisconnectBot,
+    makeForceReconnectBot,
     makeGetBot,
     makeGetBotConnectionState,
     makeListBots,
@@ -67,6 +68,18 @@ export class BotController {
     async connect(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.params as { id: string };
         const result = await makeConnectBot().execute({
+            organizationId: request.organizationId,
+            id,
+        });
+        return reply.send(result);
+    }
+
+    @Route("POST", "/api/bots/:id/reconnect", {
+        middlewares: [requireOrganization],
+    })
+    async reconnect(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const result = await makeForceReconnectBot().execute({
             organizationId: request.organizationId,
             id,
         });

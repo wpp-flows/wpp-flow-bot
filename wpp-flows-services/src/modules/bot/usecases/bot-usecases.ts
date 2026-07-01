@@ -6,6 +6,8 @@ import type { Bot, BotRepository } from "../repositories/bot-repo";
 const buildInstanceName = (organizationId: string) =>
     `org-${organizationId.slice(0, 8)}-${Date.now().toString(36)}`;
 
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 const buildWebhookUrl = (botInstanceName: string) => {
     if (!env.EVOLUTION_WEBHOOK_URL) return undefined;
     const base = env.EVOLUTION_WEBHOOK_URL.replace(/\/$/, "");
@@ -135,6 +137,67 @@ export class ConnectBotUseCase {
         if (qrCode) patch.qrCode = qrCode;
 
         return this.repo.update(bot.id, patch);
+    }
+}
+
+/**
+ * Hard reconnect for a wedged instance. Unlike {@link ConnectBotUseCase} — which
+ * reuses whatever session Evolution is holding — this first LOGS OUT to wipe the
+ * stored credentials, then connects for a genuinely fresh QR.
+ *
+ * The motivating case: WhatsApp removes the linked device (disconnection tag
+ * `conflict` / `device_removed`, 401). The creds Evolution kept are now dead,
+ * but a plain `/instance/connect` regenerates a QR bound to that dead state, so
+ * the phone keeps rejecting the scan with "Couldn't connect". Logging out clears
+ * the creds so the next pairing starts clean.
+ *
+ * We deliberately do NOT fall back to the cached `bot.qrCode` here (that stale
+ * code is exactly what's failing) — if Evolution doesn't return a fresh QR we
+ * surface a 503 so the operator retries.
+ */
+export class ForceReconnectBotUseCase {
+    constructor(private readonly repo: BotRepository) { }
+    async execute(input: { organizationId: string; id: string }): Promise<Bot> {
+        const bot = await this.repo.findByIdInOrg(input.organizationId, input.id);
+        if (!bot) throw new NotFoundError("Bot");
+
+        // Kill the dead session. Tolerate failure — after device_removed the
+        // logout itself often 401s, which is fine; the goal is just to drop
+        // whatever creds Evolution is clinging to.
+        try {
+            await evolutionApi.logoutInstance(bot.evolutionInstanceName);
+        } catch (err) {
+            console.warn("ForceReconnect: logoutInstance failed (continuing):", err);
+        }
+
+        // Evolution needs a beat to tear the old socket down before it will
+        // emit a clean QR — connecting instantly tends to hand back the stale one.
+        await delay(1500);
+
+        let evolution: Awaited<ReturnType<typeof evolutionApi.connectInstance>>;
+        try {
+            evolution = await evolutionApi.connectInstance(bot.evolutionInstanceName);
+        } catch (err) {
+            await this.repo.update(bot.id, { status: "ERROR" });
+            throw err;
+        }
+
+        const qrCode = extractQrCode(evolution);
+        if (!qrCode) {
+            throw new HttpError(
+                "Sessão reiniciada, mas o Evolution ainda não gerou um novo QR. Tente novamente em alguns segundos.",
+                503,
+            );
+        }
+
+        return this.repo.update(bot.id, {
+            qrCode,
+            status: "CONNECTING",
+            desiredState: "CONNECTED",
+            recoveryAttempts: 0,
+            lastRecoveryAt: null,
+            lastDisconnectNotifiedAt: null,
+        });
     }
 }
 

@@ -6,6 +6,7 @@ import {
     CreateBotUseCase,
     DeleteBotUseCase,
     DisconnectBotUseCase,
+    ForceReconnectBotUseCase,
     GetBotConnectionStateUseCase,
     GetBotUseCase,
     ListBotsUseCase,
@@ -23,6 +24,7 @@ export const makeCreateBot = () => new CreateBotUseCase(repo);
 export const makeUpdateBot = () => new UpdateBotUseCase(repo);
 export const makeDeleteBot = () => new DeleteBotUseCase(repo);
 export const makeConnectBot = () => new ConnectBotUseCase(repo);
+export const makeForceReconnectBot = () => new ForceReconnectBotUseCase(repo);
 export const makeDisconnectBot = () => new DisconnectBotUseCase(repo);
 export const makeGetBotConnectionState = () =>
     new GetBotConnectionStateUseCase(repo);

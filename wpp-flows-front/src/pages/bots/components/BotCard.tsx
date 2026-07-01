@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash, Bot, BotOff } from 'lucide-react';
+import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash, Bot, BotOff, QrCode } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -40,6 +40,29 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
         );
       } else {
         toast.error('Nao foi possivel conectar', apiErr.message);
+      }
+    },
+  });
+
+  const reconnect = useMutation({
+    mutationFn: () => botService.reconnect(bot.id),
+    onSuccess: (updated) => {
+      refresh();
+      if (updated.qrCode) {
+        toast.info('Novo QR gerado', 'Escaneie com o WhatsApp para reconectar.');
+      } else {
+        toast.info('Sessão reiniciada', 'Gerando novo QR...');
+      }
+    },
+    onError: (err) => {
+      const apiErr = err as { status?: number; message?: string };
+      if (apiErr.status === 503) {
+        toast.warning(
+          'QR ainda não pronto',
+          apiErr.message ?? 'Tente "Gerar novo QR" novamente em alguns segundos.',
+        );
+      } else {
+        toast.error('Não foi possível reconectar', apiErr.message);
       }
     },
   });
@@ -130,6 +153,16 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     <Power className="h-3.5 w-3.5" />
                     {isOnline ? 'Desconectar' : 'Conectar'}
                   </button>
+                  {!isOnline ? (
+                    <button
+                      type="button"
+                      onMouseDown={() => reconnect.mutate()}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                    >
+                      <QrCode className="h-3.5 w-3.5" />
+                      Gerar novo QR
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onMouseDown={() => refresh()}
@@ -152,23 +185,11 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
           </div>
 
           {bot.qrCode && bot.status !== 'ONLINE' ? (
-            <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
-              <p className="text-2xs uppercase tracking-wider text-muted-foreground">
-                Escanear com WhatsApp
-              </p>
-              {bot.qrCode.startsWith('data:') ? (
-                <img src={bot.qrCode} alt="QR do WhatsApp" className="mx-auto mt-2 h-40 w-40" />
-              ) : (
-                <>
-                  <p className="mt-2 text-2xs text-muted-foreground">
-                    Codigo de pareamento (cole no WhatsApp 3 Dispositivos conectados 3 Vincular com numero de telefone)
-                  </p>
-                  <p className="mt-1 break-all font-mono text-xs font-semibold">
-                    {bot.qrCode}
-                  </p>
-                </>
-              )}
-            </div>
+            <QrPanel
+              qrCode={bot.qrCode}
+              onReconnect={() => reconnect.mutate()}
+              reconnecting={reconnect.isPending}
+            />
           ) : null}
 
           <div className="space-y-1.5 text-xs">
@@ -258,3 +279,37 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   );
 }
 
+function QrPanel({
+  qrCode,
+  onReconnect,
+  reconnecting,
+}: Readonly<{ qrCode: string; onReconnect: () => void; reconnecting: boolean }>) {
+  const isImage = qrCode.startsWith('data:');
+  return (
+    <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
+      <p className="text-2xs uppercase tracking-wider text-muted-foreground">
+        Escanear com WhatsApp
+      </p>
+      {isImage ? (
+        <img src={qrCode} alt="QR do WhatsApp" className="mx-auto mt-2 h-40 w-40" />
+      ) : (
+        <>
+          <p className="mt-2 text-2xs text-muted-foreground">
+            Codigo de pareamento (cole no WhatsApp › Dispositivos conectados ›
+            Vincular com numero de telefone)
+          </p>
+          <p className="mt-1 break-all font-mono text-xs font-semibold">{qrCode}</p>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={onReconnect}
+        disabled={reconnecting}
+        className="mx-auto mt-3 flex items-center gap-1.5 rounded-md px-2 py-1 text-2xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+      >
+        <QrCode className="h-3 w-3" />
+        {reconnecting ? 'Gerando novo QR...' : 'QR nao funciona? Gerar um novo'}
+      </button>
+    </div>
+  );
+}

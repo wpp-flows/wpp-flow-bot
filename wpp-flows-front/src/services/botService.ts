@@ -38,6 +38,13 @@ export const botService = {
     });
   },
 
+  reconnect(id: string): Promise<BotInstance> {
+    return apiCall<BotInstance>({
+      endpoint: `/api/bots/${id}/reconnect`,
+      method: 'POST',
+    });
+  },
+
   disconnect(id: string): Promise<BotInstance> {
     return apiCall<BotInstance>({
       endpoint: `/api/bots/${id}/disconnect`,
