@@ -77,6 +77,7 @@ export class PrismaBotRepository implements BotRepository {
         id: string,
         data: Partial<{
             name: string;
+            evolutionInstanceName: string;
             phoneNumber: string | null;
             webhookUrl: string | null;
             flowId: string | null;

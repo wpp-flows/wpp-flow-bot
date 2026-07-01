@@ -6,8 +6,6 @@ import type { Bot, BotRepository } from "../repositories/bot-repo";
 const buildInstanceName = (organizationId: string) =>
     `org-${organizationId.slice(0, 8)}-${Date.now().toString(36)}`;
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 const buildWebhookUrl = (botInstanceName: string) => {
     if (!env.EVOLUTION_WEBHOOK_URL) return undefined;
     const base = env.EVOLUTION_WEBHOOK_URL.replace(/\/$/, "");
@@ -141,19 +139,21 @@ export class ConnectBotUseCase {
 }
 
 /**
- * Hard reconnect for a wedged instance. Unlike {@link ConnectBotUseCase} — which
- * reuses whatever session Evolution is holding — this first LOGS OUT to wipe the
- * stored credentials, then connects for a genuinely fresh QR.
+ * Hard reconnect for a wedged instance: tears the old Evolution instance down
+ * entirely and provisions a brand-new one, rather than reusing the existing
+ * session like {@link ConnectBotUseCase} does.
  *
  * The motivating case: WhatsApp removes the linked device (disconnection tag
- * `conflict` / `device_removed`, 401). The creds Evolution kept are now dead,
- * but a plain `/instance/connect` regenerates a QR bound to that dead state, so
- * the phone keeps rejecting the scan with "Couldn't connect". Logging out clears
- * the creds so the next pairing starts clean.
+ * `conflict` / `device_removed`, 401). Baileys frequently clings to dead
+ * credentials on disk even after a logout, so `/instance/connect` keeps handing
+ * back a QR bound to that dead state and the phone rejects the scan with
+ * "Couldn't connect". Deleting the instance and creating a fresh one (under a
+ * new name, to dodge any name-collision with the not-yet-fully-removed old one)
+ * guarantees zero carried-over state.
  *
- * We deliberately do NOT fall back to the cached `bot.qrCode` here (that stale
- * code is exactly what's failing) — if Evolution doesn't return a fresh QR we
- * surface a 503 so the operator retries.
+ * The Bot DB row is kept (same id, same org, same flow) — only its
+ * `evolutionInstanceName` / `webhookUrl` / `qrCode` are repointed at the new
+ * instance.
  */
 export class ForceReconnectBotUseCase {
     constructor(private readonly repo: BotRepository) { }
@@ -161,42 +161,43 @@ export class ForceReconnectBotUseCase {
         const bot = await this.repo.findByIdInOrg(input.organizationId, input.id);
         if (!bot) throw new NotFoundError("Bot");
 
-        // Kill the dead session. Tolerate failure — after device_removed the
-        // logout itself often 401s, which is fine; the goal is just to drop
-        // whatever creds Evolution is clinging to.
         try {
             await evolutionApi.logoutInstance(bot.evolutionInstanceName);
         } catch (err) {
             console.warn("ForceReconnect: logoutInstance failed (continuing):", err);
         }
-
-        // Evolution needs a beat to tear the old socket down before it will
-        // emit a clean QR — connecting instantly tends to hand back the stale one.
-        await delay(1500);
-
-        let evolution: Awaited<ReturnType<typeof evolutionApi.connectInstance>>;
         try {
-            evolution = await evolutionApi.connectInstance(bot.evolutionInstanceName);
+            await evolutionApi.deleteInstance(bot.evolutionInstanceName);
+        } catch (err) {
+            console.warn("ForceReconnect: deleteInstance failed (continuing):", err);
+        }
+
+        const newInstanceName = buildInstanceName(input.organizationId);
+        const webhookUrl = buildWebhookUrl(newInstanceName);
+
+        let evolution: Awaited<ReturnType<typeof evolutionApi.createInstance>>;
+        try {
+            evolution = await evolutionApi.createInstance({
+                instanceName: newInstanceName,
+                webhookUrl,
+            });
         } catch (err) {
             await this.repo.update(bot.id, { status: "ERROR" });
             throw err;
         }
 
         const qrCode = extractQrCode(evolution);
-        if (!qrCode) {
-            throw new HttpError(
-                "Sessão reiniciada, mas o Evolution ainda não gerou um novo QR. Tente novamente em alguns segundos.",
-                503,
-            );
-        }
 
         return this.repo.update(bot.id, {
-            qrCode,
+            evolutionInstanceName: newInstanceName,
+            webhookUrl: webhookUrl ?? null,
+            qrCode: qrCode ?? null,
             status: "CONNECTING",
             desiredState: "CONNECTED",
             recoveryAttempts: 0,
             lastRecoveryAt: null,
             lastDisconnectNotifiedAt: null,
+            lastConnectedAt: null,
         });
     }
 }
