@@ -11,6 +11,7 @@ import {
     makeUpdateBot,
 } from "../../usecases/factories";
 import {
+    cloudManualSchema,
     embeddedSignupSchema,
     setBotIsActiveSchema,
     updateBotSchema,
@@ -45,6 +46,23 @@ export class BotController {
     async embeddedSignup(request: FastifyRequest, reply: FastifyReply) {
         const body = embeddedSignupSchema.parse(request.body);
         const result = await makeRegisterCloudBot().execute({
+            organizationId: request.organizationId,
+            ...body,
+        });
+        return reply.status(201).send(result);
+    }
+
+    /**
+     * Connects a CLOUD_API bot from a token supplied directly (Meta test number
+     * / System User token). Bridges the pre-App-Review gap for testing and the
+     * demo video.
+     */
+    @Route("POST", "/api/bots/cloud/manual", {
+        middlewares: [requireOrganization],
+    })
+    async cloudManual(request: FastifyRequest, reply: FastifyReply) {
+        const body = cloudManualSchema.parse(request.body);
+        const result = await makeRegisterCloudBot().executeManual({
             organizationId: request.organizationId,
             ...body,
         });

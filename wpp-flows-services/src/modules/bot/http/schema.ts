@@ -24,3 +24,15 @@ export const embeddedSignupSchema = z.object({
     wabaId: z.string().min(1).max(64),
     phoneNumberId: z.string().min(1).max(64),
 });
+
+/**
+ * Manual connection from a token you already hold (Meta test number, or a
+ * System User token). Bridges the gap before Embedded Signup is App-Review
+ * approved — used for local testing and the Meta demo video.
+ */
+export const cloudManualSchema = z.object({
+    name: z.string().min(1).max(120).optional(),
+    phoneNumberId: z.string().min(1).max(64),
+    accessToken: z.string().min(1).max(1024),
+    wabaId: z.string().min(1).max(64).optional(),
+});

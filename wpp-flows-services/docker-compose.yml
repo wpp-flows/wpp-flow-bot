@@ -32,40 +32,6 @@ services:
       timeout: 3s
       retries: 10
 
-  evolution-api:
-    container_name: evolution_api
-    image: evoapicloud/evolution-api:v2.3.7
-    restart: always
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8081:8080"
-    environment:
-      SERVER_URL: http://localhost:8081
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-key}
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://postgres:postgres@postgres:5432/evolution?schema=public
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/evolution?schema=public
-      DATABASE_CONNECTION_CLIENT_NAME: evolution_exchange
-      CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/6
-      CACHE_REDIS_PREFIX_KEY: evolution
-      CACHE_REDIS_SAVE_INSTANCES: "true"
-      CACHE_LOCAL_ENABLED: "false"
-      CONFIG_SESSION_PHONE_VERSION: 2.3000.1038839325
-      CONFIG_SESSION_PHONE_CLIENT: Chrome
-      CONFIG_SESSION_PHONE_NAME: Chrome
-      QRCODE_LIMIT: 30
-      QRCODE_COLOR: "#198754"
-    volumes:
-      - evolution_instances:/evolution/instances
-
   app:
     build:
       context: .
@@ -77,8 +43,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      evolution-api:
-        condition: service_started
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${APP_PORT:-8080}
@@ -86,19 +50,26 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-NKyP4cihK94XzTb6VDZLvJ6qdpzPbTxL}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173}
-      EVOLUTION_API_URL: http://evolution-api:8080
-      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-key}
-      EVOLUTION_WEBHOOK_URL: http://app:8080
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       # isso aqui nao vai rodar em dev de qlqr forma, só deixei pra nao quebrar build
       PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET}
+      # WhatsApp Cloud API (Meta) — passados do host/.env. Todos opcionais pro
+      # boot: a plataforma sobe sem eles, mas o Embedded Signup e o envio de
+      # mensagens só funcionam com eles preenchidos. Onde achar cada um: README.
+      META_APP_ID: ${META_APP_ID}
+      META_APP_SECRET: ${META_APP_SECRET}
+      META_SYSTEM_USER_TOKEN: ${META_SYSTEM_USER_TOKEN}
+      META_EMBEDDED_SIGNUP_CONFIG_ID: ${META_EMBEDDED_SIGNUP_CONFIG_ID}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN}
+      META_GRAPH_VERSION: ${META_GRAPH_VERSION:-v21.0}
+      META_PHONE_REGISTER_PIN: ${META_PHONE_REGISTER_PIN:-152663}
+      WHATSAPP_TOKEN_ENC_KEY: ${WHATSAPP_TOKEN_ENC_KEY}
     ports:
       - "8080:8080"
 
 volumes:
   postgres-data:
   redis-data:
-  evolution_instances:

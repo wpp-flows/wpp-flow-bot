@@ -24,27 +24,12 @@ services:
         aliases:
           - wpp-flows-redis
 
-  evolution-api:
-    image: ${EVOLUTION_IMAGE}
-    restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-    env_file:
-      - .env
-    volumes:
-      - evolution-data:/evolution/instances
-    networks:
-      - wpp-flows-network
-
   app:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-      evolution-api:
-        condition: service_started
     env_file:
       - .env
     expose:
@@ -69,7 +54,6 @@ services:
 
 volumes:
   redis-data:
-  evolution-data:
 networks:
   wpp-flows-network:
     driver: bridge
