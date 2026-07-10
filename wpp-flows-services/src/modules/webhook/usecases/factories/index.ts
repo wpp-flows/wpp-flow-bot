@@ -3,16 +3,14 @@ import { conversationRepo, messageRepo } from "@/modules/chat/usecases/factories
 import { customerRepo } from "@/modules/customer/usecases/factories";
 import { flowRepo } from "@/modules/flow/usecases/factories";
 import { orderRepo } from "@/modules/order/usecases/factories";
-import { notificationEmitter } from "@/modules/notification/usecases/factories";
 import { organizationRepo } from "@/modules/organization/usecases/factories";
 import { FlowRunner } from "../flow-runner";
 import { FlowStateMachine } from "../flow/flow-state-machine";
 import { FlowStepSender } from "../flow/flow-step-sender";
 import { paymentTimeoutScheduler } from "../flow/scheduler/payment-timeout-scheduler";
 import { defaultStepStrategies } from "../flow/strategies";
-import { HandleEvolutionEventUseCase } from "../handle-evolution-event";
+import { HandleCloudEventUseCase } from "../cloud/handle-cloud-event";
 import { PostPaymentHandler } from "../post-payment/post-payment-handler";
-import { defaultWebhookStrategies } from "../strategies";
 
 const flowStateMachine = new FlowStateMachine();
 const flowStepSender = new FlowStepSender(defaultStepStrategies());
@@ -29,8 +27,6 @@ export const flowRunner = new FlowRunner(
 
 paymentTimeoutScheduler.start();
 
-const webhookStrategies = defaultWebhookStrategies();
-
 const postPaymentHandler = new PostPaymentHandler(
     organizationRepo,
     orderRepo,
@@ -39,14 +35,11 @@ const postPaymentHandler = new PostPaymentHandler(
     messageRepo,
 );
 
-export const makeHandleEvolutionEvent = () =>
-    new HandleEvolutionEventUseCase(
+export const makeHandleCloudEvent = () =>
+    new HandleCloudEventUseCase(
         botRepo,
         conversationRepo,
         messageRepo,
-        customerRepo,
         flowRunner,
-        notificationEmitter,
         postPaymentHandler,
-        webhookStrategies,
     );

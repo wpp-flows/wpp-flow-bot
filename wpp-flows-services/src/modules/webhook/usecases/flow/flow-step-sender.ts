@@ -1,4 +1,5 @@
-import { evolutionApi } from "@/infrastructure/evolution/client";
+import { senderFor } from "@/infrastructure/whatsapp";
+import type { Bot } from "@/modules/bot/repositories/bot-repo";
 import type { FlowStep } from "@/modules/flow/repositories/flow-repo";
 import { type SendResult, TYPING_DELAY_MS } from "./flow-shared";
 import type {
@@ -23,22 +24,26 @@ export class FlowStepSender {
     }
 
     /**
-     * Fires the "digitando…" presence and waits {@link TYPING_DELAY_MS} so the
-     * customer actually sees the indicator before the message lands. The
-     * presence call is fire-and-forget — awaiting it serialized two round-trips
-     * (presence + sendText) and noticeably delayed the first reply after the
-     * Evolution instance came online.
+     * Fires the "digitando…" indicator and waits {@link TYPING_DELAY_MS} so the
+     * customer actually sees it before the message lands. The gateway call is
+     * fire-and-forget — awaiting it would serialize two round-trips (indicator
+     * + send) and add avoidable latency to every reply.
+     *
+     * On Cloud the indicator is a mark-read of the customer's triggering
+     * message, so it needs `inboundMessageId`; without one there's nothing to
+     * show and we skip the pacing sleep too.
      */
-    async indicateTyping(instanceName: string, phoneNumber: string): Promise<void> {
-        void evolutionApi
-            .sendPresence({
-                instanceName,
-                number: phoneNumber,
-                presence: "composing",
-                delayMs: TYPING_DELAY_MS,
-            })
-            .catch((err) => {
-                console.warn("sendPresence failed (best-effort):", err);
+    async indicateTyping(
+        bot: Bot,
+        phoneNumber: string,
+        inboundMessageId?: string | null,
+    ): Promise<void> {
+        if (!inboundMessageId) return;
+        const { gateway, transport } = senderFor(bot);
+        void gateway
+            .indicateTyping(transport, phoneNumber, inboundMessageId)
+            .catch((err: unknown) => {
+                console.warn("indicateTyping failed (best-effort):", err);
             });
         await new Promise<void>((resolve) => setTimeout(resolve, TYPING_DELAY_MS));
     }

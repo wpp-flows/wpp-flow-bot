@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Power, Trash2, RefreshCw, Phone, Hash, Bot, BotOff, QrCode } from 'lucide-react';
+import { MoreVertical, Trash2, RefreshCw, Phone, BadgeCheck, Bot, BotOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -19,67 +19,11 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
 
   const refresh = () => invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
 
-  const connect = useMutation({
-    mutationFn: () => botService.connect(bot.id),
-    onSuccess: (updated) => {
-      refresh();
-      if (updated.status === 'ONLINE') {
-        toast.success(`${bot.name} esta online`);
-      } else if (updated.qrCode) {
-        toast.info('Escaneie o QR code com o WhatsApp para concluir a conexao.');
-      } else {
-        toast.info('Gerando QR code...');
-      }
-    },
-    onError: (err) => {
-      const apiErr = err as { status?: number; message?: string };
-      if (apiErr.status === 503) {
-        toast.warning(
-          'Sem QR code ainda',
-          apiErr.message ?? 'Tente clicar em Conectar novamente em alguns segundos.',
-        );
-      } else {
-        toast.error('Nao foi possivel conectar', apiErr.message);
-      }
-    },
-  });
-
-  const reconnect = useMutation({
-    mutationFn: () => botService.reconnect(bot.id),
-    onSuccess: (updated) => {
-      refresh();
-      if (updated.qrCode) {
-        toast.info('Novo QR gerado', 'Escaneie com o WhatsApp para reconectar.');
-      } else {
-        toast.info('Sessão reiniciada', 'Gerando novo QR...');
-      }
-    },
-    onError: (err) => {
-      const apiErr = err as { status?: number; message?: string };
-      if (apiErr.status === 503) {
-        toast.warning(
-          'QR ainda não pronto',
-          apiErr.message ?? 'Tente "Gerar novo QR" novamente em alguns segundos.',
-        );
-      } else {
-        toast.error('Não foi possível reconectar', apiErr.message);
-      }
-    },
-  });
-
-  const disconnect = useMutation({
-    mutationFn: () => botService.disconnect(bot.id),
-    onSuccess: () => {
-      refresh();
-      toast.info(`${bot.name} desconectado`);
-    },
-  });
-
   const remove = useMutation({
     mutationFn: () => botService.remove(bot.id),
     onSuccess: () => {
       refresh();
-      toast.success('Bot excluido', `${bot.name} foi removido.`);
+      toast.success('Bot removido', `${bot.name} foi desconectado.`);
       setConfirmDelete(false);
     },
   });
@@ -90,17 +34,21 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
       refresh();
       toast.info(
         next
-          ? 'Bot ativado — respostas automaticas retomadas em todas as conversas.'
-          : 'Bot desativado globalmente — respostas automaticas pausadas em todas as conversas.',
+          ? 'Bot ativado — respostas automáticas retomadas em todas as conversas.'
+          : 'Bot desativado — respostas automáticas pausadas em todas as conversas.',
       );
     },
     onError: (err) => {
       const apiErr = err as { message?: string };
-      toast.error('Nao foi possivel alterar o bot', apiErr.message);
+      toast.error('Não foi possível alterar o bot', apiErr.message);
     },
   });
 
   const isOnline = bot.status === 'ONLINE';
+  const identity = bot.verifiedName ?? bot.displayPhoneNumber ?? bot.phoneNumber ?? null;
+  // Set by the backend when a Graph send got 401/403 — the restaurant revoked
+  // or lost the authorization and must run "Conectar WhatsApp" again.
+  const needsReauth = Boolean(bot.tokenStatus && bot.tokenStatus !== 'ACTIVE');
 
   return (
     <>
@@ -122,6 +70,14 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              {needsReauth ? (
+                <span
+                  className="rounded-full bg-destructive-soft px-2 py-0.5 text-2xs font-medium text-destructive"
+                  title="A autorização com a Meta expirou ou foi revogada. Use 'Conectar WhatsApp' para reautorizar este número."
+                >
+                  Reautorizar
+                </span>
+              ) : null}
               {!bot.isActive ? (
                 <span className="rounded-full bg-warning-soft px-2 py-0.5 text-2xs font-medium text-warning">
                   Pausado
@@ -134,7 +90,7 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                   variant="ghost"
                   onClick={() => setMenuOpen((v) => !v)}
                   onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
-                  aria-label="Acoes do bot"
+                  aria-label="Ações do bot"
                 >
                   <MoreVertical />
                 </IconButton>
@@ -145,24 +101,6 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     menuOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95',
                   )}
                 >
-                  <button
-                    type="button"
-                    onMouseDown={() => (isOnline ? disconnect.mutate() : connect.mutate())}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <Power className="h-3.5 w-3.5" />
-                    {isOnline ? 'Desconectar' : 'Conectar'}
-                  </button>
-                  {!isOnline ? (
-                    <button
-                      type="button"
-                      onMouseDown={() => reconnect.mutate()}
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                    >
-                      <QrCode className="h-3.5 w-3.5" />
-                      Gerar novo QR
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     onMouseDown={() => refresh()}
@@ -177,78 +115,63 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive-soft"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Excluir bot
+                    Remover bot
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {bot.qrCode && bot.status !== 'ONLINE' ? (
-            <QrPanel
-              qrCode={bot.qrCode}
-              onReconnect={() => reconnect.mutate()}
-              reconnecting={reconnect.isPending}
-            />
-          ) : null}
-
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Phone className="h-3 w-3" />
-              <span className="font-mono">{bot.phoneNumber ?? 'Nao atribuido'}</span>
+              <span className="font-mono">{bot.displayPhoneNumber ?? bot.phoneNumber ?? 'Não atribuído'}</span>
             </div>
+            {identity ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <BadgeCheck className="h-3 w-3" />
+                <span>{identity}</span>
+              </div>
+            ) : null}
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Hash className="h-3 w-3" />
+              <RefreshCw className="h-3 w-3" />
               <span>
                 {bot.lastConnectedAt
-                  ? `Última conexão ${formatRelativeTime(bot.lastConnectedAt)}`
-                  : 'Nunca conectado'}
+                  ? `Conectado ${formatRelativeTime(bot.lastConnectedAt)}`
+                  : 'WhatsApp oficial (Meta)'}
               </span>
             </div>
           </div>
 
+          {needsReauth ? (
+            <p className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-2xs text-destructive text-pretty">
+              A autorização com a Meta expirou ou foi revogada — as mensagens
+              deste número não estão sendo enviadas. Clique em{' '}
+              <b>Conectar WhatsApp</b> (no topo da página) e escolha este mesmo
+              número para reautorizar.
+            </p>
+          ) : null}
+
           <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              {isOnline ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => disconnect.mutate()}
-                  loading={disconnect.isPending}
-                >
-                  Desconectar
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => connect.mutate()}
-                  loading={connect.isPending}
-                >
-                  Conectar
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant={bot.isActive ? 'outline' : 'primary'}
-                className="flex-1"
-                leftIcon={bot.isActive ? <BotOff /> : <Bot />}
-                onClick={() => toggleIsActive.mutate(!bot.isActive)}
-                loading={toggleIsActive.isPending}
-                title={
-                  bot.isActive
-                    ? 'Pausa as respostas automaticas do bot em todas as conversas, sem desconectar o WhatsApp.'
-                    : 'Retoma as respostas automaticas do bot em todas as conversas.'
-                }
-              >
-                {bot.isActive ? 'Desativar' : 'Ativar'}
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant={bot.isActive ? 'outline' : 'primary'}
+              className="w-full"
+              leftIcon={bot.isActive ? <BotOff /> : <Bot />}
+              onClick={() => toggleIsActive.mutate(!bot.isActive)}
+              loading={toggleIsActive.isPending}
+              title={
+                bot.isActive
+                  ? 'Pausa as respostas automáticas do bot em todas as conversas, sem desconectar o WhatsApp.'
+                  : 'Retoma as respostas automáticas do bot em todas as conversas.'
+              }
+            >
+              {bot.isActive ? 'Desativar automação' : 'Ativar automação'}
+            </Button>
             <p className="text-2xs text-muted-foreground text-pretty">
               {bot.isActive
-                ? 'Desativar pausa as respostas automaticas em todas as conversas, sem desconectar o WhatsApp.'
-                : 'Automação pausada globalmente — o WhatsApp permanece conectado.'}
+                ? 'Desativar pausa as respostas automáticas em todas as conversas, sem desconectar o WhatsApp.'
+                : 'Automação pausada — o WhatsApp permanece conectado.'}
             </p>
           </div>
         </CardContent>
@@ -257,8 +180,8 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        title="Excluir este bot?"
-        description={`${bot.name} sera removido permanentemente e as conversas arquivadas.`}
+        title="Remover este bot?"
+        description={`${bot.name} será removido e as conversas arquivadas.`}
         size="sm"
         footer={
           <>
@@ -266,50 +189,15 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
               Cancelar
             </Button>
             <Button variant="destructive" onClick={() => remove.mutate()} loading={remove.isPending}>
-              Sim, excluir
+              Sim, remover
             </Button>
           </>
         }
       >
         <p className="text-sm text-muted-foreground">
-          Esta ação não pode ser desfeita. A instância tambem será encerrada.
+          Esta ação não pode ser desfeita. O número pode ser reconectado depois via Embedded Signup.
         </p>
       </Modal>
     </>
-  );
-}
-
-function QrPanel({
-  qrCode,
-  onReconnect,
-  reconnecting,
-}: Readonly<{ qrCode: string; onReconnect: () => void; reconnecting: boolean }>) {
-  const isImage = qrCode.startsWith('data:');
-  return (
-    <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
-      <p className="text-2xs uppercase tracking-wider text-muted-foreground">
-        Escanear com WhatsApp
-      </p>
-      {isImage ? (
-        <img src={qrCode} alt="QR do WhatsApp" className="mx-auto mt-2 h-40 w-40" />
-      ) : (
-        <>
-          <p className="mt-2 text-2xs text-muted-foreground">
-            Codigo de pareamento (cole no WhatsApp › Dispositivos conectados ›
-            Vincular com numero de telefone)
-          </p>
-          <p className="mt-1 break-all font-mono text-xs font-semibold">{qrCode}</p>
-        </>
-      )}
-      <button
-        type="button"
-        onClick={onReconnect}
-        disabled={reconnecting}
-        className="mx-auto mt-3 flex items-center gap-1.5 rounded-md px-2 py-1 text-2xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-      >
-        <QrCode className="h-3 w-3" />
-        {reconnecting ? 'Gerando novo QR...' : 'QR nao funciona? Gerar um novo'}
-      </button>
-    </div>
   );
 }

@@ -45,7 +45,11 @@ app.register(fastifyMultipart, {
 });
 
 // tava dando uns erro random de webhook, isso aq soluciona
-app.addContentTypeParser("*", { parseAs: "string" }, (_req, body, done) => {
+app.addContentTypeParser("*", { parseAs: "string" }, (req, body, done) => {
+  // Stash the raw string so signature-verified webhooks (Meta Cloud API's
+  // X-Hub-Signature-256) can HMAC the exact bytes we received.
+  (req as { rawBody?: string }).rawBody =
+    typeof body === "string" ? body : undefined;
   if (!body || (typeof body === "string" && body.length === 0)) {
     done(null, undefined);
     return;

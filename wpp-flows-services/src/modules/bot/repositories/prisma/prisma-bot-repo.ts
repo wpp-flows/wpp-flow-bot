@@ -10,12 +10,20 @@ const toBot = (row: any): Bot => ({
     id: row.id,
     organizationId: row.organizationId,
     name: row.name,
-    evolutionInstanceName: row.evolutionInstanceName,
+    // Defaults keep pre-migration rows (no `provider` column yet) on Evolution.
+    provider: (row.provider as Bot["provider"]) ?? "EVOLUTION",
+    evolutionInstanceName: row.evolutionInstanceName ?? null,
     phoneNumber: row.phoneNumber,
     status: row.status as BotStatus,
     desiredState: row.desiredState as BotDesiredState,
     qrCode: row.qrCode,
     webhookUrl: row.webhookUrl,
+    wabaId: row.wabaId ?? null,
+    phoneNumberId: row.phoneNumberId ?? null,
+    accessToken: row.accessToken ?? null,
+    displayPhoneNumber: row.displayPhoneNumber ?? null,
+    verifiedName: row.verifiedName ?? null,
+    tokenStatus: row.tokenStatus ?? null,
     flowId: row.flowId,
     lastConnectedAt: row.lastConnectedAt,
     recoveryAttempts: row.recoveryAttempts,
@@ -61,36 +69,25 @@ export class PrismaBotRepository implements BotRepository {
         return row ? toBot(row) : null;
     }
 
-    async create(data: {
-        organizationId: string;
-        name: string;
-        evolutionInstanceName: string;
-        phoneNumber?: string;
-        webhookUrl?: string;
-        flowId?: string | null;
-    }): Promise<Bot> {
+    async findByPhoneNumberId(phoneNumberId: string): Promise<Bot | null> {
+        // `as any`: the generated Prisma client only learns `phoneNumberId` is a
+        // unique field after `npm run migrate` regenerates it. Safe to drop the
+        // cast once that's run.
+        const row = await prisma.bot.findFirst({
+            where: { phoneNumberId } as any,
+        });
+        return row ? toBot(row) : null;
+    }
+
+    // `data: any` on both writes: the generated Prisma client doesn't know the
+    // new Cloud columns (provider/wabaId/…) until `npm run migrate` regenerates
+    // it. The typed contract lives on the BotRepository interface.
+    async create(data: any): Promise<Bot> {
         const row = await prisma.bot.create({ data });
         return toBot(row);
     }
 
-    async update(
-        id: string,
-        data: Partial<{
-            name: string;
-            evolutionInstanceName: string;
-            phoneNumber: string | null;
-            webhookUrl: string | null;
-            flowId: string | null;
-            status: BotStatus;
-            desiredState: BotDesiredState;
-            qrCode: string | null;
-            lastConnectedAt: Date | null;
-            recoveryAttempts: number;
-            lastRecoveryAt: Date | null;
-            lastDisconnectNotifiedAt: Date | null;
-            isActive: boolean;
-        }>
-    ): Promise<Bot> {
+    async update(id: string, data: any): Promise<Bot> {
         const row = await prisma.bot.update({ where: { id }, data });
         return toBot(row);
     }

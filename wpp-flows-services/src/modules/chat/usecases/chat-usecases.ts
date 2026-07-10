@@ -1,8 +1,8 @@
-import { evolutionApi } from "@/infrastructure/evolution/client";
+import { senderFor } from "@/infrastructure/whatsapp";
 import { orgEventBus } from "@/infrastructure/events/event-bus";
 import { NotFoundError } from "@/shared/exceptions/http";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
-import { jidToSendTarget } from "@/modules/webhook/usecases/strategies/shared";
+import { jidToSendTarget } from "@/shared/whatsapp-jid";
 import type {
     Conversation,
     ConversationFilters,
@@ -79,15 +79,16 @@ export class SendMessageUseCase {
         const bot = await this.botRepo.findByIdInOrg(input.organizationId, conv.botId);
         if (!bot) throw new NotFoundError("Bot");
 
-        const evolutionResp = await evolutionApi.sendText({
-            instanceName: bot.evolutionInstanceName,
-            number: jidToSendTarget(conv.remoteJid),
-            text: input.content,
-        });
+        const { gateway, transport } = senderFor(bot);
+        const sent = await gateway.sendText(
+            transport,
+            jidToSendTarget(conv.remoteJid),
+            input.content,
+        );
 
         const message = await this.messageRepo.create({
             conversationId: conv.id,
-            evolutionMessageId: evolutionResp.key.id,
+            evolutionMessageId: sent.messageId,
             author: input.author ?? "AGENT",
             content: input.content,
             status: "SENT",

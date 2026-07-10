@@ -1,11 +1,15 @@
-import { evolutionApi } from "@/infrastructure/evolution/client";
+import { senderFor } from "@/infrastructure/whatsapp";
 import type { BotRepository } from "@/modules/bot/repositories/bot-repo";
 import type {
     ConversationRepository,
     MessageRepository,
 } from "@/modules/chat/repositories/chat-repo";
-import { jidToSendTarget } from "@/modules/webhook/usecases/strategies/shared";
+import { jidToSendTarget } from "@/shared/whatsapp-jid";
+import { orderNumberOf } from "@/modules/public-orders/usecases/shared";
+import { statusTemplateFor } from "@/modules/public-orders/usecases/whatsapp-templates";
 import type { Order, OrderStatus } from "../repositories/order-repo";
+
+const CUSTOMER_SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export class NotifyCustomerOrderStatusChangeUseCase {
     constructor(
@@ -30,18 +34,28 @@ export class NotifyCustomerOrderStatusChangeUseCase {
             order.organizationId,
             conversation.botId,
         );
-        if (!bot?.evolutionInstanceName) return;
-        if (!bot.isActive) return;
+        if (!bot?.isActive) return;
+
+        // On Cloud API outside the 24h window, a free-form status text is
+        // rejected — fall back to the approved template for this status.
+        const withinWindow =
+            !!conversation.lastInboundAt &&
+            Date.now() - conversation.lastInboundAt.getTime() <
+            CUSTOMER_SERVICE_WINDOW_MS;
+        const template = statusTemplateFor(newStatus, orderNumberOf(order.sequence));
+        const useTemplate =
+            bot.provider === "CLOUD_API" && !!template && !withinWindow;
 
         try {
-            const sent = await evolutionApi.sendText({
-                instanceName: bot.evolutionInstanceName,
-                number: jidToSendTarget(conversation.remoteJid),
-                text,
-            });
+            const { gateway, transport } = senderFor(bot);
+            const target = jidToSendTarget(conversation.remoteJid);
+            const sent =
+                useTemplate && template
+                    ? await gateway.sendTemplate(transport, target, template)
+                    : await gateway.sendText(transport, target, text);
             await this.messageRepo.create({
                 conversationId: conversation.id,
-                evolutionMessageId: sent.key.id,
+                evolutionMessageId: sent.messageId,
                 author: "BOT",
                 content: text,
                 status: "SENT",

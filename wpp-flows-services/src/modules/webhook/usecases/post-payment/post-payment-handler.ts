@@ -1,4 +1,4 @@
-import { evolutionApi } from "@/infrastructure/evolution/client";
+import { senderFor } from "@/infrastructure/whatsapp";
 import type { Bot } from "@/modules/bot/repositories/bot-repo";
 import type {
     Conversation,
@@ -9,7 +9,7 @@ import type { CustomerRepository } from "@/modules/customer/repositories/custome
 import type { Order, OrderRepository } from "@/modules/order/repositories/order-repo";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
 import { renderOrderTemplate } from "@/modules/organization/order-template";
-import { jidToSendTarget } from "../strategies/shared";
+import { jidToSendTarget } from "@/shared/whatsapp-jid";
 
 /**
  * Matches the deep-link template the public-checkout success page seeds into
@@ -69,14 +69,15 @@ export class PostPaymentHandler {
                 : buildDefaultAcknowledgement(order);
 
         try {
-            const sent = await evolutionApi.sendText({
-                instanceName: input.bot.evolutionInstanceName,
-                number: jidToSendTarget(input.conversation.remoteJid),
-                text: reply,
-            });
+            const { gateway, transport } = senderFor(input.bot);
+            const sent = await gateway.sendText(
+                transport,
+                jidToSendTarget(input.conversation.remoteJid),
+                reply,
+            );
             await this.messageRepo.create({
                 conversationId: input.conversation.id,
-                evolutionMessageId: sent.key.id,
+                evolutionMessageId: sent.messageId,
                 author: "BOT",
                 content: reply,
                 status: "SENT",

@@ -1,19 +1,20 @@
+import { env } from "@/infrastructure/config/env";
 import { Route } from "@/infrastructure/http/decorators/route-decorator";
 import { requireOrganization } from "@/infrastructure/http/middlewares/auth";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
-    makeConnectBot,
-    makeCreateBot,
     makeDeleteBot,
-    makeDisconnectBot,
-    makeForceReconnectBot,
     makeGetBot,
-    makeGetBotConnectionState,
     makeListBots,
+    makeRegisterCloudBot,
     makeSetBotIsActive,
     makeUpdateBot,
 } from "../../usecases/factories";
-import { createBotSchema, setBotIsActiveSchema, updateBotSchema } from "../schema";
+import {
+    embeddedSignupSchema,
+    setBotIsActiveSchema,
+    updateBotSchema,
+} from "../schema";
 
 export class BotController {
     @Route("GET", "/api/bots", { middlewares: [requireOrganization] })
@@ -22,10 +23,28 @@ export class BotController {
         return reply.send(result);
     }
 
-    @Route("POST", "/api/bots", { middlewares: [requireOrganization] })
-    async create(request: FastifyRequest, reply: FastifyReply) {
-        const body = createBotSchema.parse(request.body);
-        const result = await makeCreateBot().execute({
+    /** Public config the frontend needs to launch the Embedded Signup popup. */
+    @Route("GET", "/api/bots/embedded-signup/config", {
+        middlewares: [requireOrganization],
+    })
+    async embeddedSignupConfig(_request: FastifyRequest, reply: FastifyReply) {
+        return reply.send({
+            appId: env.META_APP_ID ?? null,
+            configId: env.META_EMBEDDED_SIGNUP_CONFIG_ID ?? null,
+            graphVersion: env.META_GRAPH_VERSION,
+            configured: Boolean(
+                env.META_APP_ID && env.META_EMBEDDED_SIGNUP_CONFIG_ID,
+            ),
+        });
+    }
+
+    /** Completes Embedded Signup and provisions a CLOUD_API bot. */
+    @Route("POST", "/api/bots/embedded-signup", {
+        middlewares: [requireOrganization],
+    })
+    async embeddedSignup(request: FastifyRequest, reply: FastifyReply) {
+        const body = embeddedSignupSchema.parse(request.body);
+        const result = await makeRegisterCloudBot().execute({
             organizationId: request.organizationId,
             ...body,
         });
@@ -62,50 +81,6 @@ export class BotController {
             id,
         });
         return reply.status(204).send();
-    }
-
-    @Route("POST", "/api/bots/:id/connect", { middlewares: [requireOrganization] })
-    async connect(request: FastifyRequest, reply: FastifyReply) {
-        const { id } = request.params as { id: string };
-        const result = await makeConnectBot().execute({
-            organizationId: request.organizationId,
-            id,
-        });
-        return reply.send(result);
-    }
-
-    @Route("POST", "/api/bots/:id/reconnect", {
-        middlewares: [requireOrganization],
-    })
-    async reconnect(request: FastifyRequest, reply: FastifyReply) {
-        const { id } = request.params as { id: string };
-        const result = await makeForceReconnectBot().execute({
-            organizationId: request.organizationId,
-            id,
-        });
-        return reply.send(result);
-    }
-
-    @Route("POST", "/api/bots/:id/disconnect", {
-        middlewares: [requireOrganization],
-    })
-    async disconnect(request: FastifyRequest, reply: FastifyReply) {
-        const { id } = request.params as { id: string };
-        const result = await makeDisconnectBot().execute({
-            organizationId: request.organizationId,
-            id,
-        });
-        return reply.send(result);
-    }
-
-    @Route("GET", "/api/bots/:id/state", { middlewares: [requireOrganization] })
-    async state(request: FastifyRequest, reply: FastifyReply) {
-        const { id } = request.params as { id: string };
-        const result = await makeGetBotConnectionState().execute({
-            organizationId: request.organizationId,
-            id,
-        });
-        return reply.send(result);
     }
 
     @Route("PATCH", "/api/bots/:id/is-active", {

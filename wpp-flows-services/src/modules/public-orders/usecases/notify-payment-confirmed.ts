@@ -3,6 +3,8 @@ import type { Order } from "@/modules/order/repositories/order-repo";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
 import { renderOrderTemplate } from "@/modules/organization/order-template";
 import type { OrderCustomerNotifier } from "./order-customer-notifier";
+import { orderNumberOf } from "./shared";
+import { orderTemplate, WA_TEMPLATES } from "./whatsapp-templates";
 
 const DEFAULT_RECEIVED_MESSAGE = [
     "✅ Pedido {{order_number}} confirmado, recebemos seu pagamento!",
@@ -35,6 +37,10 @@ export class NotifyPaymentConfirmedUseCase {
             phone: customer.phone,
             contactName: customer.name,
             text,
+            template: orderTemplate(
+                WA_TEMPLATES.paymentConfirmed,
+                orderNumberOf(order.sequence),
+            ),
         });
     }
 }

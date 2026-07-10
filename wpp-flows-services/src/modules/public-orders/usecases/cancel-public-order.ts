@@ -5,6 +5,8 @@ import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import { paymentTimeoutScheduler } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import { NotFoundError, ValidationError } from "@/shared/exceptions/http";
 import type { OrderCustomerNotifier } from "./order-customer-notifier";
+import { orderNumberOf } from "./shared";
+import { orderTemplate, WA_TEMPLATES } from "./whatsapp-templates";
 
 const DEFAULT_CANCEL_MESSAGE =
     "Que pena, quem sabe na próxima! Seu pedido foi cancelado.";
@@ -50,6 +52,10 @@ export class CancelPublicOrderUseCase {
             phone: customer.phone,
             contactName: customer.name,
             text,
+            template: orderTemplate(
+                WA_TEMPLATES.orderCanceled,
+                orderNumberOf(order.sequence),
+            ),
         });
     }
 }
