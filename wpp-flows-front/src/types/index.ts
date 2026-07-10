@@ -10,7 +10,15 @@ export type {
   InvitationTokenInfo,
   AcceptInvitationPayload,
 } from './auth';
-export type { BotInstance, BotStatus, CreateBotPayload, UpdateBotPayload } from './bot';
+export type {
+  BotInstance,
+  BotStatus,
+  BotProvider,
+  CreateBotPayload,
+  UpdateBotPayload,
+  EmbeddedSignupConfig,
+  EmbeddedSignupPayload,
+} from './bot';
 export type {
   MenuItem,
   MenuItemOption,

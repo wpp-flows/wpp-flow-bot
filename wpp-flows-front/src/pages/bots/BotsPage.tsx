@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bot as BotIcon, Clock, Plus, Search } from 'lucide-react';
+import { Bot as BotIcon, Clock, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { queryKeys } from '@/lib/queryClient';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { BotCard } from './components/BotCard';
-import { CreateBotModal } from './components/CreateBotModal';
+import { ConnectWhatsAppButton } from './components/ConnectWhatsAppButton';
 import { OrgWorkingHoursModal } from './components/OrgWorkingHoursModal';
 import type { BotStatus } from '@/types';
 
@@ -20,7 +20,6 @@ type StatusFilter = 'all' | BotStatus;
 
 export function BotsPage() {
   const { organization } = useAuth();
-  const [createOpen, setCreateOpen] = useState(false);
   const [workingHoursOpen, setWorkingHoursOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -46,7 +45,7 @@ export function BotsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Bots"
-        description="Cada bot é uma instancia do WhatsApp. Conecte, monitore e gerencie aqui."
+        description="Cada bot é um número oficial do WhatsApp (Meta) conectado via Embedded Signup. Conecte, monitore e gerencie aqui."
         actions={
           <>
             <Button
@@ -56,9 +55,7 @@ export function BotsPage() {
             >
               Horário de atendimento
             </Button>
-            <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
-              Novo bot
-            </Button>
+            <ConnectWhatsAppButton />
           </>
         }
       />
@@ -96,15 +93,11 @@ export function BotsPage() {
           title="Nenhum bot corresponde aos filtros"
           description={
             bots.data?.length === 0
-              ? 'Crie seu primeiro bot para comecar a enviar e receber mensagens no WhatsApp.'
+              ? 'Conecte o WhatsApp oficial (Meta) para começar a enviar e receber mensagens.'
               : 'Tente ajustar os filtros ou o termo de busca.'
           }
           action={
-            bots.data?.length === 0 ? (
-              <Button leftIcon={<Plus />} onClick={() => setCreateOpen(true)}>
-                Criar seu primeiro bot
-              </Button>
-            ) : undefined
+            bots.data?.length === 0 ? <ConnectWhatsAppButton /> : undefined
           }
         />
       ) : (
@@ -115,7 +108,6 @@ export function BotsPage() {
         </div>
       )}
 
-      <CreateBotModal open={createOpen} onClose={() => setCreateOpen(false)} />
       <OrgWorkingHoursModal
         organization={organization}
         open={workingHoursOpen}

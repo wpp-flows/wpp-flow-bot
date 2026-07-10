@@ -14,7 +14,7 @@ import type {
     FlowStep,
     FlowWithSteps,
 } from "@/modules/flow/repositories/flow-repo";
-import { evolutionApi } from "@/infrastructure/evolution/client";
+import { senderFor } from "@/infrastructure/whatsapp";
 import { orgEventBus } from "@/infrastructure/events/event-bus";
 import type { OrganizationRepository } from "@/modules/organization/repositories/organization-repo";
 import {
@@ -26,7 +26,7 @@ import type { FlowStateMachine } from "./flow/flow-state-machine";
 import type { FlowStepSender } from "./flow/flow-step-sender";
 import { findStep, nextStep, sortSteps } from "./flow/flow-step-helpers";
 import { type RenderContext } from "./render-message";
-import { jidToSendTarget } from "./strategies/shared";
+import { jidToSendTarget } from "@/shared/whatsapp-jid";
 
 /** Min interval between out-of-hours replies for the same conversation. */
 const OOH_COOLDOWN_MS = 30 * 60 * 1000;
@@ -59,6 +59,12 @@ export class FlowRunner {
     async handleInbound(input: {
         bot: Bot;
         conversation: Conversation;
+        /**
+         * wamid of the customer message that triggered this run. Cloud shows
+         * "typing…" by marking that message read, so without it the indicator
+         * is silently skipped.
+         */
+        inboundMessageId?: string | null;
     }): Promise<void> {
         const { bot, conversation } = input;
         if (!bot.isActive) return;
@@ -105,6 +111,7 @@ export class FlowRunner {
             state: transition.state,
             allSteps: sortedSteps,
             organization: org,
+            inboundMessageId: input.inboundMessageId ?? null,
         });
     }
 
@@ -166,9 +173,13 @@ export class FlowRunner {
         state: FlowState;
         allSteps: FlowStep[];
         organization: { slug: string; name: string } | null;
+        inboundMessageId: string | null;
     }): Promise<void> {
         let step = input.step;
         const state = input.state;
+        // Mark-read (which is what renders "typing…" on Cloud) only makes
+        // sense once per inbound — chained follow-up steps skip it.
+        let inboundMessageId = input.inboundMessageId;
 
         for (let i = 0; i < MAX_AUTO_CHAIN; i++) {
             const ok = await this.deliverStep({
@@ -178,8 +189,10 @@ export class FlowRunner {
                 step,
                 state,
                 organization: input.organization,
+                inboundMessageId,
             });
             if (!ok) return;
+            inboundMessageId = null;
 
             const next = nextStep(input.allSteps, step.id);
             if (!next) {
@@ -239,14 +252,15 @@ export class FlowRunner {
         text: string,
     ): Promise<void> {
         try {
-            const sent = await evolutionApi.sendText({
-                instanceName: bot.evolutionInstanceName,
-                number: jidToSendTarget(conversation.remoteJid),
+            const { gateway, transport } = senderFor(bot);
+            const sent = await gateway.sendText(
+                transport,
+                jidToSendTarget(conversation.remoteJid),
                 text,
-            });
+            );
             await this.messageRepo.create({
                 conversationId: conversation.id,
-                evolutionMessageId: sent.key.id,
+                evolutionMessageId: sent.messageId,
                 author: "BOT",
                 content: text,
                 status: "SENT",
@@ -275,6 +289,7 @@ export class FlowRunner {
         step: FlowStep;
         state: FlowState;
         organization: { slug: string; name: string } | null;
+        inboundMessageId: string | null;
     }): Promise<boolean> {
         const { bot, conversation, customer, step, state, organization } = input;
         const phoneNumber = jidToSendTarget(conversation.remoteJid);
@@ -288,8 +303,9 @@ export class FlowRunner {
 
         try {
             await this.stepSender.indicateTyping(
-                bot.evolutionInstanceName,
+                bot,
                 phoneNumber,
+                input.inboundMessageId,
             );
             const sent = await this.stepSender.sendStep({
                 bot,
@@ -300,7 +316,7 @@ export class FlowRunner {
 
             const message = await this.messageRepo.create({
                 conversationId: conversation.id,
-                evolutionMessageId: sent.evolutionResp.key.id,
+                evolutionMessageId: sent.messageId,
                 author: "BOT",
                 content: sent.preview,
                 status: "SENT",

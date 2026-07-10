@@ -85,16 +85,16 @@ const DELIVERY_STEPS: TourStep[] = [
         route: ROUTES.bots,
         title: 'Bots do WhatsApp',
         description:
-            'Aqui você cadastra e gerencia os bots que atendem seus clientes no WhatsApp. Cada bot conecta via <b>QR Code</b> e exibe um status: Online / Offline.',
+            'Aqui você gerencia os números do <b>WhatsApp oficial (Meta)</b> que atendem seus clientes. Cada bot mostra o número verificado, o status e o controle de automação.',
         side: 'right',
         align: 'start',
     },
     {
         id: 'page-actions',
         route: ROUTES.bots,
-        title: 'Novo bot',
+        title: 'Conectar WhatsApp',
         description:
-            'Cadastre um bot informando nome e número. Depois é só escanear o <b>QR Code</b> com o WhatsApp do estabelecimento. Se a conexão cair, dá pra regenerar a partir do card.',
+            'Clique em <b>Conectar WhatsApp</b> para vincular o número do restaurante pela própria Meta (login do Facebook + escolha do número).',
         side: 'bottom',
         align: 'end',
     },

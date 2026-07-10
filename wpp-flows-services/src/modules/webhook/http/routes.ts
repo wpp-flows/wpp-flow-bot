@@ -1,3 +1,3 @@
-import { WebhookController } from "./controllers/webhook-controller";
+import { CloudWebhookController } from "./controllers/cloud-webhook-controller";
 
-export const webhookRoutes = [new WebhookController()];
+export const webhookRoutes = [new CloudWebhookController()];

@@ -1,4 +1,4 @@
-import { EvolutionApiError } from "@/infrastructure/evolution/client";
+import { CloudApiError } from "@/infrastructure/whatsapp/cloud-api-client";
 import { HttpError } from "@/shared/exceptions/http";
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
@@ -19,7 +19,7 @@ export function globalErrorHandler(
         return reply.status(error.status).send({ error: error.message });
     }
 
-    if (error instanceof EvolutionApiError) {
+    if (error instanceof CloudApiError) {
         return reply.status(502).send({
             error: error.message,
             details: error.body,

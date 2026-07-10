@@ -187,17 +187,36 @@ enum BotDesiredState {
   DISCONNECTED
 }
 
+/// Transport backing a bot. EVOLUTION = legacy unofficial Baileys instance;
+/// CLOUD_API = Meta's official WhatsApp Cloud API (Embedded Signup).
+enum BotProvider {
+  EVOLUTION
+  CLOUD_API
+}
+
 model Bot {
   id                       String          @id @default(uuid())
   organizationId           String
   organization             Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name                     String
-  evolutionInstanceName    String          @unique
+  provider                 BotProvider     @default(EVOLUTION)
+  evolutionInstanceName    String?         @unique
   phoneNumber              String?
   status                   BotStatus       @default(CONNECTING)
   desiredState             BotDesiredState @default(CONNECTED)
   qrCode                   String?
   webhookUrl               String?
+  /// CLOUD_API — WhatsApp Business Account id + the specific phone number id
+  /// events are routed by. `accessToken` is the client's long-lived token,
+  /// encrypted at rest (AES-256-GCM, see token-crypto).
+  wabaId                   String?
+  phoneNumberId            String?         @unique
+  accessToken              String?
+  displayPhoneNumber       String?
+  verifiedName             String?
+  /// "ACTIVE" | "EXPIRED" | "REVOKED" — surfaced so the dashboard can prompt a
+  /// re-auth without us attempting a doomed send.
+  tokenStatus              String?
   flowId                   String?
   flow                     Flow?           @relation(fields: [flowId], references: [id], onDelete: SetNull)
   lastConnectedAt          DateTime?       @db.Timestamptz
@@ -211,6 +230,7 @@ model Bot {
   conversations Conversation[]
 
   @@index([organizationId])
+  @@index([wabaId])
   @@map("bot")
 }
 
@@ -340,6 +360,10 @@ model Conversation {
   /// re-firing the flow while the customer is in active back-and-forth so
   /// operators can take over without the bot spamming over them.
   lastBotReplyAt     DateTime?          @db.Timestamptz
+  /// Timestamp of the customer's most recent inbound message. Drives Meta's
+  /// 24-hour customer-service window: within 24h we may send free-form text;
+  /// outside it, proactive messages must be pre-approved templates.
+  lastInboundAt      DateTime?          @db.Timestamptz
   createdAt          DateTime           @default(now()) @db.Timestamptz
   updatedAt          DateTime           @updatedAt @db.Timestamptz
 

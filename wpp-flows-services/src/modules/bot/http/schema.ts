@@ -17,3 +17,10 @@ export const updateBotSchema = z.object({
 export const setBotIsActiveSchema = z.object({
     isActive: z.boolean(),
 });
+
+export const embeddedSignupSchema = z.object({
+    name: z.string().min(1).max(120).optional(),
+    code: z.string().min(1).max(1024),
+    wabaId: z.string().min(1).max(64),
+    phoneNumberId: z.string().min(1).max(64),
+});

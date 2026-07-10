@@ -23,6 +23,8 @@ export interface Conversation {
     currentStepId: string | null;
     flowState: FlowState | null;
     lastBotReplyAt: Date | null;
+    /** Customer's last inbound timestamp — drives Meta's 24h service window. */
+    lastInboundAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -82,6 +84,7 @@ export interface ConversationRepository {
             contactName: string;
             contactAvatar: string | null;
             lastBotReplyAt: Date | null;
+            lastInboundAt: Date | null;
         }>
     ): Promise<Conversation>;
 }

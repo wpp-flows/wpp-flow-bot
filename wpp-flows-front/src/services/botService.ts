@@ -1,5 +1,10 @@
 import { apiCall } from '@/instances/api';
-import type { BotInstance, CreateBotPayload, UpdateBotPayload } from '@/types';
+import type {
+  BotInstance,
+  EmbeddedSignupConfig,
+  EmbeddedSignupPayload,
+  UpdateBotPayload,
+} from '@/types';
 
 export const botService = {
   list(): Promise<BotInstance[]> {
@@ -8,14 +13,6 @@ export const botService = {
 
   getById(id: string): Promise<BotInstance> {
     return apiCall<BotInstance>({ endpoint: `/api/bots/${id}` });
-  },
-
-  create(payload: CreateBotPayload): Promise<BotInstance> {
-    return apiCall<BotInstance>({
-      endpoint: '/api/bots',
-      method: 'POST',
-      body: payload,
-    });
   },
 
   update(payload: UpdateBotPayload): Promise<BotInstance> {
@@ -31,29 +28,18 @@ export const botService = {
     return apiCall<void>({ endpoint: `/api/bots/${id}`, method: 'DELETE' });
   },
 
-  connect(id: string): Promise<BotInstance> {
-    return apiCall<BotInstance>({
-      endpoint: `/api/bots/${id}/connect`,
-      method: 'POST',
+  embeddedSignupConfig(): Promise<EmbeddedSignupConfig> {
+    return apiCall<EmbeddedSignupConfig>({
+      endpoint: '/api/bots/embedded-signup/config',
     });
   },
 
-  reconnect(id: string): Promise<BotInstance> {
+  embeddedSignup(payload: EmbeddedSignupPayload): Promise<BotInstance> {
     return apiCall<BotInstance>({
-      endpoint: `/api/bots/${id}/reconnect`,
+      endpoint: '/api/bots/embedded-signup',
       method: 'POST',
+      body: payload,
     });
-  },
-
-  disconnect(id: string): Promise<BotInstance> {
-    return apiCall<BotInstance>({
-      endpoint: `/api/bots/${id}/disconnect`,
-      method: 'POST',
-    });
-  },
-
-  getConnectionState(id: string): Promise<{ bot: BotInstance; evolutionState: string | null }> {
-    return apiCall({ endpoint: `/api/bots/${id}/state` });
   },
 
   setIsActive(id: string, isActive: boolean): Promise<BotInstance> {
