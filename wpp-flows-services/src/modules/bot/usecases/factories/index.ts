@@ -7,6 +7,7 @@ import {
     UpdateBotUseCase,
 } from "../bot-usecases";
 import { RegisterCloudBotUseCase } from "../register-cloud-bot";
+import { SendTestMessageUseCase } from "../send-test-message";
 
 const repo = new PrismaBotRepository();
 
@@ -15,6 +16,7 @@ export const makeGetBot = () => new GetBotUseCase(repo);
 export const makeUpdateBot = () => new UpdateBotUseCase(repo);
 export const makeDeleteBot = () => new DeleteBotUseCase(repo);
 export const makeRegisterCloudBot = () => new RegisterCloudBotUseCase(repo);
+export const makeSendTestMessage = () => new SendTestMessageUseCase(repo);
 export const makeSetBotIsActive = () => new SetBotIsActiveUseCase(repo);
 
 export { repo as botRepo };

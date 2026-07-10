@@ -36,3 +36,12 @@ export const cloudManualSchema = z.object({
     accessToken: z.string().min(1).max(1024),
     wabaId: z.string().min(1).max(64).optional(),
 });
+
+export const testMessageSchema = z.object({
+    to: z
+        .string()
+        .min(8)
+        .max(20)
+        .regex(/^[+\d\s()-]+$/, "Telefone inválido"),
+    text: z.string().max(1000).optional(),
+});

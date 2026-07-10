@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Trash2, RefreshCw, Phone, BadgeCheck, Bot, BotOff } from 'lucide-react';
+import { MoreVertical, Trash2, RefreshCw, Phone, BadgeCheck, Bot, BotOff, Send } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { FormField } from '@/components/ui/FormField';
+import { Textarea } from '@/components/ui/Textarea';
 import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
@@ -16,8 +19,24 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
+  const [testTo, setTestTo] = useState('');
+  const [testText, setTestText] = useState('');
 
   const refresh = () => invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.bots.all }]);
+
+  const sendTest = useMutation({
+    mutationFn: () => botService.sendTestMessage(bot.id, testTo.trim(), testText.trim() || undefined),
+    onSuccess: () => {
+      toast.success('Mensagem enviada', 'Confira no WhatsApp do destinatário.');
+      setTestOpen(false);
+      setTestText('');
+    },
+    onError: (err) => {
+      const apiErr = err as { message?: string };
+      toast.error('Falha ao enviar', apiErr.message ?? 'Verifique o número e a conexão.');
+    },
+  });
 
   const remove = useMutation({
     mutationFn: () => botService.remove(bot.id),
@@ -101,6 +120,14 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                     menuOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95',
                   )}
                 >
+                  <button
+                    type="button"
+                    onMouseDown={() => setTestOpen(true)}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Enviar mensagem de teste
+                  </button>
                   <button
                     type="button"
                     onMouseDown={() => refresh()}
@@ -197,6 +224,57 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
         <p className="text-sm text-muted-foreground">
           Esta ação não pode ser desfeita. O número pode ser reconectado depois via Embedded Signup.
         </p>
+      </Modal>
+
+      <Modal
+        open={testOpen}
+        onClose={() => setTestOpen(false)}
+        title="Enviar mensagem de teste"
+        description="Envia um texto por este número para validar a conexão."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setTestOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              leftIcon={<Send />}
+              onClick={() => sendTest.mutate()}
+              loading={sendTest.isPending}
+              disabled={testTo.trim().length < 8}
+            >
+              Enviar
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <FormField label="Número do destinatário" htmlFor="test-to" required>
+            <Input
+              id="test-to"
+              placeholder="+55 19 99999-9999"
+              value={testTo}
+              onChange={(e) => setTestTo(e.target.value)}
+            />
+          </FormField>
+          <FormField
+            label="Mensagem"
+            htmlFor="test-text"
+            hint="Opcional — deixe em branco para um texto padrão."
+          >
+            <Textarea
+              id="test-text"
+              rows={2}
+              placeholder="Olá! Teste do WhatsApp oficial ✅"
+              value={testText}
+              onChange={(e) => setTestText(e.target.value)}
+            />
+          </FormField>
+          <p className="text-2xs text-muted-foreground text-pretty">
+            No número de teste da Meta, o destinatário precisa estar na lista de
+            números verificados (aba "Configuração da API" no painel da Meta).
+          </p>
+        </div>
       </Modal>
     </>
   );

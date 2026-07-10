@@ -49,4 +49,16 @@ export const botService = {
       body: { isActive },
     });
   },
+
+  sendTestMessage(
+    id: string,
+    to: string,
+    text?: string,
+  ): Promise<{ messageId: string }> {
+    return apiCall<{ messageId: string }>({
+      endpoint: `/api/bots/${id}/test-message`,
+      method: 'POST',
+      body: { to, text },
+    });
+  },
 };

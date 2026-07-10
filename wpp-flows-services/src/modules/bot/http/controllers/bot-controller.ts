@@ -7,6 +7,7 @@ import {
     makeGetBot,
     makeListBots,
     makeRegisterCloudBot,
+    makeSendTestMessage,
     makeSetBotIsActive,
     makeUpdateBot,
 } from "../../usecases/factories";
@@ -14,6 +15,7 @@ import {
     cloudManualSchema,
     embeddedSignupSchema,
     setBotIsActiveSchema,
+    testMessageSchema,
     updateBotSchema,
 } from "../schema";
 
@@ -99,6 +101,22 @@ export class BotController {
             id,
         });
         return reply.status(204).send();
+    }
+
+    /** Sends a one-off test message through a connected bot. */
+    @Route("POST", "/api/bots/:id/test-message", {
+        middlewares: [requireOrganization],
+    })
+    async testMessage(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const body = testMessageSchema.parse(request.body);
+        const result = await makeSendTestMessage().execute({
+            organizationId: request.organizationId,
+            id,
+            to: body.to,
+            text: body.text,
+        });
+        return reply.send(result);
     }
 
     @Route("PATCH", "/api/bots/:id/is-active", {
