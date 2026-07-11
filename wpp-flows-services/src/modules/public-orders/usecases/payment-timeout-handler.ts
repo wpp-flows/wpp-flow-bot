@@ -4,6 +4,8 @@ import { renderOrderTemplate } from "@/modules/organization/order-template";
 import type { OrderRepository } from "@/modules/order/repositories/order-repo";
 import type { PaymentTimeoutPayload } from "@/modules/webhook/usecases/flow/scheduler/payment-timeout-scheduler";
 import type { OrderCustomerNotifier } from "./order-customer-notifier";
+import { orderNumberOf } from "./shared";
+import { orderTemplate, WA_TEMPLATES } from "./whatsapp-templates";
 
 const DEFAULT_TIMEOUT_MESSAGE =
     "Seu pedido demorou demais para ser pago e foi cancelado. Quando quiser, é só chamar de novo!";
@@ -50,6 +52,10 @@ export class PaymentTimeoutHandler {
             phone: customer.phone,
             contactName: customer.name,
             text,
+            template: orderTemplate(
+                WA_TEMPLATES.orderCanceled,
+                orderNumberOf(order.sequence),
+            ),
         });
     };
 }

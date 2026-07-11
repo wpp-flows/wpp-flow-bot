@@ -19,3 +19,13 @@ export { Switch } from './Switch';
 export { Tooltip } from './Tooltip';
 export { Tabs } from './Tabs';
 export { Separator } from './Separator';
+export { Alert, AlertTitle, AlertDescription } from './Alert';
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from './DropdownMenu';

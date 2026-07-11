@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
+import { type ReactNode } from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,73 +31,76 @@ export function Modal({
   footer,
   size = 'md',
   closeOnOverlay = true,
-}: ModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handler);
-      document.body.style.overflow = '';
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-foreground/40"
-        onClick={closeOnOverlay ? onClose : undefined}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
-        className={cn(
-          'relative flex w-full max-h-[95vh] sm:max-h-[90vh] flex-col rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg animate-scale-in',
-          SIZES[size],
-        )}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 z-10 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        {(title || description) && (
-          <div className="shrink-0 flex flex-col gap-0.5 px-4 pt-4 pb-3 pr-12 sm:px-6 sm:pt-5">
-            {title ? (
-              <h2 id="modal-title" className="text-base font-semibold tracking-tight">
-                {title}
-              </h2>
-            ) : null}
-            {description ? (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            ) : null}
-          </div>
-        )}
-        <div
+}: Readonly<ModalProps>) {
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
           className={cn(
-            'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-4 sm:px-6',
-            title || description ? 'pb-5' : 'pt-10 pb-5',
+            'fixed inset-0 z-50 bg-foreground/40',
+            'data-[state=open]:animate-in data-[state=open]:fade-in-0',
+            'data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
           )}
-        >
-          {children}
+        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 pointer-events-none">
+          <DialogPrimitive.Content
+            onPointerDownOutside={(e) => {
+              if (!closeOnOverlay) e.preventDefault();
+            }}
+            onInteractOutside={(e) => {
+              if (!closeOnOverlay) e.preventDefault();
+            }}
+            className={cn(
+              'pointer-events-auto relative flex w-full max-h-[95vh] sm:max-h-[90vh] flex-col rounded-xl border border-border bg-card text-card-foreground shadow-soft-lg',
+              'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+              'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
+              SIZES[size],
+            )}
+          >
+            <DialogPrimitive.Close asChild>
+              <button
+                type="button"
+                className="absolute right-3 top-3 z-10 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Fechar"
+              >
+                <X className="size-4" />
+              </button>
+            </DialogPrimitive.Close>
+
+            {title || description ? (
+              <div className="shrink-0 flex flex-col gap-0.5 px-4 pt-4 pb-3 pr-12 sm:px-6 sm:pt-5">
+                {title ? (
+                  <DialogPrimitive.Title className="text-base font-semibold tracking-tight">
+                    {title}
+                  </DialogPrimitive.Title>
+                ) : null}
+                {description ? (
+                  <DialogPrimitive.Description className="text-sm text-muted-foreground">
+                    {description}
+                  </DialogPrimitive.Description>
+                ) : null}
+              </div>
+            ) : (
+              <DialogPrimitive.Title className="sr-only">Janela</DialogPrimitive.Title>
+            )}
+
+            <div
+              className={cn(
+                'min-h-0 flex-1 overflow-y-auto scrollbar-thin px-4 sm:px-6',
+                title || description ? 'pb-5' : 'pt-10 pb-5',
+              )}
+            >
+              {children}
+            </div>
+
+            {footer ? (
+              <div className="shrink-0 flex items-center justify-end gap-2 border-t border-border px-4 py-3 sm:px-6 sm:py-4">
+                {footer}
+              </div>
+            ) : null}
+          </DialogPrimitive.Content>
         </div>
-        {footer ? (
-          <div className="shrink-0 flex items-center justify-end gap-2 border-t border-border px-4 py-3 sm:px-6 sm:py-4">
-            {footer}
-          </div>
-        ) : null}
-      </div>
-    </div>,
-    document.body,
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }

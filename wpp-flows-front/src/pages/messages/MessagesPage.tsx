@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Clock } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
   Card,
@@ -97,6 +99,18 @@ export function MessagesPage() {
         title="Mensagens"
         description="Mensagens automáticas enviadas no WhatsApp + janelas de tempo que regem o comportamento do bot."
       />
+
+      <Alert variant="info">
+        <Clock />
+        <AlertTitle>Como funciona a janela de 24h do WhatsApp oficial</AlertTitle>
+        <AlertDescription>
+          Pela regra da Meta, seus textos personalizados abaixo são enviados
+          normalmente enquanto o cliente interagiu nas últimas <b>24 horas</b>{" "}
+          (o que cobre praticamente todo pedido). Passado esse prazo, a
+          plataforma envia automaticamente um <b>modelo aprovado</b> pela Meta
+          com texto fixo no lugar — assim o cliente nunca fica sem o aviso.
+        </AlertDescription>
+      </Alert>
 
       <Card>
         <CardHeader>

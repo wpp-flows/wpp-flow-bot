@@ -160,7 +160,7 @@ export function deriveOptionGroupHelperText(min: number, max: number): string {
 export const flowStepSchema = z.object({
   id: z.string().optional(),
   type: z.enum(['MESSAGE']),
-  content: z.string().min(1).max(800),
+  content: z.string().min(1).max(4096),
   order: z.number().int().nonnegative().optional(),
   metadata: z.record(z.string(), z.any()).nullable().optional(),
 });

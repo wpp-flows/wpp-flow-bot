@@ -1,13 +1,22 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MoreVertical, Trash2, RefreshCw, Phone, BadgeCheck, Bot, BotOff, Send } from 'lucide-react';
+import { MoreVertical, Trash2, RefreshCw, Phone, BadgeCheck, Bot, BotOff, Send, ShieldAlert } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FormField } from '@/components/ui/FormField';
 import { Textarea } from '@/components/ui/Textarea';
 import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/DropdownMenu';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { botService } from '@/services/botService';
 import { invalidateQueriesByFilters, queryKeys } from '@/lib/queryClient';
@@ -17,7 +26,6 @@ import type { BotInstance } from '@/types';
 
 export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
   const qc = useQueryClient();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [testTo, setTestTo] = useState('');
@@ -103,49 +111,32 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
                 </span>
               ) : null}
               <StatusBadge status={bot.status} size="sm" />
-              <div className="relative">
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setMenuOpen((v) => !v)}
-                  onBlur={() => setTimeout(() => setMenuOpen(false), 150)}
-                  aria-label="Ações do bot"
-                >
-                  <MoreVertical />
-                </IconButton>
-                <div
-                  className={cn(
-                    'absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-border bg-popover p-1 shadow-soft-md',
-                    'origin-top-right transition-all duration-150',
-                    menuOpen ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 scale-95',
-                  )}
-                >
-                  <button
-                    type="button"
-                    onMouseDown={() => setTestOpen(true)}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    Enviar mensagem de teste
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={() => refresh()}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Atualizar status
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={() => setConfirmDelete(true)}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive-soft"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remover bot
-                  </button>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <IconButton size="sm" variant="ghost" aria-label="Ações do bot">
+                    <MoreVertical />
+                  </IconButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onSelect={() => setTestOpen(true)}>
+                      <Send />
+                      Enviar mensagem de teste
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => refresh()}>
+                      <RefreshCw />
+                      Atualizar status
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem destructive onSelect={() => setConfirmDelete(true)}>
+                      <Trash2 />
+                      Remover bot
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -171,12 +162,16 @@ export function BotCard({ bot }: Readonly<{ bot: BotInstance }>) {
           </div>
 
           {needsReauth ? (
-            <p className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-2xs text-destructive text-pretty">
-              A autorização com a Meta expirou ou foi revogada — as mensagens
-              deste número não estão sendo enviadas. Clique em{' '}
-              <b>Conectar WhatsApp</b> (no topo da página) e escolha este mesmo
-              número para reautorizar.
-            </p>
+            <Alert variant="destructive">
+              <ShieldAlert />
+              <AlertTitle>Reautorização necessária</AlertTitle>
+              <AlertDescription>
+                A autorização com a Meta expirou ou foi revogada — as mensagens
+                deste número não estão sendo enviadas. Clique em{' '}
+                <b>Conectar WhatsApp</b> (no topo da página) e escolha este
+                mesmo número para reautorizar.
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           <div className="flex flex-col gap-2">

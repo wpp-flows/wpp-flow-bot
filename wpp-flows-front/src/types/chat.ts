@@ -27,6 +27,7 @@ export interface Conversation {
   lastMessagePreview: string;
   lastMessageAt: string;
   botActive: boolean;
+  lastInboundAt?: string | null;
   currentStepId?: string | null;
   createdAt: string;
   updatedAt: string;

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, BotOff, CheckCircle2, Send, XCircle } from "lucide-react";
+import { Bot, BotOff, CheckCircle2, Clock, Send, XCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import { chatService } from "@/services/chatService";
 import {
   isChatConversationListQuery,
@@ -32,6 +33,58 @@ const STATUS_LABEL: Record<Conversation["status"], string> = {
   PENDING: "pendente",
 };
 
+const SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function isWindowExpired(conversation: Conversation): boolean {
+  if (!conversation.lastInboundAt) return false;
+  return Date.now() - new Date(conversation.lastInboundAt).getTime() >= SERVICE_WINDOW_MS;
+}
+
+interface GraphSendError {
+  details?: { error?: { message?: string; code?: number } };
+  message?: string;
+}
+
+function describeGraphError(err: GraphSendError): { title: string; body?: string } {
+  const graph = err.details?.error;
+  switch (graph?.code) {
+    case 131047: // re-engagement — fora da janela de 24h
+      return {
+        title: "Janela de 24h fechada",
+        body: "O cliente precisa mandar uma mensagem para você poder responder com texto livre.",
+      };
+    case 131026: // undeliverable (sem WhatsApp / bloqueou)
+      return {
+        title: "Mensagem não entregue",
+        body: "Este número pode não ter WhatsApp ou ter bloqueado o contato.",
+      };
+    case 131056: // pair rate limit
+      return {
+        title: "Muitas mensagens para este contato",
+        body: "Aguarde alguns instantes antes de tentar de novo.",
+      };
+    default:
+      return {
+        title: "Falha ao enviar mensagem",
+        body: graph?.message ?? err.message,
+      };
+  }
+}
+
+function botBadgeFor(
+  conversation: Conversation,
+  botStatus: BotStatus | undefined,
+  botIsActive: boolean,
+): { tone: "success" | "warning" | "destructive"; label: string } {
+  if (!botIsActive) return { tone: "warning", label: "Bot pausado globalmente" };
+  if (!conversation.botActive) return { tone: "warning", label: "bot pausado" };
+  if (botStatus === "OFFLINE" || botStatus === "ERROR") {
+    return { tone: "destructive", label: "bot offline" };
+  }
+  if (botStatus === "CONNECTING") return { tone: "warning", label: "bot conectando" };
+  return { tone: "success", label: "bot ativo" };
+}
+
 export function ChatPanel({
   conversation,
   botName,
@@ -43,16 +96,7 @@ export function ChatPanel({
   botStatus?: BotStatus;
   botIsActive?: boolean;
 }>) {
-  const botBadge: { tone: "success" | "warning" | "destructive"; label: string } =
-    !botIsActive
-      ? { tone: "warning", label: "Bot pausado globalmente" }
-      : !conversation.botActive
-        ? { tone: "warning", label: "bot pausado" }
-        : botStatus === "OFFLINE" || botStatus === "ERROR"
-          ? { tone: "destructive", label: "bot offline" }
-          : botStatus === "CONNECTING"
-            ? { tone: "warning", label: "bot conectando" }
-            : { tone: "success", label: "bot ativo" };
+  const botBadge = botBadgeFor(conversation, botStatus, botIsActive);
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -85,21 +129,8 @@ export function ChatPanel({
       setDraft("");
     },
     onError: (err) => {
-      const apiErr = err as {
-        details?: {
-          response?: { message?: Array<{ exists?: boolean; jid?: string }> };
-        };
-        message?: string;
-      };
-      const detail = apiErr.details?.response?.message?.[0];
-      if (detail?.exists === false) {
-        toast.error(
-          "Destinatario nao esta no WhatsApp",
-          `O numero ${detail.jid ?? ""} nao tem uma conta no WhatsApp.`,
-        );
-      } else {
-        toast.error("Falha ao enviar mensagem", apiErr.message);
-      }
+      const { title, body } = describeGraphError(err as GraphSendError);
+      toast.error(title, body);
     },
   });
 
@@ -203,6 +234,20 @@ export function ChatPanel({
           ))
           : messages?.map((m) => <MessageBubble key={m.id} message={m} />)}
       </div>
+
+      {isWindowExpired(conversation) ? (
+        <div className="w-full shrink-0 border-t border-border bg-background px-3 pt-3">
+          <Alert variant="warning">
+            <Clock />
+            <AlertTitle>Janela de 24h fechada</AlertTitle>
+            <AlertDescription>
+              A última mensagem do cliente foi há mais de 24 horas. Pela regra
+              da Meta, respostas de texto livre podem ser rejeitadas até o
+              cliente escrever de novo.
+            </AlertDescription>
+          </Alert>
+        </div>
+      ) : null}
 
       <form
         onSubmit={onSubmit}

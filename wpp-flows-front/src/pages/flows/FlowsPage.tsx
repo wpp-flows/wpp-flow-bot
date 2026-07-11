@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Code2, Plus, Save, Trash2, Workflow as WorkflowIcon, Zap } from 'lucide-react';
+import {
+  Code2,
+  GitBranch,
+  MoreVertical,
+  Plus,
+  Save,
+  Trash2,
+  Workflow as WorkflowIcon,
+  Zap,
+} from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
@@ -10,12 +19,21 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/DropdownMenu';
 import { flowService } from '@/services/flowService';
 import { queryKeys } from '@/lib/queryClient';
 import { generateId } from '@/lib/utils';
 import type { FlowStep } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
+import { FlowChatPreview } from './components/FlowChatPreview';
 import { useFlowsPage } from '@/pages/flows/hooks/useFlowsPage';
 
 type ViewMode = 'editor' | 'json';
@@ -130,25 +148,42 @@ export function FlowsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Construtor de flows"
-        description="Defina a conversa passo a passo que o bot vai seguir. Cada passo é um nó — arraste para reordenar e clique para editar."
+        description="Defina a conversa que o bot responde no WhatsApp oficial. Cada passo vira uma mensagem — acompanhe ao lado como o cliente vai receber."
         actions={
           <>
-            <Button
-              variant="outline"
-              leftIcon={<Trash2 />}
-              disabled={!activeFlowDetail.data || activeFlowDetail.data.isActive}
-              title={
-                activeFlowDetail.data?.isActive
-                  ? 'Ative outro flow antes de excluir este.'
-                  : undefined
-              }
-              onClick={() => setConfirmDeleteOpen(true)}
-            >
-              Excluir flow
-            </Button>
-            <Button variant="outline" leftIcon={<Plus />} onClick={() => createFlow.mutate()} loading={createFlow.isPending}>
-              Novo flow
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" leftIcon={<MoreVertical />}>
+                  Mais ações
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onSelect={() => createFlow.mutate()}>
+                    <Plus />
+                    Novo flow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!activeFlowDetail.data}
+                    onSelect={() => newVersion.mutate()}
+                  >
+                    <GitBranch />
+                    Nova versão deste flow
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    destructive
+                    disabled={!activeFlowDetail.data || activeFlowDetail.data.isActive}
+                    onSelect={() => setConfirmDeleteOpen(true)}
+                  >
+                    <Trash2 />
+                    Excluir flow
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               leftIcon={<Zap />}
@@ -156,15 +191,7 @@ export function FlowsPage() {
               loading={activate.isPending}
               onClick={() => activate.mutate()}
             >
-              Ativar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => newVersion.mutate()}
-              loading={newVersion.isPending}
-              disabled={!activeFlowDetail.data}
-            >
-              Nova versão
+              {activeFlowDetail.data?.isActive ? 'Flow ativo' : 'Ativar'}
             </Button>
             <Button
               leftIcon={<Save />}
@@ -209,8 +236,9 @@ export function FlowsPage() {
                     ) : null}
                   </div>
                   <CardDescription>
-                    Flow sequencial no WhatsApp · {steps.length}{' '}
-                    {steps.length === 1 ? 'passo' : 'passos'}
+                    {steps.length} {steps.length === 1 ? 'passo' : 'passos'} ·
+                    enviado em sequência quando o cliente escreve — sempre
+                    dentro da janela de 24h do WhatsApp oficial
                   </CardDescription>
                 </div>
 
@@ -243,7 +271,7 @@ export function FlowsPage() {
           {activeFlowDetail.isLoading ? (
             <Skeleton className="h-[400px] rounded-xl" />
           ) : view === 'editor' ? (
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 space-y-3">
                 {steps.map((step, idx) => (
                   <div
@@ -294,8 +322,11 @@ export function FlowsPage() {
                 </button>
               </div>
 
-              <div className="hidden xl:block">
-                {flowForPreview ? <JsonPreview flow={flowForPreview} /> : null}
+              <div className="hidden lg:block">
+                <FlowChatPreview
+                  steps={steps}
+                  className="sticky top-6 max-h-[calc(100vh-8rem)] min-h-[420px]"
+                />
               </div>
             </div>
           ) : flowForPreview ? (

@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import type { FlowStep } from '@/types';
 import { FLOW_VARIABLES, formatVariable } from '../flow-variables';
 
+const CLOUD_TEXT_LIMIT = 4096;
+
 interface StepNodeProps {
   step: FlowStep;
   index: number;
@@ -147,8 +149,19 @@ export function StepNode({
           </p>
 
           <label className="block space-y-1.5">
-            <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
               Conteúdo da mensagem
+              <span
+                className={cn(
+                  'font-mono normal-case tracking-normal',
+                  step.content.length > CLOUD_TEXT_LIMIT
+                    ? 'font-semibold text-destructive'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {step.content.length.toLocaleString('pt-BR')}/
+                {CLOUD_TEXT_LIMIT.toLocaleString('pt-BR')}
+              </span>
             </span>
             <Textarea
               ref={textareaRef}
@@ -157,6 +170,13 @@ export function StepNode({
               onChange={(e) => onChange({ ...step, content: e.target.value })}
               placeholder="Ex: Olá {{customer_name}}! Faça seu pedido em {{menu_url}}"
             />
+            {step.content.length > CLOUD_TEXT_LIMIT ? (
+              <span className="block text-2xs text-destructive">
+                O WhatsApp oficial aceita no máximo{' '}
+                {CLOUD_TEXT_LIMIT.toLocaleString('pt-BR')} caracteres por
+                mensagem — reduza o texto ou divida em dois passos.
+              </span>
+            ) : null}
           </label>
 
           <div className="space-y-1.5">
