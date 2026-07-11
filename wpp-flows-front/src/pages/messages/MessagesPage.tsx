@@ -98,19 +98,21 @@ export function MessagesPage() {
       <PageHeader
         title="Mensagens"
         description="Mensagens automáticas enviadas no WhatsApp + janelas de tempo que regem o comportamento do bot."
+        info={
+          <div className="space-y-2">
+            <p className="font-medium tracking-tight text-foreground">
+              Como funciona a janela de 24h do WhatsApp oficial
+            </p>
+            <p className="text-muted-foreground">
+              Pela regra da Meta, seus textos personalizados abaixo são enviados
+              normalmente enquanto o cliente interagiu nas últimas <b>24 horas</b>{" "}
+              (o que cobre praticamente todo pedido). Passado esse prazo, a
+              plataforma envia automaticamente um <b>modelo aprovado</b> pela Meta
+              com texto fixo no lugar — assim o cliente nunca fica sem o aviso.
+            </p>
+          </div>
+        }
       />
-
-      <Alert variant="info">
-        <Clock />
-        <AlertTitle>Como funciona a janela de 24h do WhatsApp oficial</AlertTitle>
-        <AlertDescription>
-          Pela regra da Meta, seus textos personalizados abaixo são enviados
-          normalmente enquanto o cliente interagiu nas últimas <b>24 horas</b>{" "}
-          (o que cobre praticamente todo pedido). Passado esse prazo, a
-          plataforma envia automaticamente um <b>modelo aprovado</b> pela Meta
-          com texto fixo no lugar — assim o cliente nunca fica sem o aviso.
-        </AlertDescription>
-      </Alert>
 
       <Card>
         <CardHeader>
