@@ -97,7 +97,7 @@ export function MessagesPage() {
         title="Mensagens"
         description="Mensagens automáticas enviadas no WhatsApp + janelas de tempo que regem o comportamento do bot."
         info={
-          <div className="space-y-2">
+          <div className="space-y-4">
             <p className="font-medium tracking-tight text-foreground">
               Como funciona a janela de 24h do WhatsApp oficial
             </p>
