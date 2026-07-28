@@ -44,10 +44,11 @@ app.register(fastifyMultipart, {
   limits: { fileSize: 5 * 1024 * 1024, files: 1 }, //5 mb
 });
 
-// tava dando uns erro random de webhook, isso aq soluciona
-app.addContentTypeParser("*", { parseAs: "string" }, (req, body, done) => {
-  // Stash the raw string so signature-verified webhooks (Meta Cloud API's
-  // X-Hub-Signature-256) can HMAC the exact bytes we received.
+const parseWithRawBody = (
+  req: import("fastify").FastifyRequest,
+  body: string,
+  done: (err: Error | null, body?: unknown) => void,
+) => {
   (req as { rawBody?: string }).rawBody =
     typeof body === "string" ? body : undefined;
   if (!body || (typeof body === "string" && body.length === 0)) {
@@ -59,7 +60,10 @@ app.addContentTypeParser("*", { parseAs: "string" }, (req, body, done) => {
   } catch {
     done(null, body);
   }
-});
+};
+
+app.addContentTypeParser("application/json", { parseAs: "string" }, parseWithRawBody);
+app.addContentTypeParser("*", { parseAs: "string" }, parseWithRawBody);
 
 app.setErrorHandler(globalErrorHandler);
 
