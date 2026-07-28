@@ -52,7 +52,16 @@ function loadFacebookSdk(appId: string, graphVersion: string): Promise<FacebookS
     script.async = true;
     script.defer = true;
     script.crossOrigin = 'anonymous';
-    script.onerror = () => reject(new Error('Falha ao carregar o SDK do Facebook'));
+    script.onerror = () => {
+      // Sem remover, o tag morto faz o `if (existing) return` acima pendurar
+      // toda tentativa seguinte (promise nunca resolve).
+      script.remove();
+      reject(
+        new Error(
+          'Não foi possível carregar o SDK do Facebook. Verifique bloqueador de anúncios, extensões de privacidade ou VPN.',
+        ),
+      );
+    };
     document.body.appendChild(script);
   });
 }

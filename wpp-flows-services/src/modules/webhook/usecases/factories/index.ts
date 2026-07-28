@@ -9,7 +9,9 @@ import { FlowStateMachine } from "../flow/flow-state-machine";
 import { FlowStepSender } from "../flow/flow-step-sender";
 import { paymentTimeoutScheduler } from "../flow/scheduler/payment-timeout-scheduler";
 import { defaultStepStrategies } from "../flow/strategies";
+import { notificationEmitter } from "@/modules/notification/usecases/factories";
 import { HandleCloudEventUseCase } from "../cloud/handle-cloud-event";
+import { HumanHandoffHandler } from "../human-handoff/human-handoff-handler";
 import { PostPaymentHandler } from "../post-payment/post-payment-handler";
 
 const flowStateMachine = new FlowStateMachine();
@@ -35,6 +37,13 @@ const postPaymentHandler = new PostPaymentHandler(
     messageRepo,
 );
 
+const humanHandoffHandler = new HumanHandoffHandler(
+    organizationRepo,
+    conversationRepo,
+    messageRepo,
+    notificationEmitter,
+);
+
 export const makeHandleCloudEvent = () =>
     new HandleCloudEventUseCase(
         botRepo,
@@ -42,4 +51,5 @@ export const makeHandleCloudEvent = () =>
         messageRepo,
         flowRunner,
         postPaymentHandler,
+        humanHandoffHandler,
     );

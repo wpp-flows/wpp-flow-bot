@@ -30,6 +30,8 @@ const toOrganization = (row: any): Organization => ({
     workingStartTime: row.workingStartTime ?? null,
     workingEndTime: row.workingEndTime ?? null,
     outOfHoursMessage: row.outOfHoursMessage ?? null,
+    humanHandoffKeywords: (row.humanHandoffKeywords as string[] | null) ?? [],
+    humanHandoffMessage: row.humanHandoffMessage ?? null,
     localWorkingDaysOfWeek: (row.localWorkingDaysOfWeek ?? []) as number[],
     localWorkingStartTime: row.localWorkingStartTime ?? null,
     localWorkingEndTime: row.localWorkingEndTime ?? null,

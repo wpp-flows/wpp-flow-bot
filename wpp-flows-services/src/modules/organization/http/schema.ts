@@ -61,6 +61,8 @@ export const updateOrganizationSchema = z.object({
         .optional(),
     localOutOfHoursMessage: z.string().max(800).nullable().optional(),
     botCooldownMinutes: z.number().int().min(0).max(1440).optional(),
+    humanHandoffKeywords: z.array(z.string().trim().min(1).max(60)).max(10).optional(),
+    humanHandoffMessage: z.string().max(800).nullable().optional(),
 });
 
 export type CreateOrganizationDTO = z.infer<typeof createOrganizationSchema>;

@@ -67,6 +67,9 @@ export interface Organization {
   localWorkingEndTime: string | null;
   localOutOfHoursMessage: string | null;
   botCooldownMinutes: number;
+  /** Keywords que pausam o bot e chamam um humano. Vazio = padrão ("atendente"). */
+  humanHandoffKeywords: string[];
+  humanHandoffMessage: string | null;
   createdAt: string;
   updatedAt: string;
 }

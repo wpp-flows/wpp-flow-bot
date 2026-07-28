@@ -3,6 +3,7 @@ export type NotificationType =
     | "PAYMENT_RECEIVED"
     | "BOT_OFFLINE"
     | "IDLE_CONVERSATION"
+    | "HUMAN_HANDOFF"
     | "GENERIC";
 
 export interface Notification {

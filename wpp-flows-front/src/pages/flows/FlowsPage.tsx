@@ -34,6 +34,11 @@ import type { FlowStep } from '@/types';
 import { StepNode } from './components/StepNode';
 import { JsonPreview } from './components/JsonPreview';
 import { FlowChatPreview } from './components/FlowChatPreview';
+import {
+  HANDOFF_DEFAULT_KEYWORD,
+  HANDOFF_DEFAULT_MESSAGE,
+  HumanHandoffCard,
+} from './components/HumanHandoffCard';
 import { useFlowsPage } from '@/pages/flows/hooks/useFlowsPage';
 
 type ViewMode = 'editor' | 'json';
@@ -48,6 +53,11 @@ export function FlowsPage() {
   const [overId, setOverId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>('editor');
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  // Valores ao vivo do card de atendimento humano, para o preview encenar a troca.
+  const [handoffLive, setHandoffLive] = useState({
+    keyword: HANDOFF_DEFAULT_KEYWORD,
+    message: HANDOFF_DEFAULT_MESSAGE,
+  });
 
   const activeFlowSummary = useMemo(
     () => flows.data?.find((f) => f.id === activeFlowId) ?? flows.data?.[0],
@@ -320,11 +330,15 @@ export function FlowsPage() {
                   <Plus className="h-4 w-4" />
                   Adicionar passo
                 </button>
+
+                <HumanHandoffCard onLiveChange={setHandoffLive} />
               </div>
 
               <div className="hidden lg:block">
                 <FlowChatPreview
                   steps={steps}
+                  handoffKeyword={handoffLive.keyword}
+                  handoffMessage={handoffLive.message}
                   className="sticky top-6 max-h-[calc(100vh-8rem)] min-h-[420px]"
                 />
               </div>

@@ -8,6 +8,9 @@ interface Props {
   steps: FlowStep[];
   botName?: string;
   className?: string;
+  /** Quando presentes, o preview encena também o pedido de atendimento humano. */
+  handoffKeyword?: string | null;
+  handoffMessage?: string | null;
 }
 
 const PREVIEW_VARIABLES = FLOW_VARIABLES.map((v) => ({
@@ -15,7 +18,17 @@ const PREVIEW_VARIABLES = FLOW_VARIABLES.map((v) => ({
   label: v.label,
 }));
 
-export function FlowChatPreview({ steps, botName, className }: Readonly<Props>) {
+const HANDOFF_PREVIEW_VARIABLES = [
+  { key: 'customer_name', label: 'Nome do cliente' },
+];
+
+export function FlowChatPreview({
+  steps,
+  botName,
+  className,
+  handoffKeyword,
+  handoffMessage,
+}: Readonly<Props>) {
   return (
     <div
       className={cn(
@@ -63,6 +76,33 @@ export function FlowChatPreview({ steps, botName, className }: Readonly<Props>) 
             </div>
           ))
         )}
+
+        {handoffKeyword ? (
+          <>
+            <div className="mx-auto mt-2 rounded-md bg-card px-2.5 py-1 text-2xs text-muted-foreground shadow-soft-sm">
+              …se o cliente pedir ajuda:
+            </div>
+            <div className="flex max-w-[85%] flex-col self-start">
+              <div className="rounded-lg rounded-tl-sm bg-card px-3 py-2 text-xs leading-relaxed shadow-soft-sm">
+                {handoffKeyword}
+              </div>
+            </div>
+            <div className="flex max-w-[85%] flex-col self-end">
+              <div className="relative rounded-lg rounded-tr-sm bg-primary-soft px-3 py-2 shadow-soft-sm">
+                <MessagePreview
+                  value={handoffMessage ?? ''}
+                  variables={HANDOFF_PREVIEW_VARIABLES}
+                  size="sm"
+                  className="border-0 bg-transparent p-0 text-xs leading-relaxed"
+                />
+                <span className="mt-1 flex items-center justify-end gap-1 text-[10px] leading-none text-muted-foreground">
+                  bot pausa · você é notificado
+                  <Check className="size-3" />
+                </span>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
 
       <p className="shrink-0 border-t border-border bg-card px-3 py-2 text-2xs text-muted-foreground text-pretty">

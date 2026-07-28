@@ -83,6 +83,8 @@ export const authService = {
     localWorkingEndTime?: string | null;
     localOutOfHoursMessage?: string | null;
     botCooldownMinutes?: number;
+    humanHandoffKeywords?: string[];
+    humanHandoffMessage?: string | null;
   }): Promise<Organization> {
     return apiCall<Organization>({
       endpoint: '/api/organization',

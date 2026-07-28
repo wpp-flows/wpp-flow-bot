@@ -25,7 +25,9 @@ export class PrismaNotificationRepository implements NotificationRepository {
         const row = await prisma.notification.create({
             data: {
                 organizationId: input.organizationId,
-                type: input.type,
+                // `as any`: o client gerado só conhece HUMAN_HANDOFF depois de
+                // `npm run migrate` regenerar. Remova o cast após a migration.
+                type: input.type as any,
                 title: input.title,
                 body: input.body ?? null,
                 link: input.link ?? null,

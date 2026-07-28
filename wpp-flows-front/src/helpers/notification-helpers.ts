@@ -2,6 +2,7 @@ import {
   Bell,
   CircleAlert,
   CircleCheck,
+  Headset,
   MessagesSquare,
   Receipt,
   type LucideIcon,
@@ -13,6 +14,7 @@ export const TYPE_LABEL: Record<NotificationType, string> = {
   PAYMENT_RECEIVED: 'Pagamento recebido',
   BOT_OFFLINE: 'Bot offline',
   IDLE_CONVERSATION: 'Conversa parada',
+  HUMAN_HANDOFF: 'Atendimento humano',
   GENERIC: 'Notificação',
 };
 
@@ -21,6 +23,7 @@ export const TYPE_ICON: Record<NotificationType, LucideIcon> = {
   PAYMENT_RECEIVED: CircleCheck,
   BOT_OFFLINE: CircleAlert,
   IDLE_CONVERSATION: MessagesSquare,
+  HUMAN_HANDOFF: Headset,
   GENERIC: Bell,
 };
 
@@ -29,6 +32,7 @@ export const TYPE_ICON_TONE: Record<NotificationType, string> = {
   PAYMENT_RECEIVED: 'bg-success-soft text-success',
   BOT_OFFLINE: 'bg-destructive-soft text-destructive',
   IDLE_CONVERSATION: 'bg-warning-soft text-warning',
+  HUMAN_HANDOFF: 'bg-info-soft text-info',
   GENERIC: 'bg-muted text-muted-foreground',
 };
 

@@ -14,6 +14,7 @@ const CLOUD_STATUS_MAP: Record<string, MessageStatus> = {
     failed: "FAILED",
 };
 import type { FlowRunner } from "../flow-runner";
+import type { HumanHandoffHandler } from "../human-handoff/human-handoff-handler";
 import type { PostPaymentHandler } from "../post-payment/post-payment-handler";
 
 /**
@@ -72,6 +73,7 @@ export class HandleCloudEventUseCase {
         private readonly messageRepo: MessageRepository,
         private readonly flowRunner: FlowRunner,
         private readonly postPaymentHandler: PostPaymentHandler,
+        private readonly humanHandoffHandler: HumanHandoffHandler,
     ) { }
 
     async execute(body: CloudWebhookBody): Promise<void> {
@@ -177,15 +179,21 @@ export class HandleCloudEventUseCase {
             direction: "IN",
         });
 
-        // Post-payment deep-link ack first, then the flow runner. The inbound
-        // wamid rides along so Cloud can show "typing…" (it's implemented as a
-        // mark-read on the customer's last message).
+        // Ordem: ack pós-pagamento → handoff humano → fluxo. O wamid do inbound
+        // segue junto para o "digitando…" do Cloud (mark-read da mensagem).
         const handled = await this.postPaymentHandler.tryHandle({
             bot,
             conversation: updated,
             text,
         });
         if (handled) return;
+
+        const handedOff = await this.humanHandoffHandler.tryHandle({
+            bot,
+            conversation: updated,
+            text,
+        });
+        if (handedOff) return;
 
         await this.flowRunner.handleInbound({
             bot,

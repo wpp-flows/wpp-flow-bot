@@ -65,7 +65,16 @@ export function useFlowsPage({
     mutationFn: () =>
       flowService.create({
         name: `Novo flow ${flowCount + 1}`,
-        steps: [{ type: 'MESSAGE', order: 0, content: 'Olá! Bem-vindo ao nosso restaurante 👋' }],
+        // Padrão "mensagem única completa": saudação + link do cardápio +
+        // como chamar um humano (keyword de handoff) — tudo em um passo.
+        steps: [
+          {
+            type: 'MESSAGE',
+            order: 0,
+            content:
+              'Olá {{customer_name}}! Bem-vindo ao {{restaurant_name}} 👋\n\nFaça seu pedido pelo nosso cardápio digital: {{menu_url}}\n\nPrecisa de ajuda? Escreva *atendente* que uma pessoa da equipe te responde por aqui.',
+          },
+        ],
       }),
     onSuccess: (flow) => {
       void invalidateQueriesByFilters(qc, [{ queryKey: queryKeys.flows.all }]);

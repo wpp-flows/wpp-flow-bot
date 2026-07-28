@@ -30,6 +30,8 @@ export interface UpdateOrganizationInput {
     localWorkingEndTime?: string | null;
     localOutOfHoursMessage?: string | null;
     botCooldownMinutes?: number;
+    humanHandoffKeywords?: string[];
+    humanHandoffMessage?: string | null;
 }
 
 export class UpdateOrganizationUseCase {
@@ -67,6 +69,8 @@ export class UpdateOrganizationUseCase {
             localWorkingEndTime: input.localWorkingEndTime,
             localOutOfHoursMessage: input.localOutOfHoursMessage,
             botCooldownMinutes: input.botCooldownMinutes,
+            humanHandoffKeywords: input.humanHandoffKeywords,
+            humanHandoffMessage: input.humanHandoffMessage,
         });
     }
 }
