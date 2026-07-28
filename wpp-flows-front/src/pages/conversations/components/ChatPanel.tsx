@@ -40,6 +40,28 @@ function isWindowExpired(conversation: Conversation): boolean {
   return Date.now() - new Date(conversation.lastInboundAt).getTime() >= SERVICE_WINDOW_MS;
 }
 
+const isNewDay = (prevIso: string | undefined, iso: string): boolean =>
+  !prevIso ||
+  new Date(prevIso).toDateString() !== new Date(iso).toDateString();
+
+function DayDivider({ iso }: Readonly<{ iso: string }>) {
+  const date = new Date(iso);
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86_400_000).toDateString();
+  let label: string;
+  if (date.toDateString() === today) label = "Hoje";
+  else if (date.toDateString() === yesterday) label = "Ontem";
+  else label = date.toLocaleDateString("pt-BR", { dateStyle: "medium" });
+
+  return (
+    <div className="my-3 flex justify-center">
+      <span className="rounded-full bg-card px-3 py-1 text-2xs font-medium text-muted-foreground shadow-soft-sm">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 interface GraphSendError {
   details?: { error?: { message?: string; code?: number } };
   message?: string;
@@ -100,6 +122,7 @@ export function ChatPanel({
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
     data: messages,
@@ -127,6 +150,7 @@ export function ChatPanel({
         { predicate: isChatConversationListQuery },
       ]);
       setDraft("");
+      composerRef.current?.style.setProperty("height", "auto");
     },
     onError: (err) => {
       const { title, body } = describeGraphError(err as GraphSendError);
@@ -223,16 +247,34 @@ export function ChatPanel({
 
       <div
         ref={scrollRef}
-        className="min-h-0 w-full flex-1 space-y-3 overflow-y-auto bg-muted/30 px-5 py-6 scrollbar-thin"
+        className="min-h-0 w-full flex-1 overflow-y-auto bg-muted/30 px-4 py-6 scrollbar-thin sm:px-6"
       >
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
             <Skeleton
               key={i}
-              className={`h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
+              className={`mb-2 h-12 ${i % 2 ? "ml-auto w-[55%]" : "w-[45%]"}`}
             />
           ))
-          : messages?.map((m) => <MessageBubble key={m.id} message={m} />)}
+          : messages?.map((m, i) => {
+            const prev = messages[i - 1];
+            const next = messages[i + 1];
+            return (
+              <div key={m.id}>
+                {isNewDay(prev?.createdAt, m.createdAt) ? (
+                  <DayDivider iso={m.createdAt} />
+                ) : null}
+                <MessageBubble
+                  message={m}
+                  isLastOfGroup={
+                    !next ||
+                    next.author !== m.author ||
+                    isNewDay(m.createdAt, next.createdAt)
+                  }
+                />
+              </div>
+            );
+          })}
       </div>
 
       {isWindowExpired(conversation) ? (
@@ -255,9 +297,15 @@ export function ChatPanel({
       >
         <div className="flex items-end gap-2">
           <Textarea
+            ref={composerRef}
             rows={1}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -265,14 +313,16 @@ export function ChatPanel({
               }
             }}
             placeholder={`Responder para ${conversation.contactName.split(" ")[0]}...`}
-            className="resize-none"
+            className="max-h-[140px] resize-none rounded-2xl"
           />
           <Button
             type="submit"
-            rightIcon={<Send />}
+            size="icon"
+            className="size-10 shrink-0 rounded-full"
+            aria-label="Enviar mensagem"
             disabled={!draft.trim() || send.isPending}
           >
-            Enviar
+            <Send className="size-4" />
           </Button>
         </div>
         <p className="mt-1.5 text-2xs text-muted-foreground">
