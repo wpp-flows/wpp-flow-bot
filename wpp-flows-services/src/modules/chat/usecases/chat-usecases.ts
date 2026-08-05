@@ -94,9 +94,11 @@ export class SendMessageUseCase {
             status: "SENT",
         });
 
+        const resumed = conv.status === "PENDING";
         await this.conversationRepo.update(conv.id, {
             lastMessagePreview: input.content.slice(0, 100),
             lastMessageAt: message.createdAt,
+            ...(resumed ? { status: "OPEN" as const } : {}),
         });
 
         orgEventBus.emit(input.organizationId, {
@@ -104,6 +106,13 @@ export class SendMessageUseCase {
             conversationId: conv.id,
             direction: "OUT",
         });
+        
+        if (resumed) {
+            orgEventBus.emit(input.organizationId, {
+                kind: "chat.conversation",
+                conversationId: conv.id,
+            });
+        }
 
         return message;
     }

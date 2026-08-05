@@ -278,15 +278,21 @@ export function ChatPanel({
       </div>
 
       {isWindowExpired(conversation) ? (
-        <div className="w-full shrink-0 border-t border-border bg-background px-3 pt-3">
-          <Alert variant="warning">
-            <Clock />
-            <AlertTitle>Janela de 24h fechada</AlertTitle>
-            <AlertDescription>
-              A última mensagem do cliente foi há mais de 24 horas. Pela regra
-              da Meta, respostas de texto livre podem ser rejeitadas até o
-              cliente escrever de novo.
-            </AlertDescription>
+        <div className="w-full shrink-0 bg-muted/30 px-4 pb-3 pt-1 sm:px-6">
+          <Alert
+            variant="warning"
+            className="flex items-start gap-3 rounded-xl border-warning/25 py-2.5 shadow-soft-sm"
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-warning/15">
+              <Clock className="size-3.5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <AlertTitle className="mb-0.5">Janela de 24h fechada</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                O cliente não escreve há mais de 24h — pela regra da Meta, sua
+                resposta pode ser recusada até ele mandar uma nova mensagem.
+              </AlertDescription>
+            </div>
           </Alert>
         </div>
       ) : null}
