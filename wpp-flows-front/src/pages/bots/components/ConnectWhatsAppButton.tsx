@@ -100,7 +100,7 @@ export function ConnectWhatsAppButton() {
       const data =
         typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
       if (data?.type !== 'WA_EMBEDDED_SIGNUP') return;
-      if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
+      if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA' || data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING') {
         signupData.current = {
           phoneNumberId: data.data?.phone_number_id,
           wabaId: data.data?.waba_id,
@@ -148,7 +148,7 @@ export function ConnectWhatsAppButton() {
           config_id: config.configId,
           response_type: 'code',
           override_default_response_type: true,
-          extras: { setup: {}, featureType: '', sessionInfoVersion: '3' },
+          extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' },
         },
       );
     } catch (err) {
